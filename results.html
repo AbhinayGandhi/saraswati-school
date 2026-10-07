@@ -1,0 +1,26 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bitter:wght@600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="css/style.css"><link rel="stylesheet" href="css/print.css" media="print"><title>Results | Saraswati English Medium School</title></head>
+<body><div class="app"><aside id="sidebar" class="noprint" aria-label="Sidebar"></aside>
+<div><header class="top"><button class="btn ghost" id="menu" aria-expanded="false" aria-controls="sidebar">Menu</button><span id="who"></span><button class="btn ghost" id="logout">Sign out</button></header>
+<main><h1 class="noprint">Results</h1><div class="row"><div><label for="y">Academic year</label><select id="y"></select></div><div><label for="ex">Exam</label><select id="ex"></select></div><div><label for="dv">Division</label><select id="dv"></select></div><button class="btn ghost" id="rx">Export CSV</button><button class="btn ghost" onclick="window.print()">Print</button></div><div id="info"></div><div id="list" class="tw"></div></main></div></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script><script src="js/config.js"></script><script src="js/supabase.js"></script><script src="js/utils.js"></script><script src="js/permissions.js"></script><script src="js/auth.js"></script><script src="js/students.js"></script><script src="js/exams.js"></script>
+<script>
+(async()=>{const p=await Auth.require([...ADMIN_ROLES,"teacher","class_teacher"]);Auth.shell(p);const $=id=>document.getElementById(id);
+
+const list=$("list");let exams=[],rules=[],out=[],cls=[];
+try{rules=await Ex.rules();const {data,error}=await db.from("classes").select("id,name,sort_order").order("sort_order");if(error)throw error;cls=data;await Ex.yearSelect($("y"))}catch(e){U.friendly(e);return U.state(list,"error","Unable to load. Please try again.")}
+async function loadExams(){try{exams=await Ex.examSelect($("ex"),$("y").value);const {data,error}=await db.from("divisions").select("id,name,class_id").eq("academic_year_id",$("y").value);if(error)throw error;
+const d=data.map(x=>({...x,l:(cls.find(c=>c.id===x.class_id)?.name||"")+" - "+x.name,o:cls.findIndex(c=>c.id===x.class_id)})).sort((a,b)=>a.o-b.o||a.name.localeCompare(b.name));$("dv").innerHTML=d.map(x=>`<option value="${x.id}">${U.esc(x.l)}</option>`).join("");show()}catch(e){U.friendly(e);U.state(list,"error","Unable to load. Please try again.")}}
+async function show(){out=[];const ex=exams.find(x=>x.id===$("ex").value),dv=$("dv").value;if(!ex||!dv)return U.state(list,"empty","Choose an exam and division.");list.innerHTML='<div class="state">Loading...</div>';
+try{const {data:subs,error}=await db.from("exam_subjects").select("id,max_marks,passing_marks,subjects(name)").eq("exam_id",ex.id).eq("division_id",dv);if(error)throw error;if(!subs.length)return U.state(list,"empty","No subjects added for this division in this exam.");
+subs.sort((a,b)=>a.subjects.name.localeCompare(b.subjects.name));
+const {data:en,error:e2}=await db.from("student_enrollments").select("id,roll_no,students!inner(first_name,last_name)").eq("division_id",dv).eq("academic_year_id",$("y").value).order("roll_no",{nullsFirst:false});if(e2)throw e2;
+const {data:m,error:e3}=await db.from("marks").select("exam_subject_id,enrollment_id,marks,absent").in("exam_subject_id",subs.map(s=>s.id));if(e3)throw e3;
+const mk=Object.fromEntries(m.map(x=>[x.exam_subject_id+"|"+x.enrollment_id,x]));
+out=en.map(e=>({e,r:Ex.calc(subs,mk,e.id,rules)}));const rank=[...out].filter(o=>o.r.result!=="Incomplete").sort((a,b)=>b.r.tot-a.r.tot);out.forEach(o=>{o.rank=o.r.result==="Incomplete"?"":rank.findIndex(x=>x.r.tot===o.r.tot)+1});
+$("info").innerHTML=ex.status==="published"?"":'<div class="state">Provisional: results are not published yet.</div>';
+list.innerHTML="<table><thead><tr><th>Roll</th><th>Student</th>"+subs.map(s=>`<th>${U.esc(s.subjects.name)} (${s.max_marks})</th>`).join("")+"<th>Total</th><th>%</th><th>Grade</th><th>Result</th><th>Rank</th><th class=\"noprint\"></th></tr></thead><tbody>"+out.map(o=>`<tr><td>${U.esc(o.e.roll_no??"")}</td><td>${U.esc(o.e.students.first_name+" "+o.e.students.last_name)}</td>`+o.r.cells.map(c=>`<td${c.f?' style="color:var(--bad)"':""}>${U.esc(c.v)}</td>`).join("")+`<td>${o.r.tot}/${o.r.max}</td><td>${o.r.pct}</td><td>${U.esc(o.r.grade)}</td><td>${U.esc(o.r.result)}</td><td>${o.rank}</td><td class="noprint"><a href="report-card.html?exam=${ex.id}&e=${o.e.id}">Report card</a></td></tr>`).join("")+"</tbody></table>";
+window.subsCache=subs}catch(e){U.friendly(e);U.state(list,"error","Unable to load results. Please try again.")}}
+$("rx").onclick=()=>{if(!out.length)return U.toast("No results to export.","err");Students.download("results.csv",Students.csv([["roll","student",...window.subsCache.map(s=>s.subjects.name),"total","max","percent","grade","result","rank"],...out.map(o=>[o.e.roll_no,o.e.students.first_name+" "+o.e.students.last_name,...o.r.cells.map(c=>c.v),o.r.tot,o.r.max,o.r.pct,o.r.grade,o.r.result,o.rank])]))};
+$("y").onchange=loadExams;$("ex").onchange=show;$("dv").onchange=show;loadExams();
+})();
+</script></body></html>

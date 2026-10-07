@@ -1,0 +1,44 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bitter:wght@600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="css/style.css"><link rel="stylesheet" href="css/print.css" media="print"><title>Exams | Saraswati English Medium School</title></head>
+<body><div class="app"><aside id="sidebar" class="noprint" aria-label="Sidebar"></aside>
+<div><header class="top"><button class="btn ghost" id="menu" aria-expanded="false" aria-controls="sidebar">Menu</button><span id="who"></span><button class="btn ghost" id="logout">Sign out</button></header>
+<main><h1 class="noprint">Exams</h1><div class="row"><div><label for="y">Academic year</label><select id="y"></select></div></div>
+<form id="f" class="row"><div><label for="en">Exam name</label><input id="en" required maxlength="60"></div><div><label for="et">Type</label><select id="et"><option>Unit Test</option><option>First Term</option><option>Mid Term</option><option>Preliminary</option><option>Annual Examination</option><option>Oral</option><option>Practical</option><option>Internal Assessment</option></select></div><button class="btn">Create exam</button></form>
+<div id="list" class="tw"></div><div id="mg" class="panel" hidden><h2 id="mt"></h2><form id="sf" class="row"><div><label for="kc">Class</label><select id="kc"></select></div><div><label for="ks">Subject</label><select id="ks"></select></div><div><label for="mx">Maximum marks</label><input id="mx" type="number" min="1" required></div><div><label for="pm">Passing marks</label><input id="pm" type="number" min="0" required></div><div><label for="ed">Exam date</label><input id="ed" type="date"></div><button class="btn">Add to all divisions of class</button></form><div id="sl" class="tw"></div></div>
+<details class="panel"><summary><b>Grading rules</b></summary><p>A student gets the grade of the highest row whose minimum percentage they reach.</p><div id="gr"></div><button class="btn ghost" id="ga">Add row</button> <button class="btn" id="gs">Save grading rules</button></details></main></div></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script><script src="js/config.js"></script><script src="js/supabase.js"></script><script src="js/utils.js"></script><script src="js/permissions.js"></script><script src="js/auth.js"></script><script src="js/students.js"></script><script src="js/exams.js"></script>
+<script>
+(async()=>{const p=await Auth.require(ADMIN_ROLES);Auth.shell(p);const $=id=>document.getElementById(id);
+
+const list=$("list");let exams=[],cur=null,cls=[],subs=[];
+try{const [c,s]=await Promise.all([db.from("classes").select("id,name").order("sort_order"),db.from("subjects").select("id,name").eq("is_active",true).order("name")]);if(c.error||s.error)throw c.error||s.error;cls=c.data;
+$("kc").innerHTML=cls.map(a=>`<option value="${a.id}">${U.esc(a.name)}</option>`).join("");$("ks").innerHTML=s.data.map(a=>`<option value="${a.id}">${U.esc(a.name)}</option>`).join("");await Ex.yearSelect($("y"))}catch(e){U.friendly(e);return U.state(list,"error","Unable to load. Please try again.")}
+async function load(){$("mg").hidden=true;try{const {data,error}=await db.from("exams").select("*").eq("academic_year_id",$("y").value).order("created_at");if(error)throw error;exams=data;
+if(!data.length)return U.state(list,"empty","No exams yet. Create the first one above.");
+list.innerHTML="<table><thead><tr><th>Exam</th><th>Type</th><th>Status</th><th></th></tr></thead><tbody>"+data.map(x=>`<tr><td>${U.esc(x.name)}</td><td>${U.esc(x.exam_type)}</td><td><span class="badge ${x.status==="published"?"on":""}">${U.esc(x.status)}</span></td><td><button class="btn sm" data-a="m" data-id="${x.id}">Subjects</button> ${x.status==="draft"?`<button class="btn sm ghost" data-a="p" data-id="${x.id}">Publish results</button>`:""}</td></tr>`).join("")+"</tbody></table>"}catch(e){U.friendly(e);U.state(list,"error","Unable to load exams. Please try again.")}}
+async function loadSubs(){try{const {data,error}=await db.from("exam_subjects").select("id,max_marks,passing_marks,exam_date,status,divisions(name,classes(name,sort_order)),subjects(name)").eq("exam_id",cur.id);if(error)throw error;
+if(!data.length)return U.state($("sl"),"empty","No subjects added to this exam yet.");
+data.sort((a,b)=>(a.divisions.classes.sort_order-b.divisions.classes.sort_order)||a.divisions.name.localeCompare(b.divisions.name));
+$("sl").innerHTML="<table><thead><tr><th>Division</th><th>Subject</th><th>Max</th><th>Pass</th><th>Date</th><th>Marks</th></tr></thead><tbody>"+data.map(x=>`<tr><td>${U.esc(x.divisions.classes.name+" - "+x.divisions.name)}</td><td>${U.esc(x.subjects.name)}</td><td>${x.max_marks}</td><td>${x.passing_marks}</td><td>${U.esc(x.exam_date||"")}</td><td>${U.esc(x.status)}</td></tr>`).join("")+"</tbody></table>"}catch(e){U.friendly(e);U.state($("sl"),"error","Unable to load subjects. Please try again.")}}
+list.addEventListener("click",async ev=>{const b=ev.target.closest("button[data-id]");if(!b)return;cur=exams.find(x=>x.id===b.dataset.id);
+if(b.dataset.a==="m"){$("mg").hidden=false;$("mt").textContent=cur.name+": subjects";$("sf").hidden=cur.status==="published";loadSubs()}
+else if(await U.confirm("Publish results for "+cur.name+"? All marks will be locked and students and parents can see results.")){const {error}=await db.rpc("publish_exam",{p_id:cur.id});if(error){U.friendly(error);return U.toast("Could not publish. Please try again.","err")}U.audit("Exam published","exams",cur.id);U.toast("Published.");load()}});
+$("y").onchange=load;
+$("f").addEventListener("submit",async ev=>{ev.preventDefault();const {data,error}=await db.from("exams").insert({academic_year_id:$("y").value,name:$("en").value.trim(),exam_type:$("et").value}).select("id").single();
+if(error){U.friendly(error);return U.toast(error.code==="23505"?"An exam with this name already exists this year.":"Could not create the exam.","err")}U.audit("Exam created","exams",data.id);ev.target.reset();load()});
+$("sf").addEventListener("submit",async ev=>{ev.preventDefault();const mx=Number($("mx").value),pm=Number($("pm").value);if(pm>mx)return U.toast("Passing marks cannot exceed maximum marks.","err");
+const {data:d,error:e1}=await db.from("divisions").select("id").eq("academic_year_id",$("y").value).eq("class_id",$("kc").value);if(e1){U.friendly(e1);return U.toast("Could not load divisions.","err")}
+if(!d.length)return U.toast("This class has no divisions in this year.","err");
+const {error}=await db.from("exam_subjects").upsert(d.map(x=>({exam_id:cur.id,division_id:x.id,subject_id:$("ks").value,max_marks:mx,passing_marks:pm,exam_date:$("ed").value||null})),{onConflict:"exam_id,division_id,subject_id"});
+if(error){U.friendly(error);return U.toast("Could not add the subject. Marks may already be locked.","err")}U.audit("Exam subject added","exam_subjects",cur.id);U.toast("Added.");loadSubs()});
+let rules=[];async function loadRules(){try{rules=await Ex.rules();drawRules()}catch(e){U.friendly(e);U.state($("gr"),"error","Unable to load grading rules.")}}
+function drawRules(){$("gr").innerHTML="<table><thead><tr><th>Minimum %</th><th>Grade</th><th></th></tr></thead><tbody>"+rules.map((r,i)=>`<tr><td><input type="number" min="0" max="100" value="${r.min_pct}" data-i="${i}" data-k="min_pct" aria-label="Minimum percentage"></td><td><input value="${U.esc(r.grade)}" maxlength="3" data-i="${i}" data-k="grade" aria-label="Grade"></td><td><button class="btn sm ghost" data-rm="${i}">Remove</button></td></tr>`).join("")+"</tbody></table>"}
+$("gr").addEventListener("input",ev=>{const t=ev.target;if(t.dataset.k)rules[t.dataset.i][t.dataset.k]=t.value});
+$("gr").addEventListener("click",ev=>{const b=ev.target.closest("[data-rm]");if(b){rules.splice(b.dataset.rm,1);drawRules()}});
+$("ga").onclick=()=>{rules.push({min_pct:0,grade:""});drawRules()};
+$("gs").onclick=async()=>{const ok=rules.every(r=>r.grade.trim()&&r.min_pct!==""&&r.min_pct>=0&&r.min_pct<=100),mins=rules.map(r=>Number(r.min_pct));
+if(!ok||new Set(mins).size!==mins.length||!mins.includes(0))return U.toast("Each row needs a grade and a unique percentage, and one row must start at 0.","err");
+const {error:e0}=await db.from("grading_rules").delete().neq("min_pct",-1);if(e0){U.friendly(e0);return U.toast("Could not save the rules.","err")}
+const {error}=await db.from("grading_rules").insert(rules.map(r=>({min_pct:Number(r.min_pct),grade:r.grade.trim()})));if(error){U.friendly(error);U.toast("Saving failed. Reload and check the rules.","err");return}U.audit("Grading rules changed","grading_rules",null);U.toast("Saved.");loadRules()};
+loadRules();load();
+})();
+</script></body></html>

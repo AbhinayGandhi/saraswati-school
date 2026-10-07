@@ -1,0 +1,40 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bitter:wght@600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="css/style.css"><link rel="stylesheet" href="css/print.css" media="print"><title>Marks entry | Saraswati English Medium School</title></head>
+<body><div class="app"><aside id="sidebar" class="noprint" aria-label="Sidebar"></aside>
+<div><header class="top"><button class="btn ghost" id="menu" aria-expanded="false" aria-controls="sidebar">Menu</button><span id="who"></span><button class="btn ghost" id="logout">Sign out</button></header>
+<main><h1 class="noprint">Marks entry</h1><div class="row"><div><label for="y">Academic year</label><select id="y"></select></div><div><label for="ex">Exam</label><select id="ex"></select></div><div><label for="es">Division and subject</label><select id="es"></select></div></div><div id="info" role="status"></div><div id="list" class="tw"></div><div class="row" id="bar" hidden><button class="btn ghost" id="sd">Save draft</button><button class="btn" id="sb">Submit marks</button><button class="btn ghost" id="ro" hidden>Reopen for correction</button></div></main></div></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script><script src="js/config.js"></script><script src="js/supabase.js"></script><script src="js/utils.js"></script><script src="js/permissions.js"></script><script src="js/auth.js"></script><script src="js/students.js"></script><script src="js/exams.js"></script>
+<script>
+(async()=>{const p=await Auth.require([...ADMIN_ROLES,"teacher","class_teacher"]);Auth.shell(p);const $=id=>document.getElementById(id);
+
+const list=$("list");let exams=[],ess=[],cur=null,en=[],rules=[];
+try{rules=await Ex.rules();await Ex.yearSelect($("y"))}catch(e){U.friendly(e);return U.state(list,"error","Unable to load. Please try again.")}
+async function loadExams(){try{exams=await Ex.examSelect($("ex"),$("y").value);await loadEs()}catch(e){U.friendly(e);U.state(list,"error","Unable to load exams. Please try again.")}}
+async function loadEs(){$("bar").hidden=true;list.innerHTML="";if(!$("ex").value)return U.state(list,"empty","No exams in this year.");
+try{let q=db.from("exam_subjects").select("id,division_id,subject_id,max_marks,passing_marks,status,divisions(name,classes(name,sort_order)),subjects(name)").eq("exam_id",$("ex").value);const {data,error}=await q;if(error)throw error;let d=data;
+if(!Perm.isAdmin(p.role)){const {data:m}=await db.from("class_subjects").select("division_id,subject_id").eq("teacher_id",p.id);const k=new Set((m||[]).map(x=>x.division_id+"|"+x.subject_id));d=d.filter(x=>k.has(x.division_id+"|"+x.subject_id))}
+d.sort((a,b)=>(a.divisions.classes.sort_order-b.divisions.classes.sort_order)||a.divisions.name.localeCompare(b.divisions.name)||a.subjects.name.localeCompare(b.subjects.name));ess=d;
+$("es").innerHTML=d.map(x=>`<option value="${x.id}">${U.esc(x.divisions.classes.name+" - "+x.divisions.name+" | "+x.subjects.name)}</option>`).join("");
+if(!d.length)return U.state(list,"empty","No subjects are assigned to you for this exam.");sheet()}catch(e){U.friendly(e);U.state(list,"error","Unable to load. Please try again.")}}
+async function sheet(){cur=ess.find(x=>x.id===$("es").value);if(!cur)return;const ex=exams.find(x=>x.id===$("ex").value);list.innerHTML='<div class="state">Loading...</div>';
+try{const {data:e,error}=await db.from("student_enrollments").select("id,roll_no,students!inner(first_name,last_name)").eq("division_id",cur.division_id).eq("academic_year_id",$("y").value).eq("status","active").order("roll_no",{nullsFirst:false});if(error)throw error;en=e;
+if(!e.length)return U.state(list,"empty","No active students in this division.");
+const {data:m,error:e2}=await db.from("marks").select("enrollment_id,marks,absent,remarks").eq("exam_subject_id",cur.id);if(e2)throw e2;const mm=Object.fromEntries(m.map(x=>[x.enrollment_id,x]));
+const ed=cur.status==="open"||p.role==="super_admin";$("bar").hidden=false;$("sd").hidden=$("sb").hidden=!ed;$("ro").hidden=!(Perm.isAdmin(p.role)&&cur.status==="submitted"&&ex.status==="draft");
+$("info").innerHTML=`<div class="state">Maximum ${cur.max_marks}, passing ${cur.passing_marks}. Status: ${U.esc(cur.status)}${ed?"":". Marks are locked."}</div>`;
+list.innerHTML="<table><thead><tr><th>Roll</th><th>Student</th><th>Marks</th><th>Absent</th><th>Grade</th><th>Remarks</th></tr></thead><tbody>"+e.map(x=>{const r=mm[x.id]||{};return `<tr data-e="${x.id}"><td>${U.esc(x.roll_no??"")}</td><td>${U.esc(x.students.first_name+" "+x.students.last_name)}</td><td><input type="number" class="mk" min="0" max="${cur.max_marks}" step="0.5" value="${r.marks??""}" ${ed?"":"disabled"} aria-label="Marks for ${U.esc(x.students.first_name)}"></td><td><input type="checkbox" class="ab" ${r.absent?"checked":""} ${ed?"":"disabled"} aria-label="Absent"></td><td class="gd"></td><td><input class="rm" value="${U.esc(r.remarks||"")}" maxlength="120" ${ed?"":"disabled"}></td></tr>`}).join("")+"</tbody></table>";list.querySelectorAll("tr[data-e]").forEach(grade)}
+catch(e){U.friendly(e);U.state(list,"error","Unable to load marks. Please try again.")}}
+function grade(tr){const v=tr.querySelector(".mk").value,ab=tr.querySelector(".ab").checked;tr.querySelector(".gd").textContent=ab?"AB":v===""?"":Ex.grade(rules,Number(v)/cur.max_marks*100)}
+list.addEventListener("input",ev=>{const tr=ev.target.closest("tr[data-e]");if(tr)grade(tr)});
+function rows(){return [...list.querySelectorAll("tr[data-e]")].map(tr=>{const ab=tr.querySelector(".ab").checked,v=tr.querySelector(".mk").value;return {exam_subject_id:cur.id,enrollment_id:tr.dataset.e,marks:ab||v===""?null:Number(v),absent:ab,remarks:tr.querySelector(".rm").value.trim()||null}})}
+async function save(){const r=rows();if(r.some(x=>x.marks!==null&&(x.marks<0||x.marks>cur.max_marks))){U.toast("Marks must be between 0 and "+cur.max_marks+".","err");return false}
+const {error}=await db.from("marks").upsert(r,{onConflict:"exam_subject_id,enrollment_id"});if(error){U.friendly(error);U.toast("Could not save marks. They may be locked.","err");return false}return true}
+$("sd").onclick=async()=>{if(await save()){U.audit("Marks saved (draft)","marks",cur.id);U.toast("Draft saved.")}};
+$("sb").onclick=async()=>{const r=rows();if(r.some(x=>x.marks===null&&!x.absent))return U.toast("Enter marks or tick Absent for every student before submitting.","err");
+if(!await U.confirm("Submit marks? You will not be able to edit them afterwards."))return;if(!await save())return;
+const {error}=await db.from("exam_subjects").update({status:"submitted"}).eq("id",cur.id);if(error){U.friendly(error);return U.toast("Marks saved, but submitting failed. Try again.","err")}
+U.audit("Marks submitted","marks",cur.id);U.toast("Submitted.");loadEs()};
+$("ro").onclick=async()=>{if(!await U.confirm("Reopen these marks so the teacher can correct them?"))return;const {error}=await db.from("exam_subjects").update({status:"open"}).eq("id",cur.id);
+if(error){U.friendly(error);return U.toast("Could not reopen.","err")}U.audit("Marks reopened for correction","exam_subjects",cur.id);loadEs()};
+$("y").onchange=loadExams;$("ex").onchange=loadEs;$("es").onchange=sheet;loadExams();
+})();
+</script></body></html>

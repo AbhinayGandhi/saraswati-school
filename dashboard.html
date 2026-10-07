@@ -1,0 +1,17 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bitter:wght@600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="css/style.css"><link rel="stylesheet" href="css/print.css" media="print"><title>Dashboard | Saraswati English Medium School</title></head>
+<body><div class="app"><aside id="sidebar" aria-label="Sidebar"></aside>
+<div><header class="top"><button class="btn ghost" id="menu" aria-expanded="false" aria-controls="sidebar">Menu</button><span id="who"></span><button class="btn ghost" id="logout">Sign out</button></header>
+<main><h1>Dashboard</h1><div id="out" class="grid"><div class="state">Loading...</div></div></main></div></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="js/config.js"></script><script src="js/supabase.js"></script><script src="js/utils.js"></script><script src="js/permissions.js"></script><script src="js/auth.js"></script>
+<script>
+(async()=>{const p=await Auth.require("*");Auth.shell(p);const out=document.getElementById("out");
+try{const [y,c,d]=await Promise.all([
+db.from("academic_years").select("name").eq("is_active",true).maybeSingle(),
+db.from("classes").select("id",{count:"exact",head:true}),
+db.from("divisions").select("id",{count:"exact",head:true})]);
+if(y.error||c.error||d.error)throw y.error||c.error||d.error;
+out.innerHTML=`<div class="card"><b>${U.esc(y.data?y.data.name:"None")}</b>Active academic year</div>
+<div class="card"><b>${c.count??0}</b>Classes</div><div class="card"><b>${d.count??0}</b>Divisions</div>`;
+}catch(e){U.state(out,"error","Unable to load the dashboard. Please try again.");U.friendly(e)}})();
+</script></body></html>

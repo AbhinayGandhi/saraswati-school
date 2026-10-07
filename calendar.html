@@ -1,0 +1,19 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bitter:wght@600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="css/style.css"><link rel="stylesheet" href="css/print.css" media="print"><title>School calendar | Saraswati English Medium School</title></head>
+<body><div class="app"><aside id="sidebar" aria-label="Sidebar"></aside>
+<div><header class="top"><button class="btn ghost" id="menu" aria-expanded="false" aria-controls="sidebar">Menu</button><span id="who"></span><button class="btn ghost" id="logout">Sign out</button></header>
+<main><h1>School calendar</h1><form id="f" class="row"><div><label for="day">Date</label><input id="day" type="date" required></div><div><label for="kind">Type</label><select id="kind"><option value="holiday">Holiday</option><option value="vacation">Vacation</option><option value="exam">Exam</option><option value="event">Event</option><option value="parent_meeting">Parent meeting</option></select></div><div><label for="ttl">Title</label><input id="ttl" required maxlength="80"></div><button class="btn">Add</button></form><p>Holidays and vacations are not counted as absent, and attendance cannot be marked on them.</p><div id="list" class="tw"></div></main></div></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script><script src="js/config.js"></script><script src="js/supabase.js"></script><script src="js/utils.js"></script><script src="js/permissions.js"></script><script src="js/auth.js"></script><script src="js/students.js"></script>
+<script>
+(async()=>{const p=await Auth.require(ADMIN_ROLES);Auth.shell(p);const $=id=>document.getElementById(id);
+
+const list=$("list");
+async function load(){try{const {data,error}=await db.from("school_calendar").select("*").order("day",{ascending:false}).limit(300);if(error)throw error;
+if(!data.length)return U.state(list,"empty","No dates added yet. Add holidays above.");
+list.innerHTML="<table><thead><tr><th>Date</th><th>Type</th><th>Title</th><th></th></tr></thead><tbody>"+data.map(x=>`<tr><td>${U.esc(x.day)}</td><td>${U.esc(x.kind.replace("_"," "))}</td><td>${U.esc(x.title)}</td><td><button class="btn sm ghost" data-id="${x.id}">Remove</button></td></tr>`).join("")+"</tbody></table>"}catch(e){U.friendly(e);U.state(list,"error","Unable to load the calendar. Please try again.")}}
+list.addEventListener("click",async ev=>{const b=ev.target.closest("button[data-id]");if(!b||!await U.confirm("Remove this calendar entry?"))return;
+const {error}=await db.from("school_calendar").delete().eq("id",b.dataset.id);if(error){U.friendly(error);return U.toast("Could not remove it.","err")}U.audit("Calendar entry removed","school_calendar",b.dataset.id);load()});
+$("f").addEventListener("submit",async ev=>{ev.preventDefault();const {data,error}=await db.from("school_calendar").insert({day:$("day").value,kind:$("kind").value,title:$("ttl").value.trim()}).select("id").single();
+if(error){U.friendly(error);return U.toast(error.code==="23505"?"This date already has that type.":"Could not add the date.","err")}U.audit("Calendar entry added","school_calendar",data.id);ev.target.reset();U.toast("Added.");load()});
+load();
+})();
+</script></body></html>

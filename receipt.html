@@ -1,0 +1,20 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bitter:wght@600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="css/style.css"><link rel="stylesheet" href="css/print.css" media="print"><title>Fee receipt | Saraswati English Medium School</title></head>
+<body><div class="app"><aside id="sidebar" class="noprint" aria-label="Sidebar"></aside>
+<div><header class="top noprint"><button class="btn ghost" id="menu" aria-expanded="false" aria-controls="sidebar">Menu</button><span id="who"></span><button class="btn ghost" id="logout">Sign out</button></header>
+<main><h1 class="noprint">Fee receipt</h1><div id="out"><div class="state">Loading...</div></div></main></div></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script><script src="js/config.js"></script><script src="js/supabase.js"></script><script src="js/utils.js"></script><script src="js/permissions.js"></script><script src="js/auth.js"></script><script src="js/students.js"></script><script src="js/exams.js"></script><script src="js/fees.js"></script>
+<script>
+(async()=>{const p=await Auth.require([...ADMIN_ROLES,"accountant","parent","student"]);Auth.shell(p);const $=id=>document.getElementById(id);
+
+const out=$("out"),id=new URLSearchParams(location.search).get("id");
+try{if(!id)throw new Error("missing");const {data:r,error}=await db.from("fee_payments").select("*,student_fees(installment_no,assigned_amount,concession_amount,balance,fee_types(name),student_enrollments(id,roll_no,academic_years(name),divisions(name,classes(name)),students(admission_no,gr_no,first_name,middle_name,last_name)))").eq("id",id).single();if(error)throw error;
+const f=r.student_fees,e=f.student_enrollments,s=e.students;const {data:all,error:e2}=await db.from("student_fees").select("balance").eq("enrollment_id",e.id);if(e2)throw e2;const rem=all.reduce((a,x)=>a+Number(x.balance),0);
+out.innerHTML=`<p class="noprint"><button class="btn" onclick="window.print()">Print or save as PDF</button> <a href="javascript:history.back()">Back</a></p><div class="rc"><div class="ph">Logo</div><h2>${U.esc(SCHOOL_NAME)}</h2><p style="text-align:center">[School Address] | [School Phone]</p><h3>Fee receipt</h3>
+<p>Receipt no: <b>${U.esc(r.receipt_no)}</b> | Date: ${U.esc(r.payment_date)}</p>
+<p><b>${U.esc([s.first_name,s.middle_name,s.last_name].filter(Boolean).join(" "))}</b><br>Admission no: ${U.esc(s.admission_no)} | GR no: ${U.esc(s.gr_no||"-")}<br>Class: ${U.esc(e.divisions.classes.name+" - "+e.divisions.name)} | Academic year: ${U.esc(e.academic_years.name)}</p>
+<table><thead><tr><th>Fee details</th><th>Fee amount</th><th>Concession</th><th>Paid now</th></tr></thead><tbody><tr><td>${U.esc(f.fee_types.name)} #${f.installment_no}</td><td>${Fee.inr(f.assigned_amount)}</td><td>${Fee.inr(f.concession_amount)}</td><td>${Fee.inr(r.amount)}</td></tr></tbody></table>
+<p>Payment mode: ${U.esc(r.mode.replace("_"," "))} | Reference: ${U.esc(r.reference_no||"-")}<br>Balance of this fee: <b>${Fee.inr(f.balance)}</b> | Total remaining balance: <b>${Fee.inr(rem)}</b></p>${r.notes?`<p>Notes: ${U.esc(r.notes)}</p>`:""}
+<p style="margin-top:3rem;text-align:right">Authorized signature</p></div>`;U.audit("Receipt viewed","fee_payments",id)}
+catch(e){U.friendly(e);U.state(out,"error","Unable to load this receipt. Please try again.")}
+})();
+</script></body></html>

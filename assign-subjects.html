@@ -1,0 +1,24 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bitter:wght@600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="css/style.css"><link rel="stylesheet" href="css/print.css" media="print"><title>Subject teachers | Saraswati English Medium School</title></head>
+<body><div class="app"><aside id="sidebar" class="noprint" aria-label="Sidebar"></aside>
+<div><header class="top"><button class="btn ghost" id="menu" aria-expanded="false" aria-controls="sidebar">Menu</button><span id="who"></span><button class="btn ghost" id="logout">Sign out</button></header>
+<main><h1 class="noprint">Subject teachers</h1><div class="row"><div><label for="y">Academic year</label><select id="y"></select></div></div><form id="f" class="row"><div><label for="dv">Division</label><select id="dv" required></select></div><div><label for="sb">Subject</label><select id="sb" required></select></div><div><label for="tc">Teacher</label><select id="tc" required></select></div><button class="btn">Assign</button></form><div id="list" class="tw"></div></main></div></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script><script src="js/config.js"></script><script src="js/supabase.js"></script><script src="js/utils.js"></script><script src="js/permissions.js"></script><script src="js/auth.js"></script><script src="js/students.js"></script><script src="js/exams.js"></script>
+<script>
+(async()=>{const p=await Auth.require(ADMIN_ROLES);Auth.shell(p);const $=id=>document.getElementById(id);
+
+const list=$("list");let divs=[],cls=[];
+try{const [c,s,t]=await Promise.all([db.from("classes").select("id,name").order("sort_order"),db.from("subjects").select("id,name").eq("is_active",true).order("name"),db.from("profiles").select("id,full_name").in("role",["teacher","class_teacher"]).eq("is_active",true).order("full_name")]);
+if(c.error||s.error||t.error)throw c.error||s.error||t.error;cls=c.data;await Ex.yearSelect($("y"));
+$("sb").innerHTML=s.data.map(a=>`<option value="${a.id}">${U.esc(a.name)}</option>`).join("");$("tc").innerHTML=t.data.map(a=>`<option value="${a.id}">${U.esc(a.full_name)}</option>`).join("");}catch(e){U.friendly(e);return U.state(list,"error","Unable to load. Please try again.")}
+async function load(){try{const {data:d,error}=await db.from("divisions").select("id,name,class_id").eq("academic_year_id",$("y").value);if(error)throw error;
+divs=d.map(x=>({...x,label:(cls.find(c=>c.id===x.class_id)?.name||"")+" - "+x.name,o:cls.findIndex(c=>c.id===x.class_id)})).sort((a,b)=>a.o-b.o||a.name.localeCompare(b.name));
+$("dv").innerHTML=divs.map(x=>`<option value="${x.id}">${U.esc(x.label)}</option>`).join("");
+const {data,error:e2}=await db.from("class_subjects").select("id,division_id,subjects(name),profiles:teacher_id(full_name)").eq("academic_year_id",$("y").value);if(e2)throw e2;
+if(!data.length)return U.state(list,"empty","No subject teachers assigned for this year yet.");
+list.innerHTML="<table><thead><tr><th>Division</th><th>Subject</th><th>Teacher</th></tr></thead><tbody>"+data.map(x=>({x,l:divs.find(d=>d.id===x.division_id)})).sort((a,b)=>(a.l?.o-b.l?.o)||0).map(({x,l})=>`<tr><td>${U.esc(l?.label||"")}</td><td>${U.esc(x.subjects?.name)}</td><td>${U.esc(x.profiles?.full_name||"")}</td></tr>`).join("")+"</tbody></table>"}catch(e){U.friendly(e);U.state(list,"error","Unable to load. Please try again.")}}
+$("y").onchange=load;
+$("f").addEventListener("submit",async ev=>{ev.preventDefault();const {error}=await db.from("class_subjects").upsert({academic_year_id:$("y").value,division_id:$("dv").value,subject_id:$("sb").value,teacher_id:$("tc").value},{onConflict:"academic_year_id,division_id,subject_id"});
+if(error){U.friendly(error);return U.toast("Could not save the assignment.","err")}U.audit("Subject teacher assigned","class_subjects",$("dv").value);U.toast("Saved.");load()});
+load();
+})();
+</script></body></html>

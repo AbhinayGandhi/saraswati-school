@@ -1,0 +1,24 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bitter:wght@600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="css/style.css"><link rel="stylesheet" href="css/print.css" media="print"><title>Sign in | Saraswati English Medium School</title></head>
+<body><div class="login"><form id="f" novalidate>
+<h1>Saraswati English Medium School</h1><p id="msg" role="alert" style="color:var(--bad);min-height:1.4em"></p>
+<label for="email">Email</label><input id="email" type="email" autocomplete="username" required>
+<label for="pw">Password</label><input id="pw" type="password" autocomplete="current-password" required>
+<button class="btn" id="go" type="submit">Sign in</button>
+<p><a href="#" id="forgot">Forgot password?</a> &nbsp; <a href="index.html">Back to website</a></p>
+</form></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
+<script src="js/config.js"></script><script src="js/supabase.js"></script><script src="js/utils.js"></script><script src="js/permissions.js"></script><script src="js/auth.js"></script>
+<script>
+const msg=document.getElementById("msg"),go=document.getElementById("go");
+Auth.profile().then(p=>{if(p)location.href="dashboard.html"});
+document.getElementById("f").addEventListener("submit",async e=>{e.preventDefault();msg.textContent="";
+const email=document.getElementById("email").value.trim(),pw=document.getElementById("pw").value;
+if(!email||!pw){msg.textContent="Enter your email and password.";return}
+go.disabled=true;go.textContent="Signing in...";
+try{await Auth.login(email,pw);const p=await Auth.profile();
+if(!p){await db.auth.signOut();throw new Error("Your account is not active. Contact the school office.")}
+location.href="dashboard.html"}catch(err){msg.textContent=err.message}finally{go.disabled=false;go.textContent="Sign in"}});
+document.getElementById("forgot").addEventListener("click",async e=>{e.preventDefault();
+const email=document.getElementById("email").value.trim();if(!email){msg.textContent="Type your email above first.";return}
+try{await Auth.resetPassword(email);U.toast("Password reset email sent.")}catch(err){msg.textContent=err.message}});
+</script></body></html>

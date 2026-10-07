@@ -1,0 +1,62 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bitter:wght@600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="css/style.css"><link rel="stylesheet" href="css/print.css" media="print"><title>Students | Saraswati English Medium School</title></head>
+<body><div class="app"><aside id="sidebar" aria-label="Sidebar"></aside>
+<div><header class="top"><button class="btn ghost" id="menu" aria-expanded="false" aria-controls="sidebar">Menu</button><span id="who"></span><button class="btn ghost" id="logout">Sign out</button></header>
+<main><h1>Students</h1><div class="row"><div><label for="y">Academic year</label><select id="y"></select></div><div><label for="d">Division</label><select id="d"><option value="">All divisions</option></select></div><div><label for="q">Search</label><input id="q" type="search" placeholder="Name, admission no, GR no"></div><button class="btn ghost" id="exp">Export CSV</button></div>
+<details class="panel" id="addp"><summary><b>Add student</b></summary><form id="f" class="row"><div><label for="adm">Admission number</label><input id="adm" required></div><div><label for="gr">GR number</label><input id="gr"></div><div><label for="fn">First name</label><input id="fn" required></div><div><label for="mn">Middle name</label><input id="mn"></div><div><label for="ln">Last name</label><input id="ln" required></div><div><label for="g">Gender</label><select id="g"><option>Male</option><option>Female</option><option>Other</option></select></div><div><label for="dob">Date of birth</label><input id="dob" type="date" required></div><div><label for="dv">Division (selected year)</label><select id="dv" required></select></div><div><label for="rn">Roll number</label><input id="rn" type="number" min="1"></div><div><label for="fa">Father name</label><input id="fa"></div><div><label for="mo">Mother name</label><input id="mo"></div><div><label for="pm">Parent mobile</label><input id="pm" type="tel"></div><div><label for="am">Alternate mobile</label><input id="am" type="tel"></div><div><label for="em">Email</label><input id="em" type="email"></div><div><label for="ad">Address</label><input id="ad"></div><div><label for="ps">Previous school</label><input id="ps"></div><button class="btn">Save student</button></form></details>
+<details class="panel"><summary><b>Import from CSV</b></summary><p>Imports into the academic year selected above. <a href="#" id="samp">Download sample CSV</a></p><input type="file" id="file" accept=".csv"><div id="prev" class="tw"></div><button class="btn" id="go" hidden>Import valid rows</button></details>
+<div id="list" class="tw"><div class="state">Loading...</div></div><div class="pager"><button class="btn ghost sm" id="pv">Previous</button><span id="pg"></span><button class="btn ghost sm" id="nx">Next</button></div></main></div></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script><script src="js/config.js"></script><script src="js/supabase.js"></script><script src="js/utils.js"></script><script src="js/permissions.js"></script><script src="js/auth.js"></script><script src="js/students.js"></script>
+<script>
+(async()=>{const p=await Auth.require([...ADMIN_ROLES,"teacher","class_teacher","reception"]);Auth.shell(p);
+
+const $=id=>document.getElementById(id),list=$("list");let page=0,total=0,divs=[],classes=[],valid=[];
+const canEdit=["super_admin","school_admin","reception"].includes(p.role);if(!canEdit){$("addp").hidden=true;$("go").parentElement.hidden=true}
+try{const [y,c]=await Promise.all([db.from("academic_years").select("id,name,is_active").order("start_date",{ascending:false}),db.from("classes").select("id,name").order("sort_order")]);
+if(y.error||c.error)throw y.error||c.error;classes=c.data;$("y").innerHTML=y.data.map(a=>`<option value="${a.id}"${a.is_active?" selected":""}>${U.esc(a.name)}</option>`).join("");
+if(!y.data.length)return U.state(list,"empty","Create an academic year and divisions first.")}catch(e){U.friendly(e);return U.state(list,"error","Unable to load. Please try again.")}
+async function loadDivs(){const {data,error}=await db.from("divisions").select("id,name,class_id").eq("academic_year_id",$("y").value);if(error){U.friendly(error);return}
+const cn=id=>classes.find(c=>c.id===id)?.name||"";divs=data.map(d=>({...d,label:cn(d.class_id)+" - "+d.name,ord:classes.findIndex(c=>c.id===d.class_id)})).sort((a,b)=>a.ord-b.ord||a.name.localeCompare(b.name));
+$("d").innerHTML='<option value="">All divisions</option>'+divs.map(d=>`<option value="${d.id}">${U.esc(d.label)}</option>`).join("");$("dv").innerHTML=divs.map(d=>`<option value="${d.id}">${U.esc(d.label)}</option>`).join("")}
+function query(count){let r=db.from("student_enrollments").select("roll_no,status,division_id,students!inner(id,admission_no,gr_no,first_name,middle_name,last_name,gender,dob,status),divisions(name,classes(name))",count?{count:"exact"}:{}).eq("academic_year_id",$("y").value);
+if($("d").value)r=r.eq("division_id",$("d").value);const t=Students.safe($("q").value);
+if(t)r=r.or(`first_name.ilike.%${t}%,last_name.ilike.%${t}%,admission_no.ilike.%${t}%,gr_no.ilike.%${t}%`,{foreignTable:"students"});return r.order("roll_no",{nullsFirst:false})}
+async function load(){list.innerHTML='<div class="state">Loading...</div>';try{const {data,error,count}=await query(true).range(page*Students.PAGE,page*Students.PAGE+Students.PAGE-1);if(error)throw error;total=count||0;
+$("pg").textContent=total?`${page*Students.PAGE+1}-${Math.min(total,(page+1)*Students.PAGE)} of ${total}`:"0";$("pv").disabled=page===0;$("nx").disabled=(page+1)*Students.PAGE>=total;
+if(!data.length)return U.state(list,"empty","No students found for this selection.");
+list.innerHTML="<table><thead><tr><th>Roll</th><th>Name</th><th>Admission no</th><th>GR no</th><th>Class</th><th>Gender</th><th>Status</th></tr></thead><tbody>"+data.map(r=>{const s=r.students;return `<tr><td>${U.esc(r.roll_no??"")}</td><td><a href="student-profile.html?id=${s.id}">${U.esc([s.first_name,s.middle_name,s.last_name].filter(Boolean).join(" "))}</a></td><td>${U.esc(s.admission_no)}</td><td>${U.esc(s.gr_no||"")}</td><td>${U.esc((r.divisions?.classes?.name||"")+" - "+(r.divisions?.name||""))}</td><td>${U.esc(s.gender)}</td><td><span class="badge ${s.status==="active"?"on":""}">${U.esc(s.status)}</span></td></tr>`}).join("")+"</tbody></table>"}
+catch(e){U.friendly(e);U.state(list,"error","Unable to load students. Please try again.")}}
+const reload=()=>{page=0;load()};$("y").addEventListener("change",async()=>{await loadDivs();reload()});$("d").addEventListener("change",reload);$("q").addEventListener("input",U.debounce(reload));
+$("pv").onclick=()=>{page--;load()};$("nx").onclick=()=>{page++;load()};
+$("exp").onclick=async()=>{try{const {data,error}=await query(false).limit(2000);if(error)throw error;
+Students.download("students.csv",Students.csv([["admission_no","gr_no","first_name","last_name","gender","dob","class","division","roll_no","status"],...data.map(r=>{const s=r.students;return [s.admission_no,s.gr_no,s.first_name,s.last_name,s.gender,s.dob,r.divisions?.classes?.name,r.divisions?.name,r.roll_no,s.status]})]))}catch(e){U.friendly(e);U.toast("Could not export. Please try again.","err")}};
+$("f").addEventListener("submit",async ev=>{ev.preventDefault();const v=id=>$(id).value.trim()||null;
+if(!$("dv").value)return U.toast("Add a division for this year first.","err");
+const {data:s,error}=await db.from("students").insert({admission_no:v("adm"),gr_no:v("gr"),first_name:v("fn"),middle_name:v("mn"),last_name:v("ln"),gender:$("g").value,dob:$("dob").value,previous_school:v("ps")}).select("id").single();
+if(error){U.friendly(error);return U.toast(error.code==="23505"?"This admission or GR number already exists.":"Could not save the student. Check the details.","err")}
+const gs=[["father","fa"],["mother","mo"]].filter(([,i])=>v(i)).map(([relation,i])=>({student_id:s.id,relation,name:v(i),mobile:v("pm"),alt_mobile:v("am"),email:v("em"),address:v("ad")}));
+if(!gs.length&&(v("pm")||v("ad")))gs.push({student_id:s.id,relation:"guardian",name:"Guardian",mobile:v("pm"),alt_mobile:v("am"),email:v("em"),address:v("ad")});
+const r1=gs.length?await db.from("student_guardians").insert(gs):{};const r2=await db.from("student_enrollments").insert({student_id:s.id,academic_year_id:$("y").value,division_id:$("dv").value,roll_no:v("rn")});
+if(r1.error||r2.error){U.friendly(r1.error||r2.error);U.toast("Student saved, but parent or class details failed. Please check the record.","err")}else U.toast("Student saved.");
+U.audit("Student created","students",s.id);ev.target.reset();reload()});
+const HDR=["admission_no","gr_no","student_name","gender","dob","class","division","parent_name","mobile","address"];
+$("samp").onclick=e=>{e.preventDefault();Students.download("students-sample.csv",Students.csv([HDR,["A-1001","GR-501","Asha Ramesh Patil","Female","2018-06-15","Grade 1","A","Ramesh Patil","9000000000","Sample address"]]))};
+$("file").addEventListener("change",async ev=>{const f=ev.target.files[0];valid=[];$("go").hidden=true;if(!f)return;
+try{const rows=Students.parseCSV(await f.text());const h=rows[0].map(x=>x.trim().toLowerCase());if(HDR.some(x=>!h.includes(x)))return U.state($("prev"),"error","Wrong columns. Download the sample CSV and keep its header row.");
+const ix=k=>h.indexOf(k),body=rows.slice(1,501),adms=body.map(r=>(r[ix("admission_no")]||"").trim());
+const {data:ex,error}=await db.from("students").select("admission_no").in("admission_no",adms);if(error)throw error;const have=new Set(ex.map(x=>x.admission_no)),seen=new Set();
+const res=body.map((r,n)=>{const g=k=>(r[ix(k)]||"").trim(),parts=g("student_name").split(/\s+/).filter(Boolean),cl=classes.find(c=>c.name.toLowerCase()===g("class").toLowerCase()),dv=cl&&divs.find(d=>d.class_id===cl.id&&d.name.toLowerCase()===g("division").toLowerCase());
+const gen={male:"Male",female:"Female",other:"Other"}[g("gender").toLowerCase()];let err="";
+if(!g("admission_no"))err="Missing admission_no";else if(have.has(g("admission_no"))||seen.has(g("admission_no")))err="Duplicate admission_no";else if(parts.length<2)err="Name needs first and last name";else if(!gen)err="Gender must be Male, Female or Other";else if(!/^\d{4}-\d{2}-\d{2}$/.test(g("dob")))err="dob must be YYYY-MM-DD";else if(!dv)err="Class or division not found for this year";
+seen.add(g("admission_no"));const o={n:n+2,err,g,parts,gen,dv};if(!err)valid.push(o);return o});
+$("prev").innerHTML="<table><thead><tr><th>Row</th><th>Admission no</th><th>Name</th><th>Result</th></tr></thead><tbody>"+res.map(o=>`<tr><td>${o.n}</td><td>${U.esc(o.g("admission_no"))}</td><td>${U.esc(o.g("student_name"))}</td><td>${o.err?U.esc(o.err):"Ready"}</td></tr>`).join("")+"</tbody></table>";$("go").hidden=!valid.length}
+catch(e){U.friendly(e);U.state($("prev"),"error","Could not read this file. Please check it and try again.")}});
+$("go").onclick=async()=>{if(!await U.confirm(`Import ${valid.length} students?`))return;$("go").disabled=true;let ok=0,bad=[];
+for(const o of valid){const g=o.g;const {data:s,error}=await db.from("students").insert({admission_no:g("admission_no"),gr_no:g("gr_no")||null,first_name:o.parts[0],middle_name:o.parts.length>2?o.parts.slice(1,-1).join(" "):null,last_name:o.parts[o.parts.length-1],gender:o.gen,dob:g("dob")}).select("id").single();
+if(error){bad.push(o.n);continue}
+const a=await db.from("student_enrollments").insert({student_id:s.id,academic_year_id:$("y").value,division_id:o.dv.id});
+if(g("parent_name"))await db.from("student_guardians").insert({student_id:s.id,relation:"guardian",name:g("parent_name"),mobile:g("mobile")||null,address:g("address")||null});
+a.error?bad.push(o.n):ok++}
+U.audit("Student CSV import ("+ok+" rows)","students",null);U.toast(`Imported ${ok} students.`+(bad.length?` Failed rows: ${bad.join(", ")}`:""),bad.length?"err":"ok");valid=[];$("go").hidden=true;$("go").disabled=false;$("file").value="";$("prev").innerHTML="";reload()};
+await loadDivs();load();
+})();
+</script></body></html>

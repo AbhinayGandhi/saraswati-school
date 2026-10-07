@@ -1,0 +1,28 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bitter:wght@600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="css/style.css"><link rel="stylesheet" href="css/print.css" media="print"><title>Report card | Saraswati English Medium School</title></head>
+<body><div class="app"><aside id="sidebar" class="noprint" aria-label="Sidebar"></aside>
+<div><header class="top"><button class="btn ghost" id="menu" aria-expanded="false" aria-controls="sidebar">Menu</button><span id="who"></span><button class="btn ghost" id="logout">Sign out</button></header>
+<main><h1 class="noprint">Report card</h1><div id="out"><div class="state">Loading...</div></div></main></div></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script><script src="js/config.js"></script><script src="js/supabase.js"></script><script src="js/utils.js"></script><script src="js/permissions.js"></script><script src="js/auth.js"></script><script src="js/students.js"></script><script src="js/exams.js"></script>
+<script>
+(async()=>{const p=await Auth.require([...ADMIN_ROLES,"teacher","class_teacher","parent","student"]);Auth.shell(p);const $=id=>document.getElementById(id);
+
+const out=$("out"),qs=new URLSearchParams(location.search),exId=qs.get("exam"),eid=qs.get("e");
+try{if(!exId||!eid)throw new Error("missing");const rules=await Ex.rules();
+const [ex,en]=await Promise.all([db.from("exams").select("id,name,status,academic_years(name)").eq("id",exId).single(),db.from("student_enrollments").select("id,roll_no,division_id,student_id,students(*),divisions(name,classes(name))").eq("id",eid).single()]);if(ex.error||en.error)throw ex.error||en.error;
+const s=en.data.students,{data:subs,error:e1}=await db.from("exam_subjects").select("id,max_marks,passing_marks,subjects(name)").eq("exam_id",exId).eq("division_id",en.data.division_id);if(e1)throw e1;subs.sort((a,b)=>a.subjects.name.localeCompare(b.subjects.name));
+const [m,a,rr]=await Promise.all([db.from("marks").select("exam_subject_id,enrollment_id,marks,absent").eq("enrollment_id",eid).in("exam_subject_id",subs.map(x=>x.id)),db.from("attendance").select("status").eq("enrollment_id",eid),db.from("report_remarks").select("*").eq("exam_id",exId).eq("enrollment_id",eid).maybeSingle()]);
+if(m.error||a.error||rr.error)throw m.error||a.error||rr.error;
+const mk=Object.fromEntries(m.data.map(x=>[x.exam_subject_id+"|"+x.enrollment_id,x])),r=Ex.calc(subs,mk,eid,rules),c=k=>a.data.filter(x=>x.status===k).length,days=a.data.length,att=c("present")+c("late")+c("half_day")*0.5,rem=rr.data||{};
+const canRem=["super_admin","school_admin","principal","teacher","class_teacher"].includes(p.role);
+out.innerHTML=`<p class="noprint"><button class="btn" onclick="window.print()">Print or save as PDF</button> <a href="javascript:history.back()">Back</a></p>
+<div class="rc"><div class="ph">Photo</div><h2>${U.esc(SCHOOL_NAME)}</h2><p style="text-align:center">[School Address] | [School Phone]</p><h3>Report card: ${U.esc(ex.data.name)} (${U.esc(ex.data.academic_years.name)})</h3>${ex.data.status==="published"?"":"<p><b>Provisional: results are not published.</b></p>"}
+<p><b>${U.esc(s.first_name+" "+(s.middle_name?s.middle_name+" ":"")+s.last_name)}</b><br>Admission no: ${U.esc(s.admission_no)} | GR no: ${U.esc(s.gr_no||"-")} | Roll no: ${U.esc(en.data.roll_no??"-")}<br>Class: ${U.esc(en.data.divisions.classes.name+" - "+en.data.divisions.name)} | Date of birth: ${U.esc(s.dob)}</p>
+<table><thead><tr><th>Subject</th><th>Maximum</th><th>Passing</th><th>Obtained</th></tr></thead><tbody>${subs.map((x,i)=>`<tr><td>${U.esc(x.subjects.name)}</td><td>${x.max_marks}</td><td>${x.passing_marks}</td><td>${U.esc(r.cells[i].v)}</td></tr>`).join("")}<tr><th>Total</th><th>${r.max}</th><th></th><th>${r.tot}</th></tr></tbody></table>
+<p>Percentage: <b>${r.pct}%</b> | Grade: <b>${U.esc(r.grade)}</b> | Result: <b>${U.esc(r.result)}</b><br>Attendance: ${days?`${att} of ${days} days (${Math.round(att/days*100)}%)`:"not recorded"}</p>
+<p><b>Class teacher remarks:</b> ${U.esc(rem.teacher_remark||"")}</p><p><b>Principal remarks:</b> ${U.esc(rem.principal_remark||"")}</p><p style="margin-top:3rem;display:flex;justify-content:space-between"><span>Class teacher</span><span>Principal</span></p></div>`+
+(canRem?`<form id="rf" class="panel noprint"><h3 style="text-align:left">Remarks</h3><label for="tr">Class teacher remarks</label><textarea id="tr" maxlength="300">${U.esc(rem.teacher_remark||"")}</textarea><label for="pr">Principal remarks</label><textarea id="pr" maxlength="300">${U.esc(rem.principal_remark||"")}</textarea><button class="btn">Save remarks</button></form>`:"");
+if(canRem)$("rf").addEventListener("submit",async ev=>{ev.preventDefault();const {error}=await db.from("report_remarks").upsert({exam_id:exId,enrollment_id:eid,teacher_remark:$("tr").value.trim()||null,principal_remark:$("pr").value.trim()||null},{onConflict:"exam_id,enrollment_id"});
+if(error){U.friendly(error);return U.toast("Could not save remarks.","err")}U.audit("Report remarks saved","report_remarks",eid);U.toast("Saved. Reload to see it on the card.")})}
+catch(e){U.friendly(e);U.state(out,"error","Unable to load this report card. Please try again.")}
+})();
+</script></body></html>

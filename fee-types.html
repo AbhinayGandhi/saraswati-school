@@ -1,0 +1,19 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bitter:wght@600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="css/style.css"><link rel="stylesheet" href="css/print.css" media="print"><title>Fee types | Saraswati English Medium School</title></head>
+<body><div class="app"><aside id="sidebar" class="noprint" aria-label="Sidebar"></aside>
+<div><header class="top noprint"><button class="btn ghost" id="menu" aria-expanded="false" aria-controls="sidebar">Menu</button><span id="who"></span><button class="btn ghost" id="logout">Sign out</button></header>
+<main><h1 class="noprint">Fee types</h1><form id="f" class="row"><div><label for="n">Fee type name</label><input id="n" required maxlength="60"></div><button class="btn">Add fee type</button></form><div id="list" class="tw"></div></main></div></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script><script src="js/config.js"></script><script src="js/supabase.js"></script><script src="js/utils.js"></script><script src="js/permissions.js"></script><script src="js/auth.js"></script><script src="js/students.js"></script><script src="js/exams.js"></script><script src="js/fees.js"></script>
+<script>
+(async()=>{const p=await Auth.require(ADMIN_ROLES);Auth.shell(p);const $=id=>document.getElementById(id);
+
+const list=$("list");
+async function load(){try{const {data,error}=await db.from("fee_types").select("*").order("name");if(error)throw error;
+list.innerHTML="<table><thead><tr><th>Name</th><th>Status</th><th></th></tr></thead><tbody>"+data.map(x=>`<tr><td><input value="${U.esc(x.name)}" maxlength="60" data-n="${x.id}" aria-label="Fee type name"></td><td><span class="badge ${x.is_active?"on":""}">${x.is_active?"Active":"Inactive"}</span></td><td><button class="btn sm" data-s="${x.id}">Save name</button> <button class="btn sm ghost" data-t="${x.id}" data-on="${x.is_active}">${x.is_active?"Deactivate":"Activate"}</button></td></tr>`).join("")+"</tbody></table>"}catch(e){U.friendly(e);U.state(list,"error","Unable to load fee types. Please try again.")}}
+list.addEventListener("click",async ev=>{const b=ev.target.closest("button");if(!b)return;let r;
+if(b.dataset.s){const v=list.querySelector(`[data-n="${b.dataset.s}"]`).value.trim();if(!v)return U.toast("Name is required.","err");r=await db.from("fee_types").update({name:v}).eq("id",b.dataset.s)}
+else if(b.dataset.t)r=await db.from("fee_types").update({is_active:b.dataset.on!=="true"}).eq("id",b.dataset.t);else return;
+if(r.error){U.friendly(r.error);return U.toast(r.error.code==="23505"?"This name already exists.":"Could not save.","err")}U.audit("Fee type changed","fee_types",b.dataset.s||b.dataset.t);U.toast("Saved.");load()});
+$("f").addEventListener("submit",async ev=>{ev.preventDefault();const {data,error}=await db.from("fee_types").insert({name:$("n").value.trim()}).select("id").single();
+if(error){U.friendly(error);return U.toast(error.code==="23505"?"This fee type already exists.":"Could not add.","err")}U.audit("Fee type created","fee_types",data.id);ev.target.reset();load()});load();
+})();
+</script></body></html>

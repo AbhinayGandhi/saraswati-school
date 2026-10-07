@@ -1,0 +1,43 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bitter:wght@600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="css/style.css"><link rel="stylesheet" href="css/print.css" media="print"><title>Attendance | Saraswati English Medium School</title></head>
+<body><div class="app"><aside id="sidebar" aria-label="Sidebar"></aside>
+<div><header class="top"><button class="btn ghost" id="menu" aria-expanded="false" aria-controls="sidebar">Menu</button><span id="who"></span><button class="btn ghost" id="logout">Sign out</button></header>
+<main><h1>Attendance</h1><div class="row"><div><label for="y">Academic year</label><select id="y"></select></div><div><label for="dv">Class and division</label><select id="dv"></select></div><div><label for="dt">Date</label><input id="dt" type="date"></div></div><div id="note" role="status"></div><div class="row"><button class="btn ghost" id="ap">Mark all present</button><button class="btn ghost" id="aa">Mark all absent</button><button class="btn" id="sv">Save attendance</button></div><div id="list" class="tw"></div>
+<h2 style="margin-top:2rem">Monthly report</h2><div class="row"><div><label for="mo">Month</label><input id="mo" type="month"></div><button class="btn ghost" id="rp">Show report</button><button class="btn ghost" id="rx">Export CSV</button><button class="btn ghost" onclick="window.print()">Print</button></div><div id="rep" class="tw"></div></main></div></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script><script src="js/config.js"></script><script src="js/supabase.js"></script><script src="js/utils.js"></script><script src="js/permissions.js"></script><script src="js/auth.js"></script><script src="js/students.js"></script>
+<script>
+(async()=>{const p=await Auth.require([...ADMIN_ROLES,"teacher","class_teacher"]);Auth.shell(p);const $=id=>document.getElementById(id);
+
+const ST=[["present","Present"],["absent","Absent"],["late","Late"],["half_day","Half day"],["leave","Leave"]],list=$("list");let en=[],classes=[],repRows=[];
+$("dt").value=new Date().toISOString().slice(0,10);$("mo").value=$("dt").value.slice(0,7);
+try{const [y,c]=await Promise.all([db.from("academic_years").select("id,name,is_active").order("start_date",{ascending:false}),db.from("classes").select("id,name").order("sort_order")]);if(y.error||c.error)throw y.error||c.error;classes=c.data;
+$("y").innerHTML=y.data.map(a=>`<option value="${a.id}"${a.is_active?" selected":""}>${U.esc(a.name)}</option>`).join("");if(!y.data.length)return U.state(list,"empty","Ask the admin to create an academic year first.")}catch(e){U.friendly(e);return U.state(list,"error","Unable to load. Please try again.")}
+async function loadDivs(){try{let mine=null;if(!Perm.isAdmin(p.role)){const {data}=await db.from("class_subjects").select("division_id").eq("teacher_id",p.id);mine=new Set((data||[]).map(x=>x.division_id))}
+const {data,error}=await db.from("divisions").select("id,name,class_id,class_teacher_id").eq("academic_year_id",$("y").value);if(error)throw error;
+const d=data.filter(x=>!mine||x.class_teacher_id===p.id||mine.has(x.id)).map(x=>({...x,label:(classes.find(c=>c.id===x.class_id)?.name||"")+" - "+x.name,o:classes.findIndex(c=>c.id===x.class_id)})).sort((a,b)=>a.o-b.o||a.name.localeCompare(b.name));
+$("dv").innerHTML=d.map(x=>`<option value="${x.id}">${U.esc(x.label)}</option>`).join("");if(!d.length)U.state(list,"empty","No divisions available for you in this year.")}catch(e){U.friendly(e);U.state(list,"error","Unable to load divisions. Please try again.")}}
+async function sheet(){const dv=$("dv").value,dt=$("dt").value;en=[];$("note").innerHTML="";if(!dv||!dt)return;list.innerHTML='<div class="state">Loading...</div>';
+try{const {data:e,error}=await db.from("student_enrollments").select("id,roll_no,students!inner(first_name,last_name,admission_no)").eq("division_id",dv).eq("academic_year_id",$("y").value).eq("status","active").order("roll_no",{nullsFirst:false});if(error)throw error;en=e;
+if(!e.length)return U.state(list,"empty","No active students in this division.");
+const [a,h]=await Promise.all([db.from("attendance").select("enrollment_id,status").eq("att_date",dt).in("enrollment_id",e.map(x=>x.id)),db.from("school_calendar").select("title").eq("day",dt).in("kind",["holiday","vacation"])]);if(a.error||h.error)throw a.error||h.error;
+const m=Object.fromEntries(a.data.map(x=>[x.enrollment_id,x.status]));const hol=h.data[0];
+if(hol)$("note").innerHTML=`<div class="state error">${U.esc(hol.title)}: this day is a holiday. Attendance cannot be marked.</div>`;else if(new Date(dt+"T00:00").getDay()===0)$("note").innerHTML='<div class="state">This date is a Sunday.</div>';
+$("sv").disabled=!!hol;
+list.innerHTML="<table><thead><tr><th>Roll</th><th>Student</th><th>Status</th></tr></thead><tbody>"+e.map(x=>`<tr><td>${U.esc(x.roll_no??"")}</td><td>${U.esc(x.students.first_name+" "+x.students.last_name)}</td><td><select data-e="${x.id}" aria-label="Status for ${U.esc(x.students.first_name)}">${ST.map(s=>`<option value="${s[0]}"${(m[x.id]||"present")===s[0]?" selected":""}>${s[1]}</option>`).join("")}</select></td></tr>`).join("")+"</tbody></table>"}
+catch(e){U.friendly(e);U.state(list,"error","Unable to load attendance. Please try again.")}}
+const setAll=v=>list.querySelectorAll("select[data-e]").forEach(s=>s.value=v);$("ap").onclick=()=>setAll("present");$("aa").onclick=()=>{if(en.length)setAll("absent")};
+$("sv").onclick=async()=>{const rows=[...list.querySelectorAll("select[data-e]")].map(s=>({enrollment_id:s.dataset.e,att_date:$("dt").value,status:s.value}));if(!rows.length)return;
+$("sv").disabled=true;const {error}=await db.from("attendance").upsert(rows,{onConflict:"enrollment_id,att_date"});$("sv").disabled=false;
+if(error){U.friendly(error);return U.toast(String(error.message).includes("holiday")?"This date is a holiday.":"Could not save attendance. Please try again.","err")}
+U.audit("Attendance saved ("+rows.length+" students)","attendance",$("dv").value);U.toast("Attendance saved.")};
+$("y").onchange=async()=>{await loadDivs();sheet()};$("dv").onchange=sheet;$("dt").onchange=sheet;
+$("rp").onclick=async()=>{const mo=$("mo").value;if(!mo||!en.length&&!$("dv").value)return;const [yy,mm]=mo.split("-"),last=new Date(yy,mm,0).getDate();
+try{const {data:e,error:e1}=await db.from("student_enrollments").select("id,roll_no,students!inner(first_name,last_name)").eq("division_id",$("dv").value).eq("academic_year_id",$("y").value).order("roll_no",{nullsFirst:false});if(e1)throw e1;
+const {data:a,error}=await db.from("attendance").select("enrollment_id,status").in("enrollment_id",e.map(x=>x.id)).gte("att_date",mo+"-01").lte("att_date",mo+"-"+String(last).padStart(2,"0"));if(error)throw error;
+if(!a.length)return U.state($("rep"),"empty","No attendance marked for this month.");
+repRows=e.map(x=>{const r=a.filter(i=>i.enrollment_id===x.id),c=s=>r.filter(i=>i.status===s).length,att=c("present")+c("late")+c("half_day")*0.5;return [x.roll_no??"",x.students.first_name+" "+x.students.last_name,c("present"),c("absent"),c("late"),c("half_day"),c("leave"),r.length?Math.round(att/r.length*100)+"%":"-"]});
+$("rep").innerHTML="<table><thead><tr><th>Roll</th><th>Student</th><th>Present</th><th>Absent</th><th>Late</th><th>Half day</th><th>Leave</th><th>Attendance %</th></tr></thead><tbody>"+repRows.map(r=>"<tr>"+r.map(v=>`<td>${U.esc(v)}</td>`).join("")+"</tr>").join("")+"</tbody></table>"}
+catch(e){U.friendly(e);U.state($("rep"),"error","Unable to load the report. Please try again.")}};
+$("rx").onclick=()=>repRows.length?Students.download("attendance-"+$("mo").value+".csv",Students.csv([["roll","student","present","absent","late","half_day","leave","percent"],...repRows])):U.toast("Show the report first.","err");
+await loadDivs();sheet();
+})();
+</script></body></html>

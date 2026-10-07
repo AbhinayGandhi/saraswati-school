@@ -1,0 +1,10 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bitter:wght@600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="css/style.css"><link rel="stylesheet" href="css/print.css" media="print"><title>Staff | Saraswati English Medium School</title></head>
+<body><div class="app"><aside id="sidebar" aria-label="Sidebar"></aside>
+<div><header class="top"><button class="btn ghost" id="menu" aria-expanded="false" aria-controls="sidebar">Menu</button><span id="who"></span><button class="btn ghost" id="logout">Sign out</button></header>
+<main><h1>Staff</h1><form id="f" class="row"></form><label for="q">Search</label><input id="q" type="search" placeholder="Name, type, ID"><div id="list" class="tw"><div class="state">Loading...</div></div></main></div></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script><script src="js/config.js"></script><script src="js/supabase.js"></script><script src="js/utils.js"></script><script src="js/permissions.js"></script><script src="js/auth.js"></script><script src="js/people.js"></script>
+<script>
+(async()=>{const p=await Auth.require(ADMIN_ROLES);Auth.shell(p);
+People.init({table:"staff",label:"Staff",cols:[["employee_id","Employee ID"],["name","Name"],["staff_type","Type"],["mobile","Mobile"]],fields:[{id:"employee_id",label:"Employee ID",required:1},{id:"name",label:"Name",required:1},{id:"staff_type",label:"Staff type",options:["Teaching Staff","Non-Teaching Staff","Administrative Staff","Support Staff"]},{id:"mobile",label:"Mobile",type:"tel"},{id:"email",label:"Email",type:"email"},{id:"joining_date",label:"Joining date",type:"date"}]});
+})();
+</script></body></html>

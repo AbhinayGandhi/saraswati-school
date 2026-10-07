@@ -1,0 +1,25 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bitter:wght@600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="css/style.css"><link rel="stylesheet" href="css/print.css" media="print"><title>Student profile | Saraswati English Medium School</title></head>
+<body><div class="app"><aside id="sidebar" aria-label="Sidebar"></aside>
+<div><header class="top"><button class="btn ghost" id="menu" aria-expanded="false" aria-controls="sidebar">Menu</button><span id="who"></span><button class="btn ghost" id="logout">Sign out</button></header>
+<main><h1>Student profile</h1><div id="out"><div class="state">Loading...</div></div></main></div></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script><script src="js/config.js"></script><script src="js/supabase.js"></script><script src="js/utils.js"></script><script src="js/permissions.js"></script><script src="js/auth.js"></script><script src="js/students.js"></script>
+<script>
+(async()=>{const p=await Auth.require([...ADMIN_ROLES,"teacher","class_teacher","reception"]);Auth.shell(p);const $=id=>document.getElementById(id);
+
+const out=$("out"),id=new URLSearchParams(location.search).get("id"),canEdit=["super_admin","school_admin","reception"].includes(p.role);
+async function load(){if(!id)return U.state(out,"error","No student selected.");
+try{const {data:s,error}=await db.from("students").select("*,student_guardians(*),student_enrollments(roll_no,status,academic_years(name),divisions(name,classes(name)))").eq("id",id).single();if(error)throw error;
+const F=[["first_name","First name"],["middle_name","Middle name"],["last_name","Last name"],["gr_no","GR number"],["dob","Date of birth","date"],["blood_group","Blood group"],["house","House"],["student_type","Student type"],["previous_school","Previous school"]];
+out.innerHTML=`<p><a href="students.html">Back to students</a> <button class="btn ghost sm" onclick="window.print()">Print</button></p><div class="panel"><h2>${U.esc(s.first_name+" "+s.last_name)}</h2><p>Admission no ${U.esc(s.admission_no)} | ${U.esc(s.gender)} | <span class="badge ${s.status==="active"?"on":""}">${U.esc(s.status)}</span></p></div>
+<div class="panel"><h3>Parents and guardians</h3>${s.student_guardians.length?s.student_guardians.map(g=>`<p><b>${U.esc(g.relation)}</b>: ${U.esc(g.name)} ${U.esc(g.mobile||"")} ${U.esc(g.email||"")}<br>${U.esc(g.address||"")}</p>`).join(""):"<p>No parent details recorded.</p>"}</div>
+<div class="panel"><h3>Class history</h3><table><thead><tr><th>Year</th><th>Class</th><th>Roll</th><th>Status</th></tr></thead><tbody>${s.student_enrollments.map(e=>`<tr><td>${U.esc(e.academic_years?.name)}</td><td>${U.esc((e.divisions?.classes?.name||"")+" - "+(e.divisions?.name||""))}</td><td>${U.esc(e.roll_no??"")}</td><td>${U.esc(e.status)}</td></tr>`).join("")}</tbody></table></div>`+
+(canEdit?`<form id="ef" class="panel row"><h3 style="grid-column:1/-1">Edit details</h3>${F.map(f=>`<div><label for="${f[0]}">${f[1]}</label><input id="${f[0]}" type="${f[2]||"text"}" value="${U.esc(s[f[0]]||"")}"></div>`).join("")}<div><label for="status">Status</label><select id="status">${["active","inactive","transferred","alumni"].map(o=>`<option${o===s.status?" selected":""}>${o}</option>`).join("")}</select></div><button class="btn">Save changes</button></form>`:"");
+if(canEdit)$("ef").addEventListener("submit",async ev=>{ev.preventDefault();const row={};F.forEach(f=>{row[f[0]]=$(f[0]).value.trim()||null});row.status=$("status").value;
+if(!row.first_name||!row.last_name||!row.dob)return U.toast("Name and date of birth are required.","err");
+if(row.status!==s.status&&row.status!=="active"&&!await U.confirm("Change this student status to "+row.status+"?"))return;
+const {error}=await db.from("students").update(row).eq("id",id);if(error){U.friendly(error);return U.toast(error.code==="23505"?"This GR number is already used.":"Could not save the changes.","err")}
+U.audit("Student updated","students",id);U.toast("Saved.");load()})}
+catch(e){U.friendly(e);U.state(out,"error","Unable to load this student. Please try again.")}}
+load();
+})();
+</script></body></html>

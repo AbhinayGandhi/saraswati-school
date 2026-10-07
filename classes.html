@@ -1,0 +1,30 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bitter:wght@600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="css/style.css"><link rel="stylesheet" href="css/print.css" media="print"><title>Classes and divisions | Saraswati English Medium School</title></head>
+<body><div class="app"><aside id="sidebar" aria-label="Sidebar"></aside>
+<div><header class="top"><button class="btn ghost" id="menu" aria-expanded="false" aria-controls="sidebar">Menu</button><span id="who"></span><button class="btn ghost" id="logout">Sign out</button></header>
+<main><h1>Classes and divisions</h1><div class="row"><div><label for="y">Academic year</label><select id="y"></select></div></div><form id="f" class="row"><div><label for="k">Class</label><select id="k" required></select></div><div><label for="n">Division (e.g. A)</label><input id="n" required maxlength="5"></div><div><label for="t">Class teacher</label><select id="t"><option value="">Not assigned</option></select></div><button class="btn">Add division</button></form><div id="list" class="tw"><div class="state">Loading...</div></div></main></div></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script><script src="js/config.js"></script><script src="js/supabase.js"></script><script src="js/utils.js"></script><script src="js/permissions.js"></script><script src="js/auth.js"></script>
+<script>
+(async()=>{const p=await Auth.require(ADMIN_ROLES);Auth.shell(p);const list=document.getElementById("list");
+
+let classes=[];
+try{const [y,c,t]=await Promise.all([db.from("academic_years").select("id,name,is_active").order("start_date",{ascending:false}),db.from("classes").select("id,name").order("sort_order"),db.from("profiles").select("id,full_name").in("role",["teacher","class_teacher"]).eq("is_active",true).order("full_name")]);
+if(y.error||c.error||t.error)throw y.error||c.error||t.error;classes=c.data;
+window.$y=document.getElementById("y");
+document.getElementById("y").innerHTML=y.data.map(a=>`<option value="${a.id}"${a.is_active?" selected":""}>${U.esc(a.name)}</option>`).join("");
+document.getElementById("k").innerHTML=classes.map(a=>`<option value="${a.id}">${U.esc(a.name)}</option>`).join("");
+document.getElementById("t").innerHTML+=t.data.map(a=>`<option value="${a.id}">${U.esc(a.full_name)}</option>`).join("");
+if(!y.data.length){U.state(list,"empty","Create an academic year first.");return}
+}catch(e){U.friendly(e);U.state(list,"error","Unable to load. Please try again.");return}
+async function load(){try{const {data,error}=await db.from("divisions").select("id,name,class_id,class_teacher_id,profiles:class_teacher_id(full_name)").eq("academic_year_id",document.getElementById("y").value);if(error)throw error;
+list.innerHTML="<table><thead><tr><th>Class</th><th>Divisions</th></tr></thead><tbody>"+classes.map(c=>{const d=data.filter(x=>x.class_id===c.id).sort((a,b)=>a.name.localeCompare(b.name));
+return `<tr><td>${U.esc(c.name)}</td><td>${d.length?d.map(x=>`${U.esc(x.name)}${x.profiles?" ("+U.esc(x.profiles.full_name)+")":""}`).join(", "):"<span class=\"badge\">None</span>"}</td></tr>`}).join("")+"</tbody></table>";
+}catch(e){U.friendly(e);U.state(list,"error","Unable to load divisions. Please try again.")}}
+document.getElementById("y").addEventListener("change",load);
+document.getElementById("f").addEventListener("submit",async ev=>{ev.preventDefault();
+const row={academic_year_id:document.getElementById("y").value,class_id:document.getElementById("k").value,name:document.getElementById("n").value.trim().toUpperCase(),class_teacher_id:document.getElementById("t").value||null};
+const {data,error}=await db.from("divisions").insert(row).select("id").single();
+if(error){U.friendly(error);return U.toast(error.code==="23505"?"This division already exists for the class.":"Could not add the division.","err")}
+U.audit("Division created","divisions",data.id);document.getElementById("n").value="";U.toast("Division added.");load()});
+load();
+})();
+</script></body></html>
