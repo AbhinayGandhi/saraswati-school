@@ -11,8 +11,8 @@ try{rules=await Ex.rules();const {data,error}=await db.from("classes").select("i
 async function loadExams(){try{exams=await Ex.examSelect($("ex"),$("y").value);const {data,error}=await db.from("divisions").select("id,name,class_id").eq("academic_year_id",$("y").value);if(error)throw error;
 const d=data.map(x=>({...x,l:(cls.find(c=>c.id===x.class_id)?.name||"")+" - "+x.name,o:cls.findIndex(c=>c.id===x.class_id)})).sort((a,b)=>a.o-b.o||a.name.localeCompare(b.name));$("dv").innerHTML=d.map(x=>`<option value="${x.id}">${U.esc(x.l)}</option>`).join("");show()}catch(e){U.friendly(e);U.state(list,"error","Unable to load. Please try again.")}}
 async function show(){out=[];const ex=exams.find(x=>x.id===$("ex").value),dv=$("dv").value;if(!ex||!dv)return U.state(list,"empty","Choose an exam and division.");list.innerHTML='<div class="state">Loading...</div>';
-try{const {data:subs,error}=await db.from("exam_subjects").select("id,max_marks,passing_marks,subjects(name)").eq("exam_id",ex.id).eq("division_id",dv);if(error)throw error;if(!subs.length)return U.state(list,"empty","No subjects added for this division in this exam.");
-subs.sort((a,b)=>a.subjects.name.localeCompare(b.subjects.name));
+try{const {data:subs,error}=await db.from("exam_subjects").select("id,max_marks,passing_marks,subjects(name,sort_order)").eq("exam_id",ex.id).eq("division_id",dv);if(error)throw error;if(!subs.length)return U.state(list,"empty","No subjects added for this division in this exam.");
+subs.sort((a,b)=>(a.subjects.sort_order-b.subjects.sort_order)||a.subjects.name.localeCompare(b.subjects.name));
 const {data:en,error:e2}=await db.from("student_enrollments").select("id,roll_no,students!inner(first_name,last_name)").eq("division_id",dv).eq("academic_year_id",$("y").value).order("roll_no",{nullsFirst:false});if(e2)throw e2;
 const {data:m,error:e3}=await db.from("marks").select("exam_subject_id,enrollment_id,marks,absent").in("exam_subject_id",subs.map(s=>s.id));if(e3)throw e3;
 const mk=Object.fromEntries(m.map(x=>[x.exam_subject_id+"|"+x.enrollment_id,x]));

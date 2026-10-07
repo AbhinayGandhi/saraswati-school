@@ -18,6 +18,7 @@ const NAV = [
   { href: "fee-types.html", label: "Fee types", roles: ADMIN_ROLES },
   { href: "fee-structure.html", label: "Fee structure", roles: [...ADMIN_ROLES, "accountant"] },
   { href: "fee-reports.html", label: "Fee reports", roles: [...ADMIN_ROLES, "accountant"] },
+  { href: "users.html", label: "Users and roles", roles: ["super_admin", "school_admin"] },
   { href: "audit-logs.html", label: "Audit logs", roles: ["super_admin", "school_admin"] }
 ];
 const Perm = {

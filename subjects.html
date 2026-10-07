@@ -1,22 +1,22 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bitter:wght@600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="css/style.css"><link rel="stylesheet" href="css/print.css" media="print"><title>Subjects | Saraswati English Medium School</title></head>
-<body><div class="app"><aside id="sidebar" aria-label="Sidebar"></aside>
-<div><header class="top"><button class="btn ghost" id="menu" aria-expanded="false" aria-controls="sidebar">Menu</button><span id="who"></span><button class="btn ghost" id="logout">Sign out</button></header>
-<main><h1>Subjects</h1><form id="f" class="row"><div><label for="n">Subject name</label><input id="n" required maxlength="60"></div><div><label for="c">Code (optional)</label><input id="c" maxlength="10"></div><button class="btn">Add subject</button></form><div id="list" class="tw"><div class="state">Loading...</div></div></main></div></div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script><script src="js/config.js"></script><script src="js/supabase.js"></script><script src="js/utils.js"></script><script src="js/permissions.js"></script><script src="js/auth.js"></script>
+<body><div class="app"><aside id="sidebar" class="noprint" aria-label="Sidebar"></aside>
+<div><header class="top noprint"><button class="btn ghost" id="menu" aria-expanded="false" aria-controls="sidebar">Menu</button><span id="who"></span><button class="btn ghost" id="logout">Sign out</button></header>
+<main><h1 class="noprint">Subjects</h1><form id="f" class="row"><div><label for="n">Subject name</label><input id="n" required maxlength="60"></div><div><label for="c">Code (optional)</label><input id="c" maxlength="10"></div><div><label for="o">Order number</label><input id="o" type="number" min="1" placeholder="1, 2, 3..."></div><button class="btn">Add subject</button></form><p>The order number decides the order of subjects on marks sheets, results and report cards. You can change any subject at any time.</p><div id="list" class="tw"></div></main></div></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script><script src="js/config.js"></script><script src="js/supabase.js"></script><script src="js/utils.js"></script><script src="js/permissions.js"></script><script src="js/auth.js"></script><script src="js/students.js"></script><script src="js/exams.js"></script><script src="js/fees.js"></script>
 <script>
-(async()=>{const p=await Auth.require(ADMIN_ROLES);Auth.shell(p);const list=document.getElementById("list");
+(async()=>{const p=await Auth.require(ADMIN_ROLES);Auth.shell(p);const $=id=>document.getElementById(id);
 
-async function load(){try{const {data,error}=await db.from("subjects").select("*").order("name");if(error)throw error;
+const list=$("list");
+async function load(){try{const {data,error}=await db.from("subjects").select("*").order("sort_order").order("name");if(error)throw error;
 if(!data.length)return U.state(list,"empty","No subjects yet. Add the first one above.");
-list.innerHTML="<table><thead><tr><th>Subject</th><th>Code</th><th>Status</th><th></th></tr></thead><tbody>"+data.map(x=>`<tr><td>${U.esc(x.name)}</td><td>${U.esc(x.code||"")}</td><td><span class="badge ${x.is_active?"on":""}">${x.is_active?"Active":"Inactive"}</span></td><td><button class="btn sm ghost" data-id="${x.id}" data-on="${x.is_active}">${x.is_active?"Deactivate":"Activate"}</button></td></tr>`).join("")+"</tbody></table>";
-}catch(e){U.friendly(e);U.state(list,"error","Unable to load subjects. Please try again.")}}
-list.addEventListener("click",async ev=>{const b=ev.target.closest("button[data-id]");if(!b)return;
-const {error}=await db.from("subjects").update({is_active:b.dataset.on!=="true"}).eq("id",b.dataset.id);
-if(error){U.friendly(error);return U.toast("Could not save the change.","err")}U.audit("Subject status changed","subjects",b.dataset.id);load()});
-document.getElementById("f").addEventListener("submit",async ev=>{ev.preventDefault();
-const {data,error}=await db.from("subjects").insert({name:n.value.trim(),code:c.value.trim()||null}).select("id").single();
+list.innerHTML="<table><thead><tr><th>Order</th><th>Subject</th><th>Code</th><th>Status</th><th></th></tr></thead><tbody>"+data.map(x=>`<tr data-id="${x.id}"><td><input type="number" min="1" class="so" value="${x.sort_order}" aria-label="Order"></td><td><input class="sn" value="${U.esc(x.name)}" maxlength="60" aria-label="Subject name"></td><td><input class="sc" value="${U.esc(x.code||"")}" maxlength="10" aria-label="Code"></td><td><span class="badge ${x.is_active?"on":""}">${x.is_active?"Active":"Inactive"}</span></td><td><button class="btn sm" data-s="1">Save</button> <button class="btn sm ghost" data-t="${x.is_active}">${x.is_active?"Deactivate":"Activate"}</button></td></tr>`).join("")+"</tbody></table>"}catch(e){U.friendly(e);U.state(list,"error","Unable to load subjects. Please try again.")}}
+list.addEventListener("click",async ev=>{const b=ev.target.closest("button");if(!b)return;const tr=b.closest("tr"),id=tr.dataset.id;let patch;
+if(b.dataset.s){const n=tr.querySelector(".sn").value.trim();if(!n)return U.toast("Subject name is required.","err");patch={name:n,code:tr.querySelector(".sc").value.trim()||null,sort_order:Number(tr.querySelector(".so").value)||0}}
+else if(b.dataset.t)patch={is_active:b.dataset.t!=="true"};else return;
+const {error}=await db.from("subjects").update(patch).eq("id",id);if(error){U.friendly(error);return U.toast(error.code==="23505"?"This subject name or code already exists.":"Could not save the change.","err")}
+U.audit("Subject updated","subjects",id);U.toast("Saved.");load()});
+$("f").addEventListener("submit",async ev=>{ev.preventDefault();const {data,error}=await db.from("subjects").insert({name:$("n").value.trim(),code:$("c").value.trim()||null,sort_order:Number($("o").value)||0}).select("id").single();
 if(error){U.friendly(error);return U.toast(error.code==="23505"?"This subject name or code already exists.":"Could not add the subject.","err")}
-U.audit("Subject created","subjects",data.id);ev.target.reset();U.toast("Subject added.");load()});
-load();
+U.audit("Subject created","subjects",data.id);ev.target.reset();U.toast("Subject added.");load()});load();
 })();
 </script></body></html>

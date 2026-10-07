@@ -10,9 +10,9 @@ const list=$("list");let exams=[],ess=[],cur=null,en=[],rules=[];
 try{rules=await Ex.rules();await Ex.yearSelect($("y"))}catch(e){U.friendly(e);return U.state(list,"error","Unable to load. Please try again.")}
 async function loadExams(){try{exams=await Ex.examSelect($("ex"),$("y").value);await loadEs()}catch(e){U.friendly(e);U.state(list,"error","Unable to load exams. Please try again.")}}
 async function loadEs(){$("bar").hidden=true;list.innerHTML="";if(!$("ex").value)return U.state(list,"empty","No exams in this year.");
-try{let q=db.from("exam_subjects").select("id,division_id,subject_id,max_marks,passing_marks,status,divisions(name,classes(name,sort_order)),subjects(name)").eq("exam_id",$("ex").value);const {data,error}=await q;if(error)throw error;let d=data;
+try{let q=db.from("exam_subjects").select("id,division_id,subject_id,max_marks,passing_marks,status,divisions(name,classes(name,sort_order)),subjects(name,sort_order)").eq("exam_id",$("ex").value);const {data,error}=await q;if(error)throw error;let d=data;
 if(!Perm.isAdmin(p.role)){const {data:m}=await db.from("class_subjects").select("division_id,subject_id").eq("teacher_id",p.id);const k=new Set((m||[]).map(x=>x.division_id+"|"+x.subject_id));d=d.filter(x=>k.has(x.division_id+"|"+x.subject_id))}
-d.sort((a,b)=>(a.divisions.classes.sort_order-b.divisions.classes.sort_order)||a.divisions.name.localeCompare(b.divisions.name)||a.subjects.name.localeCompare(b.subjects.name));ess=d;
+d.sort((a,b)=>(a.divisions.classes.sort_order-b.divisions.classes.sort_order)||a.divisions.name.localeCompare(b.divisions.name)||(a.subjects.sort_order-b.subjects.sort_order)||a.subjects.name.localeCompare(b.subjects.name));ess=d;
 $("es").innerHTML=d.map(x=>`<option value="${x.id}">${U.esc(x.divisions.classes.name+" - "+x.divisions.name+" | "+x.subjects.name)}</option>`).join("");
 if(!d.length)return U.state(list,"empty","No subjects are assigned to you for this exam.");sheet()}catch(e){U.friendly(e);U.state(list,"error","Unable to load. Please try again.")}}
 async function sheet(){cur=ess.find(x=>x.id===$("es").value);if(!cur)return;const ex=exams.find(x=>x.id===$("ex").value);list.innerHTML='<div class="state">Loading...</div>';

@@ -7,7 +7,7 @@
 (async()=>{const p=await Auth.require(ADMIN_ROLES);Auth.shell(p);const $=id=>document.getElementById(id);
 
 const list=$("list");let divs=[],cls=[];
-try{const [c,s,t]=await Promise.all([db.from("classes").select("id,name").order("sort_order"),db.from("subjects").select("id,name").eq("is_active",true).order("name"),db.from("profiles").select("id,full_name").in("role",["teacher","class_teacher"]).eq("is_active",true).order("full_name")]);
+try{const [c,s,t]=await Promise.all([db.from("classes").select("id,name").order("sort_order"),db.from("subjects").select("id,name").eq("is_active",true).order("sort_order").order("name"),db.from("profiles").select("id,full_name").in("role",["teacher","class_teacher"]).eq("is_active",true).order("full_name")]);
 if(c.error||s.error||t.error)throw c.error||s.error||t.error;cls=c.data;await Ex.yearSelect($("y"));
 $("sb").innerHTML=s.data.map(a=>`<option value="${a.id}">${U.esc(a.name)}</option>`).join("");$("tc").innerHTML=t.data.map(a=>`<option value="${a.id}">${U.esc(a.full_name)}</option>`).join("");}catch(e){U.friendly(e);return U.state(list,"error","Unable to load. Please try again.")}
 async function load(){try{const {data:d,error}=await db.from("divisions").select("id,name,class_id").eq("academic_year_id",$("y").value);if(error)throw error;

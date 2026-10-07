@@ -10,7 +10,7 @@
 (async()=>{const p=await Auth.require(ADMIN_ROLES);Auth.shell(p);const $=id=>document.getElementById(id);
 
 const list=$("list");let exams=[],cur=null,cls=[],subs=[];
-try{const [c,s]=await Promise.all([db.from("classes").select("id,name").order("sort_order"),db.from("subjects").select("id,name").eq("is_active",true).order("name")]);if(c.error||s.error)throw c.error||s.error;cls=c.data;
+try{const [c,s]=await Promise.all([db.from("classes").select("id,name").order("sort_order"),db.from("subjects").select("id,name").eq("is_active",true).order("sort_order").order("name")]);if(c.error||s.error)throw c.error||s.error;cls=c.data;
 $("kc").innerHTML=cls.map(a=>`<option value="${a.id}">${U.esc(a.name)}</option>`).join("");$("ks").innerHTML=s.data.map(a=>`<option value="${a.id}">${U.esc(a.name)}</option>`).join("");await Ex.yearSelect($("y"))}catch(e){U.friendly(e);return U.state(list,"error","Unable to load. Please try again.")}
 async function load(){$("mg").hidden=true;try{const {data,error}=await db.from("exams").select("*").eq("academic_year_id",$("y").value).order("created_at");if(error)throw error;exams=data;
 if(!data.length)return U.state(list,"empty","No exams yet. Create the first one above.");

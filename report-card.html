@@ -9,7 +9,7 @@
 const out=$("out"),qs=new URLSearchParams(location.search),exId=qs.get("exam"),eid=qs.get("e");
 try{if(!exId||!eid)throw new Error("missing");const rules=await Ex.rules();
 const [ex,en]=await Promise.all([db.from("exams").select("id,name,status,academic_years(name)").eq("id",exId).single(),db.from("student_enrollments").select("id,roll_no,division_id,student_id,students(*),divisions(name,classes(name))").eq("id",eid).single()]);if(ex.error||en.error)throw ex.error||en.error;
-const s=en.data.students,{data:subs,error:e1}=await db.from("exam_subjects").select("id,max_marks,passing_marks,subjects(name)").eq("exam_id",exId).eq("division_id",en.data.division_id);if(e1)throw e1;subs.sort((a,b)=>a.subjects.name.localeCompare(b.subjects.name));
+const s=en.data.students,{data:subs,error:e1}=await db.from("exam_subjects").select("id,max_marks,passing_marks,subjects(name,sort_order)").eq("exam_id",exId).eq("division_id",en.data.division_id);if(e1)throw e1;subs.sort((a,b)=>(a.subjects.sort_order-b.subjects.sort_order)||a.subjects.name.localeCompare(b.subjects.name));
 const [m,a,rr]=await Promise.all([db.from("marks").select("exam_subject_id,enrollment_id,marks,absent").eq("enrollment_id",eid).in("exam_subject_id",subs.map(x=>x.id)),db.from("attendance").select("status").eq("enrollment_id",eid),db.from("report_remarks").select("*").eq("exam_id",exId).eq("enrollment_id",eid).maybeSingle()]);
 if(m.error||a.error||rr.error)throw m.error||a.error||rr.error;
 const mk=Object.fromEntries(m.data.map(x=>[x.exam_subject_id+"|"+x.enrollment_id,x])),r=Ex.calc(subs,mk,eid,rules),c=k=>a.data.filter(x=>x.status===k).length,days=a.data.length,att=c("present")+c("late")+c("half_day")*0.5,rem=rr.data||{};

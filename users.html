@@ -1,0 +1,20 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bitter:wght@600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="css/style.css"><link rel="stylesheet" href="css/print.css" media="print"><title>Users and roles | Saraswati English Medium School</title></head>
+<body><div class="app"><aside id="sidebar" class="noprint" aria-label="Sidebar"></aside>
+<div><header class="top noprint"><button class="btn ghost" id="menu" aria-expanded="false" aria-controls="sidebar">Menu</button><span id="who"></span><button class="btn ghost" id="logout">Sign out</button></header>
+<main><h1 class="noprint">Users and roles</h1><p>Create the login in Supabase (Authentication, Users). Then set the role here and tick Active. New users start as inactive Parent accounts.</p><label for="q">Search</label><input id="q" type="search" placeholder="Name"><div id="list" class="tw"></div></main></div></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script><script src="js/config.js"></script><script src="js/supabase.js"></script><script src="js/utils.js"></script><script src="js/permissions.js"></script><script src="js/auth.js"></script><script src="js/students.js"></script><script src="js/exams.js"></script><script src="js/fees.js"></script>
+<script>
+(async()=>{const p=await Auth.require(["super_admin","school_admin"]);Auth.shell(p);const $=id=>document.getElementById(id);
+
+const ROLES=["super_admin","school_admin","principal","teacher","class_teacher","accountant","librarian","reception","parent","student"],list=$("list");let rows=[];
+function draw(){const t=$("q").value.trim().toLowerCase(),v=rows.filter(r=>!t||(r.full_name||"").toLowerCase().includes(t));if(!v.length)return U.state(list,"empty","No users found.");
+list.innerHTML="<table><thead><tr><th>Name</th><th>Role</th><th>Active</th><th></th></tr></thead><tbody>"+v.map(r=>`<tr data-id="${r.id}"><td><input class="un" value="${U.esc(r.full_name||"")}" maxlength="80" aria-label="Name"></td><td><select class="ur" aria-label="Role">${ROLES.map(o=>`<option value="${o}"${o===r.role?" selected":""}>${o.replace("_"," ")}</option>`).join("")}</select></td><td><input type="checkbox" class="ua" ${r.is_active?"checked":""} aria-label="Active"></td><td><button class="btn sm">Save</button></td></tr>`).join("")+"</tbody></table>"}
+async function load(){try{const {data,error}=await db.from("profiles").select("id,full_name,role,is_active").order("created_at",{ascending:false}).limit(300);if(error)throw error;rows=data;draw()}catch(e){U.friendly(e);U.state(list,"error","Unable to load users. Please try again.")}}
+$("q").addEventListener("input",U.debounce(draw));
+list.addEventListener("click",async ev=>{const b=ev.target.closest("button");if(!b)return;const tr=b.closest("tr"),id=tr.dataset.id,role=tr.querySelector(".ur").value,act=tr.querySelector(".ua").checked;
+if(id===p.id&&(role!==p.role||!act))return U.toast("You cannot change your own role or deactivate yourself.","err");
+if(!await U.confirm("Save changes for this user?"))return;
+const {error}=await db.from("profiles").update({full_name:tr.querySelector(".un").value.trim()||null,role,is_active:act}).eq("id",id);
+if(error){U.friendly(error);return U.toast("Could not save. Only a Super Admin can give Admin roles.","err")}U.audit("User role or status changed","profiles",id);U.toast("Saved.");load()});load();
+})();
+</script></body></html>

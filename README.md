@@ -29,5 +29,8 @@ Run `supabase/phase5.sql` once. New: Subject teachers, Exams (subjects, grading 
 ## Phase 6
 Run `supabase/phase6.sql` once. New: Fee types, Fee structure (assign to students with installments), Fees and payments (record payments, concessions, dashboard), printable Receipt, Fee reports with CSV and print. Payments and concessions are permanent and cannot be edited or deleted.
 
+## Update 6b
+Run `supabase/phase6b.sql` once on an existing project. Adds subject order numbers and editing, multi-month fee payment with one receipt, and a Users and roles screen.
+
 ## Not built yet
 Phase 2 admin screens (academic years, classes, subjects pages), then students, teachers, staff, attendance, exams, results, report cards, fees, and the rest of your spec. The schema already holds the Phase 2 tables with security rules.
