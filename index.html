@@ -1,4 +1,9 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bitter:wght@600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="css/style.css"><link rel="stylesheet" href="css/print.css" media="print"><meta name="description" content="Saraswati English Medium School, LKG to Grade 10."><title>Saraswati English Medium School</title></head>
 <body><main style="max-width:640px;margin:15vh auto;padding:1rem"><h1>Saraswati English Medium School</h1>
 <p>LKG to Grade 10. [School Address] | [School Phone] | [School Email]</p>
-<p>The full public website is built in a later phase.</p><a class="btn" href="login.html">Login</a></main></body></html>
+<p>The full public website is built in a later phase.</p><a class="btn" href="login.html">Login</a><section id="pn" style="margin-top:2rem"><h2>Latest notices</h2><div id="pnl"></div></section>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script><script src="js/config.js"></script><script src="js/supabase.js"></script>
+<script>
+(async()=>{const box=document.getElementById("pnl");try{const {data,error}=await db.from("notices").select("id,title,description,notice_date,priority").eq("is_public",true).eq("status","published").order("notice_date",{ascending:false}).limit(5);if(error)throw error;
+if(!data.length){box.textContent="No notices at the moment.";return}box.innerHTML="";data.forEach(n=>{const d=document.createElement("div");d.className="card";d.style.marginBottom=".6rem";const h=document.createElement("b");h.textContent=n.title;const m=document.createElement("small");m.textContent=" "+n.notice_date;const p=document.createElement("p");p.style.whiteSpace="pre-wrap";p.textContent=n.description;d.append(h,m,p);box.appendChild(d)})}catch(e){console.error(e);box.textContent="Notices are not available right now."}})();
+</script></main></body></html>

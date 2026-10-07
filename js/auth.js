@@ -31,5 +31,8 @@ const Auth = {
     const sb = document.getElementById("sidebar"), btn = document.getElementById("menu");
     btn.addEventListener("click", () => { const o = sb.classList.toggle("open"); btn.setAttribute("aria-expanded", o); });
     document.getElementById("logout").addEventListener("click", Auth.logout);
+    const nb = document.createElement("a"); nb.href = "notifications.html"; nb.className = "btn ghost"; nb.textContent = "Notifications";
+    document.querySelector(".top").insertBefore(nb, document.getElementById("logout"));
+    db.from("notifications").select("id", { count: "exact", head: true }).eq("is_read", false).then(({ count }) => { if (count) nb.textContent = "Notifications (" + count + ")"; });
   }
 };

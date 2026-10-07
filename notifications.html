@@ -1,0 +1,18 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bitter:wght@600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="css/style.css"><link rel="stylesheet" href="css/print.css" media="print"><title>Notifications | Saraswati English Medium School</title></head>
+<body><div class="app"><aside id="sidebar" class="noprint" aria-label="Sidebar"></aside>
+<div><header class="top noprint"><button class="btn ghost" id="menu" aria-expanded="false" aria-controls="sidebar">Menu</button><span id="who"></span><button class="btn ghost" id="logout">Sign out</button></header>
+<main><h1 class="noprint">Notifications</h1><div class="row"><button class="btn ghost" id="ma">Mark all as read</button></div><div id="list"></div></main></div></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script><script src="js/config.js"></script><script src="js/supabase.js"></script><script src="js/utils.js"></script><script src="js/permissions.js"></script><script src="js/auth.js"></script><script src="js/students.js"></script><script src="js/exams.js"></script><script src="js/fees.js"></script>
+<script>
+(async()=>{const p=await Auth.require("*");Auth.shell(p);const $=id=>document.getElementById(id);
+
+const list=$("list"),MAP={notices:"notices.html"};let rows=[];
+async function load(){list.innerHTML='<div class="state">Loading...</div>';try{const {data,error}=await db.from("notifications").select("id,title,message,related_module,is_read,created_at").order("created_at",{ascending:false}).limit(50);if(error)throw error;rows=data;
+if(!data.length)return U.state(list,"empty","No notifications yet.");
+list.innerHTML=data.map(n=>`<div class="card" style="margin-bottom:.6rem${n.is_read?"":";border-left:5px solid var(--gold)"}"><b>${U.esc(n.title)}</b><br><small>${U.esc(new Date(n.created_at).toLocaleString("en-IN"))}</small><p>${U.esc(n.message||"")}</p>${MAP[n.related_module]?`<button class="btn sm" data-o="${n.id}">Open</button> `:""}${n.is_read?"":`<button class="btn sm ghost" data-r="${n.id}">Mark as read</button>`}</div>`).join("")}catch(e){U.friendly(e);U.state(list,"error","Unable to load notifications. Please try again.")}}
+list.addEventListener("click",async ev=>{const b=ev.target.closest("button");if(!b)return;const id=b.dataset.o||b.dataset.r,n=rows.find(x=>x.id===id);if(!n)return;
+if(!n.is_read){const {error}=await db.from("notifications").update({is_read:true}).eq("id",id);if(error){U.friendly(error);return U.toast("Could not update.","err")}}
+if(b.dataset.o)location.href=MAP[n.related_module];else load()});
+$("ma").onclick=async()=>{const {error}=await db.from("notifications").update({is_read:true}).eq("is_read",false);if(error){U.friendly(error);return U.toast("Could not update.","err")}U.toast("All marked as read.");load()};load();
+})();
+</script></body></html>

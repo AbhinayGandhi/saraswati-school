@@ -32,5 +32,8 @@ Run `supabase/phase6.sql` once. New: Fee types, Fee structure (assign to student
 ## Update 6b
 Run `supabase/phase6b.sql` once on an existing project. Adds subject order numbers and editing, multi-month fee payment with one receipt, and a Users and roles screen.
 
+## Phase 7
+Run `supabase/phase7.sql` once on an existing project. New: Timetable (conflict checks), Homework with attachments, Notices (drafts, publish, audience, public notices on the home page), Notifications with an unread badge.
+
 ## Not built yet
 Phase 2 admin screens (academic years, classes, subjects pages), then students, teachers, staff, attendance, exams, results, report cards, fees, and the rest of your spec. The schema already holds the Phase 2 tables with security rules.
