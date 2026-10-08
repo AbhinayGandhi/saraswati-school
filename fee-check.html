@@ -1,0 +1,17 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bitter:wght@600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="css/style.css"><link rel="stylesheet" href="css/print.css" media="print"><title>Fee check | Saraswati English Medium School</title></head>
+<body><div class="app"><aside id="sidebar" class="noprint" aria-label="Sidebar"></aside>
+<div><header class="top noprint"><button class="btn ghost" id="menu" aria-expanded="false" aria-controls="sidebar">Menu</button><span id="who"></span><button class="btn ghost" id="logout">Sign out</button></header>
+<main><h1 class="noprint">Fee check</h1><p>This page checks the selected year for mistakes: a fee type given twice, fees from the wrong class, and old monthly rows. If the lower sections are empty, your fees are clean.</p><div class="row noprint"><div><label for="y">Academic year</label><select id="y"></select></div><button class="btn" id="go">Run check</button><button class="btn ghost" onclick="window.print()">Print</button></div><div id="list" class="tw"></div></main></div></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script><script src="js/config.js"></script><script src="js/supabase.js"></script><script src="js/utils.js"></script><script src="js/permissions.js"></script><script src="js/auth.js"></script><script src="js/students.js"></script><script src="js/exams.js"></script><script src="js/fees.js"></script>
+<script>
+(async()=>{const p=await Auth.require([...ADMIN_ROLES,"accountant"]);Auth.shell(p);const $=id=>document.getElementById(id);
+
+const list=$("list");try{await Ex.yearSelect($("y"))}catch(e){U.friendly(e);return U.state(list,"error","Unable to load. Please try again.")}
+async function run(){list.innerHTML='<div class="state">Checking...</div>';try{const {data,error}=await db.rpc("fee_integrity_check",{p_year:$("y").value});if(error)throw error;
+const g={};data.forEach(r=>(g[r.section]=g[r.section]||[]).push(r));const probs=Object.keys(g).filter(k=>k!=="Fee structure");
+let h=`<div class="state ${probs.length?"error":""}">${probs.length?"Problems found: "+probs.length+" kind(s). See below.":"No problems found."}</div>`;
+const order=["Fee structure",...probs];order.forEach(k=>{h+=`<h3 style="margin-top:1rem">${U.esc(k)}</h3>`+(g[k]?`<table><thead><tr><th>Detail</th><th>${k==="Fee structure"?"Students assigned":"Count"}</th></tr></thead><tbody>${g[k].map(r=>`<tr><td>${U.esc(r.detail)}</td><td>${U.esc(r.n)}</td></tr>`).join("")}</tbody></table>`:"<p>None.</p>")});list.innerHTML=h}
+catch(e){U.friendly(e);U.state(list,"error","Unable to run the check. Please run the update 7c SQL first, then try again.")}}
+$("go").onclick=run;$("y").onchange=run;run();
+})();
+</script></body></html>

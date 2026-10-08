@@ -38,5 +38,8 @@ Run `supabase/phase7.sql` once on an existing project. New: Timetable (conflict 
 ## Update 7b
 Run `supabase/phase7b.sql` once. Adds Remove unpaid on Fee structure (keeps anything already paid) and a duplicate warning when assigning a fee.
 
+## Update 7c (simpler fees)
+Run `supabase/phase7c.sql` once. One total fee per student per fee type; parents pay any amount at any time (Take payment). Old monthly rows are merged safely. Duplicate fee structures are blocked. The Fee check page lists mistakes.
+
 ## Not built yet
 Phase 2 admin screens (academic years, classes, subjects pages), then students, teachers, staff, attendance, exams, results, report cards, fees, and the rest of your spec. The schema already holds the Phase 2 tables with security rules.
