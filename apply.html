@@ -1,0 +1,22 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bitter:wght@600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="css/style.css"><link rel="stylesheet" href="css/print.css" media="print"><meta name="description" content="Admission enquiry form for Saraswati English Medium School."><title>Admission enquiry | Saraswati English Medium School</title></head>
+<body><div class="login"><form id="f" novalidate style="max-width:560px"><h1>Admission enquiry</h1><p>Saraswati English Medium School</p><p id="msg" role="alert" style="color:var(--bad);min-height:1.4em"></p>
+<div style="position:absolute;left:-9999px" aria-hidden="true"><label for="website">Leave this empty</label><input id="website" tabindex="-1" autocomplete="off"></div>
+<label for="sn">Student name</label><input id="sn" required maxlength="100"><label for="dob">Date of birth</label><input id="dob" type="date" required>
+<label for="g">Gender</label><select id="g"><option>Male</option><option>Female</option><option>Other</option></select><label for="k">Applying for class</label><select id="k" required></select>
+<label for="pn">Parent or guardian name</label><input id="pn" required maxlength="100"><label for="mo">Mobile number</label><input id="mo" type="tel" required maxlength="15"><label for="em">Email (optional)</label><input id="em" type="email" maxlength="120">
+<label for="ad">Address</label><input id="ad" maxlength="300"><label for="ps">Previous school (if any)</label><input id="ps" maxlength="150"><label for="pc">Previous class (if any)</label><input id="pc" maxlength="50">
+<label for="ms">Message</label><textarea id="ms" rows="3" maxlength="1000"></textarea><button class="btn" id="go" type="submit">Send enquiry</button><p><a href="index.html">Back to website</a></p></form></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script><script src="js/config.js"></script><script src="js/supabase.js"></script><script src="js/utils.js"></script>
+<script>
+(async()=>{const $=id=>document.getElementById(id),msg=$("msg");
+try{const {data,error}=await db.from("classes").select("id,name").order("sort_order");if(error)throw error;$("k").innerHTML=data.map(c=>`<option value="${c.id}">${U.esc(c.name)}</option>`).join("")}catch(e){console.error(e);msg.textContent="The form could not load. Please try again later."}
+$("dob").max=new Date().toLocaleDateString("en-CA");
+$("f").addEventListener("submit",async ev=>{ev.preventDefault();msg.textContent="";
+if($("website").value){$("f").innerHTML="<h1>Thank you</h1><p>Your enquiry was sent.</p>";return}
+const v=i=>$(i).value.trim();if(v("sn").length<3)return msg.textContent="Enter the student's full name.";if(!$("dob").value||$("dob").value>=$("dob").max)return msg.textContent="Enter a valid date of birth.";
+if(v("pn").length<2)return msg.textContent="Enter the parent or guardian name.";if(!/^[0-9+ -]{8,15}$/.test(v("mo")))return msg.textContent="Enter a valid mobile number.";if(v("em")&&!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(v("em")))return msg.textContent="Enter a valid email address.";
+$("go").disabled=true;$("go").textContent="Sending...";
+const {data,error}=await db.rpc("submit_enquiry",{p_student_name:v("sn"),p_dob:$("dob").value,p_gender:$("g").value,p_class:$("k").value||null,p_parent:v("pn"),p_mobile:v("mo"),p_email:v("em")||null,p_address:v("ad")||null,p_prev_school:v("ps")||null,p_prev_class:v("pc")||null,p_message:v("ms")||null});
+if(error){console.error(error);const m=String(error.message);msg.textContent=m.includes("duplicate")?"We already received an enquiry for this student from this mobile number.":m.includes("too many")?"Too many enquiries from this number today. Please call the school.":"Could not send the enquiry. Please check the details and try again.";$("go").disabled=false;$("go").textContent="Send enquiry";return}
+$("f").innerHTML="<h1>Thank you</h1><p>Your enquiry was received. Your application number is:</p><p style='font-size:1.6rem'><b>"+U.esc(data)+"</b></p><p>Please keep this number. The school will contact you.</p><p><a href='index.html'>Back to website</a></p>"})})();
+</script></body></html>
