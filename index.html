@@ -6,4 +6,14 @@
 <script>
 (async()=>{const box=document.getElementById("pnl");try{const {data,error}=await db.from("notices").select("id,title,description,notice_date,priority").eq("is_public",true).eq("status","published").order("notice_date",{ascending:false}).limit(5);if(error)throw error;
 if(!data.length){box.textContent="No notices at the moment.";return}box.innerHTML="";data.forEach(n=>{const d=document.createElement("div");d.className="card";d.style.marginBottom=".6rem";const h=document.createElement("b");h.textContent=n.title;const m=document.createElement("small");m.textContent=" "+n.notice_date;const p=document.createElement("p");p.style.whiteSpace="pre-wrap";p.textContent=n.description;d.append(h,m,p);box.appendChild(d)})}catch(e){console.error(e);box.textContent="Notices are not available right now."}})();
+</script><section id="ue" style="margin-top:2rem"><h2>Upcoming events</h2><div id="uel"></div></section>
+<section id="ac" style="margin-top:2rem"><h2>Achievements</h2><div id="acl"></div></section>
+<p><a class="btn" href="gallery.html">View photo gallery</a></p>
+<script>
+(async()=>{const mk=(box,items,fn)=>{box.innerHTML="";if(!items.length){box.textContent="Nothing to show yet.";return}items.forEach(i=>{const d=document.createElement("div");d.className="card";d.style.marginBottom=".6rem";fn(d,i);box.appendChild(d)})};
+const t=(tag,txt)=>{const e=document.createElement(tag);e.textContent=txt;return e};
+try{const today=new Date().toLocaleDateString("en-CA");const {data,error}=await db.from("events").select("id,title,event_type,event_date,start_time,venue,description").eq("is_public",true).eq("status","published").gte("event_date",today).order("event_date").limit(5);if(error)throw error;
+mk(document.getElementById("uel"),data,(d,e)=>{d.append(t("b",e.title),t("small"," "+e.event_date+(e.venue?" | "+e.venue:"")),t("p",e.description||""))})}catch(e){console.error(e);document.getElementById("uel").textContent="Events are not available right now."}
+try{const {data,error}=await db.from("achievements_public").select("id,title,who,position,event_name,achievement_date").order("achievement_date",{ascending:false}).limit(5);if(error)throw error;
+mk(document.getElementById("acl"),data,(d,a)=>{d.append(t("b",a.title),t("small"," "+(a.who||"")+(a.position?" | "+a.position:"")+(a.event_name?" | "+a.event_name:"")))})}catch(e){console.error(e);document.getElementById("acl").textContent="Achievements are not available right now."}})();
 </script></main></body></html>
