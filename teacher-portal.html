@@ -1,0 +1,29 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bitter:wght@600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="css/style.css"><link rel="stylesheet" href="css/print.css" media="print"><title>Teacher portal | Saraswati English Medium School</title></head>
+<body><div class="app"><aside id="sidebar" class="noprint" aria-label="Sidebar"></aside>
+<div><header class="top noprint"><button class="btn ghost" id="menu" aria-expanded="false" aria-controls="sidebar">Menu</button><span id="who"></span><button class="btn ghost" id="logout">Sign out</button></header>
+<main><h1 class="noprint">Teacher portal</h1><div id="out"><div class="state">Loading...</div></div></main></div></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script><script src="js/config.js"></script><script src="js/supabase.js"></script><script src="js/utils.js"></script><script src="js/permissions.js"></script><script src="js/auth.js"></script><script src="js/students.js"></script><script src="js/exams.js"></script><script src="js/fees.js"></script><script src="js/gallery.js"></script><script src="js/portal.js"></script>
+<script>
+(async()=>{const p=await Auth.require(["teacher","class_teacher"]);Auth.shell(p);const $=id=>document.getElementById(id);
+
+const out=$("out"),T=v=>String(v||"").slice(0,5),dow=(new Date().getDay()+6)%7+1,links=[["attendance.html","Student attendance"],["students.html","My students"],["homework.html","Homework"],["marks.html","Marks entry"],["results.html","Results"],["timetable.html","Timetable"],["notices.html","Notices"],["activities.html","Activities"],["leave.html","Leave"],["notifications.html","Notifications"]];
+try{const {data:y,error:e0}=await db.from("academic_years").select("id,name").eq("is_active",true).maybeSingle();if(e0)throw e0;
+if(!y){out.innerHTML='<div class="state">No active academic year is set. Please contact the administrator.</div>';return}
+const [sl,cs,ct,es,lv]=await Promise.all([
+db.from("timetable_slots").select("period,start_time,end_time,room,subjects(name),divisions(name,classes(name))").eq("teacher_id",p.id).eq("academic_year_id",y.id).eq("day",dow).eq("is_active",true).order("period"),
+db.from("class_subjects").select("division_id,subject_id,subjects(name),divisions(name,classes(name,sort_order))").eq("teacher_id",p.id).eq("academic_year_id",y.id),
+db.from("divisions").select("id,name,classes(name)").eq("class_teacher_id",p.id).eq("academic_year_id",y.id),
+db.from("exam_subjects").select("id,division_id,subject_id,max_marks,exams!inner(name,status,academic_year_id),divisions(name,classes(name)),subjects(name)").eq("status","open").eq("exams.status","draft").eq("exams.academic_year_id",y.id),
+db.from("leave_requests").select("id",{count:"exact",head:true}).eq("status","pending")]);
+for(const r of [sl,cs,ct,es,lv])if(r.error)throw r.error;
+const mine=new Set(cs.data.map(x=>x.division_id+"|"+x.subject_id)),pend=es.data.filter(x=>mine.has(x.division_id+"|"+x.subject_id));
+const dn=d=>d.classes.name+" - "+d.name;
+out.innerHTML=`<p>Academic year ${U.esc(y.name)}. ${dow>6?"Today is Sunday.":""}</p>
+<div class="grid"><div class="card"><b>${sl.data.length}</b>Classes today</div><div class="card"><b>${cs.data.length}</b>Subjects I teach</div><div class="card"><b>${ct.data.length}</b>Classes where I am class teacher</div><div class="card"><b>${pend.length}</b>Marks entries pending</div><div class="card"><b>${lv.count||0}</b>My leave requests pending</div></div>
+<h2 style="margin-top:1.2rem">Today's classes</h2>${sl.data.length?`<div class="tw"><table><thead><tr><th>Period</th><th>Time</th><th>Class</th><th>Subject</th><th>Room</th></tr></thead><tbody>${sl.data.map(x=>`<tr><td>${x.period}</td><td>${T(x.start_time)}-${T(x.end_time)}</td><td>${U.esc(dn(x.divisions))}</td><td>${U.esc(x.subjects.name)}</td><td>${U.esc(x.room||"")}</td></tr>`).join("")}</tbody></table></div>`:"<p>No classes scheduled today.</p>"}
+<h2 style="margin-top:1.2rem">My classes and subjects</h2>${cs.data.length||ct.data.length?`<div class="tw"><table><thead><tr><th>Class</th><th>Role</th></tr></thead><tbody>${ct.data.map(d=>`<tr><td>${U.esc(dn(d))}</td><td>Class teacher</td></tr>`).join("")}${cs.data.map(x=>`<tr><td>${U.esc(dn(x.divisions))}</td><td>${U.esc(x.subjects.name)}</td></tr>`).join("")}</tbody></table></div>`:"<p>No classes assigned yet. Ask the administrator (Subject teachers).</p>"}
+<h2 style="margin-top:1.2rem">Marks waiting for me</h2>${pend.length?`<ul>${pend.map(x=>`<li>${U.esc(x.exams.name)}: ${U.esc(dn(x.divisions)+" | "+x.subjects.name)} (max ${x.max_marks})</li>`).join("")}</ul><a class="btn sm" href="marks.html">Open marks entry</a>`:"<p>Nothing pending.</p>"}
+<h2 style="margin-top:1.2rem">Quick links</h2><div class="row">${links.map(l=>`<a class="btn ghost" href="${l[0]}">${l[1]}</a>`).join("")}</div>`}
+catch(e){U.friendly(e);U.state(out,"error","Unable to load your dashboard. Please try again.")}
+})();
+</script></body></html>

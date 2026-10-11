@@ -47,5 +47,8 @@ Run `supabase/phase8.sql` once. New: Events (list and calendar, publish, public 
 ## Phase 9
 Run `supabase/phase9.sql` once. New: Library (books, issue, return, overdue, fines, CSV), public Admission enquiry form and admin screen with convert-to-student, Transport (routes, stops, assignments, report), Staff leave with approval, Teacher attendance, and Link logins to employees.
 
+## Phase 10
+Run `supabase/phase10.sql` once. New: Parent portal (child switcher, profile, attendance, results, homework, timetable, fees, receipts, activities, library, notices), Student portal, Teacher portal, and Link parents and students. Students now see only their own records. Accountant and librarian can now see student names (fixes empty lists on the Fees and Library pages for those roles).
+
 ## Not built yet
 Phase 2 admin screens (academic years, classes, subjects pages), then students, teachers, staff, attendance, exams, results, report cards, fees, and the rest of your spec. The schema already holds the Phase 2 tables with security rules.

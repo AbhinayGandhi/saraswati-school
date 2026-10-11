@@ -1,0 +1,25 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bitter:wght@600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="css/style.css"><link rel="stylesheet" href="css/print.css" media="print"><title>Link parents and students | Saraswati English Medium School</title></head>
+<body><div class="app"><aside id="sidebar" class="noprint" aria-label="Sidebar"></aside>
+<div><header class="top noprint"><button class="btn ghost" id="menu" aria-expanded="false" aria-controls="sidebar">Menu</button><span id="who"></span><button class="btn ghost" id="logout">Sign out</button></header>
+<main><h1 class="noprint">Link parents and students</h1><p>Connect each parent or student login to the right child. A parent with several children is linked once for each child. Create the login in Supabase first and set its role (Parent or Student) in Users and roles.</p><div class="row"><div><label for="y">Academic year</label><select id="y"></select></div><div><label for="q">Search student</label><input id="q" type="search" placeholder="Name, admission no, GR no"></div></div><div id="list"></div></main></div></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script><script src="js/config.js"></script><script src="js/supabase.js"></script><script src="js/utils.js"></script><script src="js/permissions.js"></script><script src="js/auth.js"></script><script src="js/students.js"></script><script src="js/exams.js"></script><script src="js/fees.js"></script><script src="js/gallery.js"></script><script src="js/portal.js"></script>
+<script>
+(async()=>{const p=await Auth.require(["super_admin","school_admin","reception"]);Auth.shell(p);const $=id=>document.getElementById(id);
+
+const list=$("list");let users=[];
+try{const {data,error}=await db.rpc("linkable_users");if(error)throw error;users=data;await Ex.yearSelect($("y"))}catch(e){U.friendly(e);return U.state(list,"error","Unable to load. Please try again.")}
+const opt=(role,sel)=>'<option value="">Not linked</option>'+users.filter(u=>u.role===role).map(u=>`<option value="${u.id}"${u.id===sel?" selected":""}>${U.esc(u.full_name||"User")}</option>`).join("");
+async function load(){const t=Students.safe($("q").value);if(t.length<2)return U.state(list,"empty","Type at least 2 letters of the student name or admission number.");list.innerHTML='<div class="state">Searching...</div>';
+try{const {data,error}=await db.from("student_enrollments").select("students!inner(id,first_name,last_name,admission_no,user_id,student_guardians(id,relation,name,user_id)),divisions(name,classes(name))").eq("academic_year_id",$("y").value).or(`first_name.ilike.%${t}%,last_name.ilike.%${t}%,admission_no.ilike.%${t}%,gr_no.ilike.%${t}%`,{foreignTable:"students"}).limit(20);if(error)throw error;
+if(!data.length)return U.state(list,"empty","No students found.");
+list.innerHTML=data.map(e=>{const s=e.students;return `<div class="card" style="margin-bottom:.8rem" data-s="${s.id}"><h3>${U.esc(s.first_name+" "+s.last_name)} <small>${U.esc(s.admission_no)} | ${U.esc(e.divisions.classes.name+" - "+e.divisions.name)}</small></h3>
+${s.student_guardians.length?s.student_guardians.map(g=>`<div class="row"><div><label>${U.esc(g.relation)}: ${U.esc(g.name)}</label><select data-g="${g.id}">${opt("parent",g.user_id)}</select></div><button class="btn sm" data-sg="${g.id}">Save</button></div>`).join(""):"<p>No parent or guardian recorded for this student.</p>"}
+<div class="row"><div><label>Student own login</label><select data-su="${s.id}">${opt("student",s.user_id)}</select></div><button class="btn sm" data-ss="${s.id}">Save</button></div></div>`}).join("")}
+catch(e){U.friendly(e);U.state(list,"error","Unable to search. Please try again.")}}
+list.addEventListener("click",async ev=>{const b=ev.target.closest("button");if(!b)return;let r;
+if(b.dataset.sg){const v=list.querySelector(`select[data-g="${b.dataset.sg}"]`).value||null;r=await db.from("student_guardians").update({user_id:v}).eq("id",b.dataset.sg);if(!r.error)U.audit("Parent login linked","student_guardians",b.dataset.sg)}
+else if(b.dataset.ss){const v=list.querySelector(`select[data-su="${b.dataset.ss}"]`).value||null;r=await db.from("students").update({user_id:v}).eq("id",b.dataset.ss);if(!r.error)U.audit("Student login linked","students",b.dataset.ss)}else return;
+if(r.error){U.friendly(r.error);return U.toast(r.error.code==="23505"?"This login is already linked to another student.":"Could not save.","err")}U.toast("Saved.")});
+$("q").addEventListener("input",U.debounce(load));$("y").onchange=load;load();
+})();
+</script></body></html>
