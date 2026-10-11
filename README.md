@@ -54,6 +54,9 @@ Run `supabase/phase10.sql` once. New: Parent portal (child switcher, profile, at
 Run `supabase/phase11.sql` once (after Phase 10). New pages: **Reports** (attendance, exam results, subject performance, student list, each with Print and CSV), **School settings** (details, logo, timings, working days, attendance alert, library fine, receipt prefix, public text), **Audit logs** (filters, CSV, print), **Student promotion** (promote, repeat, transfer, alumni, inactive; bulk, with confirmation) and **Academic year closing** (checks first; nothing is deleted). The School calendar now has a "Special school day". Attendance is refused on holidays, vacations and weekly-off days.
 Notes: marks changed after submission, attendance edits, role changes and setting changes are recorded automatically by the database. Fee and library reports stay on their own pages (linked from Reports). If old exports stop at 1000 rows, raise "Max rows" in Supabase Settings, API.
 
+## Creating users from the website
+Follow `SETUP-USERS.md` once. Then **Users and roles** can create logins (name, email, role, temporary password) and set new passwords, no Supabase visit needed.
+
 ## ALL-IN-ONE database script
 `supabase/ALL-IN-ONE.sql` contains Phase 1 to Phase 12 in one file and can be run on a new, partly set-up or complete project, any number of times. Use it if you are unsure which phase files you ran. `supabase/CHECK.sql` only reads and reports.
 

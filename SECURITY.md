@@ -14,6 +14,8 @@
 - `js/config.js` holds only the public anon key. Never place the service_role key or database password in GitHub.
 - Hiding a menu item is only a convenience. The real check is the database.
 
+- Creating logins is done by a server function that checks the caller's role in the database; the service key never reaches the browser.
+
 **Known limits (please read)**
 - GitHub Pages cannot send extra security headers, so the site has no Content Security Policy.
 - Accountant and Librarian can read basic student details (needed for fees and library). Teachers who teach a division can see that division's students.

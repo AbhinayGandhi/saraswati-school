@@ -11,7 +11,8 @@ Do these in order. Tick each line. Nothing here needs programming.
 6. Authentication, Providers, Email: **turn off "Allow new users to sign up"**. Authentication, URL Configuration: set Site URL to your GitHub Pages address.
 7. GitHub, Settings, Pages: main branch, root folder.
 8. Sign in as admin. Open **School settings** and fill in the school name, address, phone, email, principal, logo, timings, working days.
-9. Create the academic year, classes and divisions, subjects, then staff logins on **Users and roles**.
+9. Do the one-time setup in `SETUP-USERS.md` (10 minutes) so that new logins can be created on the **Users and roles** page.
+10. Create the academic year, classes and divisions, subjects, then staff logins on **Users and roles**.
 
 ## B. Existing project (you already ran some or all earlier phases)
 Run **only** `supabase/ALL-IN-ONE.sql` in the SQL Editor. It is safe to run again and again: it keeps your data, skips what already exists, adds whatever is missing and brings every rule and function to the latest version. Run it after every new update too.
