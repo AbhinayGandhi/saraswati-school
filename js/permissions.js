@@ -42,6 +42,7 @@ const NAV = [
   { href: "year-closing.html", label: "Academic year closing", roles: ["super_admin", "school_admin"] },
   { href: "settings.html", label: "School settings", roles: ["super_admin", "school_admin"] },
   { href: "users.html", label: "Users and roles", roles: ["super_admin", "school_admin"] },
+  { href: "backup.html", label: "Backup", roles: ["super_admin"] },
   { href: "audit-logs.html", label: "Audit logs", roles: ["super_admin", "school_admin"] }
 ];
 const Perm = {

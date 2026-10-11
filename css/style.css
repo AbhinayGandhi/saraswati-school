@@ -37,3 +37,9 @@ th,td{padding:.6rem .7rem;border-bottom:1px solid var(--line);text-align:left}th
 input[type=checkbox]{width:auto}.pager{display:flex;gap:.6rem;align-items:center;margin:.8rem 0}.panel{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:1rem;margin-bottom:1rem}
 .rc{background:var(--card);border:1px solid var(--line);padding:1.2rem;max-width:210mm;margin:auto}.rc h2,.rc h3{text-align:center}.rc .ph{width:90px;height:110px;border:1px solid var(--line);float:right;display:grid;place-items:center;font-size:.8rem}
 td input[type=number]{width:6rem}
+/* Phase 12: mobile fixes - the content column may shrink, the top bar wraps, wide tables scroll inside their own box */
+.app>div{min-width:0}
+.top{flex-wrap:wrap}
+.top #who{min-width:0;overflow-wrap:anywhere}
+.tw{overflow-x:auto;-webkit-overflow-scrolling:touch}
+@media (max-width:800px){main{padding-left:1rem;padding-right:1rem}.top{padding:.6rem 1rem}}

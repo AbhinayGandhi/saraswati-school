@@ -1,0 +1,26 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bitter:wght@600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="css/style.css"><link rel="stylesheet" href="css/print.css" media="print"><title>Backup | Saraswati English Medium School</title></head>
+<body><div class="app"><aside id="sidebar" aria-label="Sidebar"></aside>
+<div><header class="top"><button class="btn ghost" id="menu" aria-expanded="false" aria-controls="sidebar">Menu</button><span id="who"></span><button class="btn ghost" id="logout">Sign out</button></header>
+<main><h1>Backup</h1>
+<p class="muted">A copy of all school data (students, fees, marks, attendance, settings and more). Do this <b>every month</b> and before closing a year. Uploaded files (photos, attachments) are not included; they stay in Supabase Storage. See BACKUP.md for the full-database backup.</p>
+<div class="card"><p><strong>The backup file contains personal data of students and parents.</strong> Keep it in a safe place (not on a shared computer, not in a public folder or chat group).</p>
+<p><button class="btn" id="all">Download full backup (one file)</button> <span id="prog" class="muted"></span></p></div>
+<h2>Single table as CSV</h2><div id="list" class="tw"></div></main></div></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script><script src="js/config.js"></script><script src="js/supabase.js"></script><script src="js/utils.js"></script><script src="js/permissions.js"></script><script src="js/auth.js"></script>
+<script>
+(async()=>{const p=await Auth.require(["super_admin"]);Auth.shell(p);const $=id=>document.getElementById(id);
+const T="academic_years,achievements,activities,activity_participants,admission_enquiries,attendance,audit_logs,book_transactions,books,class_subjects,classes,divisions,events,exam_subjects,exams,fee_concessions,fee_payments,fee_structures,fee_types,gallery_albums,gallery_images,grading_rules,homework,leave_requests,marks,notices,notifications,profiles,report_remarks,school_calendar,school_settings,staff,student_enrollments,student_fees,student_guardians,students,subjects,teacher_attendance,teachers,timetable_slots,transport_assignments,transport_routes,transport_stops".split(",");
+const key=t=>t==="school_settings"?"key":"id";
+$("list").innerHTML="<table><thead><tr><th>Table</th><th></th></tr></thead><tbody>"+T.map(t=>`<tr><td>${U.esc(t)}</td><td><button class="btn sm ghost" data-t="${U.esc(t)}">Download CSV</button></td></tr>`).join("")+"</tbody></table>";
+const read=t=>U.fetchAll(()=>db.from(t).select("*").order(key(t)));
+$("list").addEventListener("click",async ev=>{const b=ev.target.closest("button[data-t]");if(!b)return;b.disabled=true;
+try{const t=b.dataset.t,rows=await read(t);if(!rows.length){U.toast("This table is empty.");return}
+const cols=Object.keys(rows[0]);U.download(t+".csv",U.csv([cols].concat(rows.map(r=>cols.map(c=>typeof r[c]==="object"&&r[c]!==null?JSON.stringify(r[c]):r[c])))));U.audit("Table exported: "+t,"backup",t)}
+catch(e){U.friendly(e);U.toast("Could not export this table.","err")}b.disabled=false});
+$("all").onclick=async()=>{$("all").disabled=true;const out={exported_at:new Date().toISOString(),format:1,tables:{}};
+try{for(let i=0;i<T.length;i++){$("prog").textContent=`Reading ${T[i]} (${i+1} of ${T.length})...`;out.tables[T[i]]=await read(T[i])}
+const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([JSON.stringify(out)],{type:"application/json"}));a.download="school-backup-"+new Date().toISOString().slice(0,10)+".json";document.body.appendChild(a);a.click();a.remove();
+const n=Object.values(out.tables).reduce((s,r)=>s+r.length,0);$("prog").textContent="Done: "+n+" rows from "+T.length+" tables.";U.audit("Full backup downloaded","backup",null)}
+catch(e){U.friendly(e);$("prog").textContent="";U.toast("Backup stopped because of an error. Please try again.","err")}$("all").disabled=false};
+})();
+</script></body></html>
