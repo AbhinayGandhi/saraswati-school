@@ -1,0 +1,52 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bitter:wght@600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="css/style.css"><link rel="stylesheet" href="css/print.css" media="print"><title>School settings | Saraswati English Medium School</title></head>
+<body><div class="app"><aside id="sidebar" aria-label="Sidebar"></aside>
+<div><header class="top"><button class="btn ghost" id="menu" aria-expanded="false" aria-controls="sidebar">Menu</button><span id="who"></span><button class="btn ghost" id="logout">Sign out</button></header>
+<main><h1>School settings</h1>
+<p class="muted">Only Super Admin and School Admin can change these settings. Every change is recorded in the Audit logs.</p>
+<form id="f" class="card" autocomplete="off">
+<h2>School details</h2>
+<div class="row"><div><label for="school_name">School name</label><input id="school_name" maxlength="150"></div><div><label for="principal">Principal</label><input id="principal" maxlength="100"></div></div>
+<div class="row"><div><label for="address">Address</label><input id="address" maxlength="300"></div><div><label for="phone">Phone</label><input id="phone" maxlength="40"></div></div>
+<div class="row"><div><label for="email">Email</label><input id="email" type="email" maxlength="120"></div><div><label for="website">Website</label><input id="website" maxlength="150" placeholder="https://"></div></div>
+<div class="row"><div><label>Logo (PNG, JPG or WebP, up to 1 MB)</label><input id="logo" type="file" accept="image/png,image/jpeg,image/webp"><div id="logoNow" class="muted"></div></div></div>
+<h2>Timings and working days</h2>
+<div class="row"><div><label for="school_start_time">School starts (HH:MM)</label><input id="school_start_time" type="time"></div><div><label for="school_end_time">School ends (HH:MM)</label><input id="school_end_time" type="time"></div></div>
+<fieldset><legend>Working days</legend><div id="wd"></div><p class="muted">Holidays and vacations in the School calendar are always off. A "Special school day" in the calendar makes a weekly off day a working day.</p></fieldset>
+<h2>Rules</h2>
+<div class="row"><div><label for="attendance_alert_percent">Low attendance alert below (%)</label><input id="attendance_alert_percent" inputmode="numeric" maxlength="3"></div><div><label for="library_fine_per_day">Library fine per day (Rs.)</label><input id="library_fine_per_day" inputmode="decimal" maxlength="8"></div><div><label for="receipt_prefix">Fee receipt prefix (letters or digits, up to 6)</label><input id="receipt_prefix" maxlength="6"></div></div>
+<p class="muted">Grading rules (A+, A, B...) are managed on the <a href="exams.html">Exams</a> page. Admission and GR numbers are typed by the office when a student is admitted.</p>
+<h2>Public website text</h2>
+<div><label for="home_tagline">Home page tagline</label><input id="home_tagline" maxlength="200"></div>
+<div><label for="about_text">About the school</label><textarea id="about_text" rows="4" maxlength="2000"></textarea></div>
+<div class="row"><div><label for="vision">Vision</label><textarea id="vision" rows="3" maxlength="1000"></textarea></div><div><label for="mission">Mission</label><textarea id="mission" rows="3" maxlength="1000"></textarea></div></div>
+<div><label for="principal_message">Principal's message</label><textarea id="principal_message" rows="4" maxlength="2000"></textarea></div>
+<p><button class="btn" id="save">Save settings</button></p>
+</form></main></div></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script><script src="js/config.js"></script><script src="js/supabase.js"></script><script src="js/utils.js"></script><script src="js/permissions.js"></script><script src="js/auth.js"></script>
+<script>
+(async()=>{const p=await Auth.require(["super_admin","school_admin"]);Auth.shell(p);const $=id=>document.getElementById(id);
+const TXT=["school_name","principal","address","phone","email","website","school_start_time","school_end_time","attendance_alert_percent","library_fine_per_day","receipt_prefix","home_tagline","about_text","vision","mission","principal_message"];
+const DAYS=[[1,"Mon"],[2,"Tue"],[3,"Wed"],[4,"Thu"],[5,"Fri"],[6,"Sat"],[7,"Sun"]];
+$("wd").innerHTML=DAYS.map(([n,l])=>`<label style="display:inline-block;margin-right:12px"><input type="checkbox" class="wdc" value="${n}"> ${l}</label>`).join("");
+let cur={};
+async function load(){try{const {data,error}=await db.from("school_settings").select("key,value");if(error)throw error;cur=Object.fromEntries(data.map(r=>[r.key,r.value]));
+TXT.forEach(k=>{$(k).value=cur[k]||""});const wd=(cur.working_days||"1,2,3,4,5,6").split(",");document.querySelectorAll(".wdc").forEach(c=>c.checked=wd.includes(c.value));
+$("logoNow").innerHTML=cur.logo_path?`<img alt="Current logo" style="max-height:60px" src="${U.esc(db.storage.from("branding").getPublicUrl(cur.logo_path).data.publicUrl)}">`:"No logo uploaded yet.";
+}catch(e){U.friendly(e);U.toast("Could not load settings. Please refresh.","err")}}
+$("f").addEventListener("submit",async ev=>{ev.preventDefault();
+const days=[...document.querySelectorAll(".wdc")].filter(c=>c.checked).map(c=>c.value);if(!days.length)return U.toast("Select at least one working day.","err");
+const pr=$("receipt_prefix").value.trim();if(pr&&!/^[A-Za-z0-9-]{1,6}$/.test(pr))return U.toast("Receipt prefix: up to 6 letters or digits.","err");
+const ap=$("attendance_alert_percent").value.trim();if(ap&&(!/^\d{1,3}$/.test(ap)||+ap>100))return U.toast("Attendance alert must be 0 to 100.","err");
+const fine=$("library_fine_per_day").value.trim();if(fine&&!/^\d{1,5}(\.\d{1,2})?$/.test(fine))return U.toast("Library fine must be a number.","err");
+const site=$("website").value.trim();if(site&&!/^https?:\/\//i.test(site))return U.toast("Website must start with http:// or https://","err");
+$("save").disabled=true;
+try{const rows=TXT.map(k=>({key:k,value:$(k).value.trim()}));rows.push({key:"working_days",value:days.join(",")});
+const f=$("logo").files[0];
+if(f){if(!["image/png","image/jpeg","image/webp"].includes(f.type)||f.size>1048576)throw new Error("bad logo");
+const path="logo-"+Date.now()+"."+(f.type==="image/png"?"png":f.type==="image/webp"?"webp":"jpg");
+const up=await db.storage.from("branding").upload(path,f,{contentType:f.type,upsert:false});if(up.error)throw up.error;rows.push({key:"logo_path",value:path})}
+const {error}=await db.from("school_settings").upsert(rows,{onConflict:"key"});if(error)throw error;
+U._settings=null;U.toast("Settings saved.");$("logo").value="";await load()}
+catch(e){U.friendly(e);U.toast("Could not save. Check the logo (under 1 MB) and the values.","err")}$("save").disabled=false});
+load();})();
+</script></body></html>

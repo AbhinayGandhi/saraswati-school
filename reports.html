@@ -1,0 +1,61 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bitter:wght@600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="css/style.css"><link rel="stylesheet" href="css/print.css" media="print"><title>Reports | Saraswati English Medium School</title></head>
+<body><div class="app"><aside id="sidebar" aria-label="Sidebar"></aside>
+<div><header class="top"><button class="btn ghost" id="menu" aria-expanded="false" aria-controls="sidebar">Menu</button><span id="who"></span><button class="btn ghost" id="logout">Sign out</button></header>
+<main><h1>Reports</h1>
+<form id="f" class="row noprint">
+<div><label for="rt">Report</label><select id="rt"><option value="att">Attendance</option><option value="res">Exam results (totals)</option><option value="sub">Subject performance</option><option value="stu">Student list</option></select></div>
+<div><label for="yr">Academic year</label><select id="yr"></select></div>
+<div><label for="dv">Class / division</label><select id="dv"><option value="">All</option></select></div>
+<div id="exw" hidden><label for="ex">Exam</label><select id="ex"></select></div>
+<div id="dw"><label for="d1">From</label><input id="d1" type="date"></div><div id="dw2"><label for="d2">To</label><input id="d2" type="date"></div>
+<button class="btn">Show report</button><button type="button" class="btn ghost" id="csv" disabled>Export CSV</button><button type="button" class="btn ghost" id="prn" disabled>Print</button></form>
+<p class="muted noprint">Fee and library reports: <a href="fee-reports.html">Fee reports</a>, <a href="fee-check.html">Fee check</a>, <a href="library.html">Library</a>. You see only the students your role is allowed to see.</p>
+<div id="lh"></div><div id="list" class="tw"><div class="state">Choose a report and press Show report.</div></div></main></div></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script><script src="js/config.js"></script><script src="js/supabase.js"></script><script src="js/utils.js"></script><script src="js/permissions.js"></script><script src="js/auth.js"></script>
+<script>
+(async()=>{const p=await Auth.require([...ADMIN_ROLES,"teacher","class_teacher"]);Auth.shell(p);const $=id=>document.getElementById(id);
+let HEAD=[],ROWS=[],TITLE="",SUB="";const alertPct=+((await U.settings()).attendance_alert_percent||75);
+const pct=(a,b)=>b>0?Math.round(a/b*1000)/10:null;
+try{const {data,error}=await db.from("academic_years").select("id,name,is_active").order("start_date",{ascending:false});if(error)throw error;
+$("yr").innerHTML=data.map(y=>`<option value="${U.esc(y.id)}"${y.is_active?" selected":""}>${U.esc(y.name)}</option>`).join("");}catch(e){U.friendly(e);U.state($("list"),"error","Unable to load academic years.")}
+async function loadYear(){const y=$("yr").value;if(!y)return;
+try{const [d,x]=await Promise.all([db.from("divisions").select("id,name,class_id,classes(name,sort_order)").eq("academic_year_id",y),db.from("exams").select("id,name,status").eq("academic_year_id",y).order("created_at",{ascending:false})]);
+if(d.error||x.error)throw d.error||x.error;
+const ds=d.data.sort((a,b)=>a.classes.sort_order-b.classes.sort_order||a.name.localeCompare(b.name));const cl=[...new Map(ds.map(v=>[v.class_id,v.classes.name]))];
+$("dv").innerHTML='<option value="">All classes</option>'+cl.map(([id,n])=>`<option value="c:${U.esc(id)}">${U.esc(n)} (all divisions)</option>`).join("")+ds.map(v=>`<option value="d:${U.esc(v.id)}">${U.esc(v.classes.name)} - ${U.esc(v.name)}</option>`).join("");
+$("ex").innerHTML=x.data.length?x.data.map(e=>`<option value="${U.esc(e.id)}">${U.esc(e.name)} (${U.esc(e.status)})</option>`).join(""):'<option value="">No exams</option>';
+}catch(e){U.friendly(e);U.toast("Could not load classes and exams.","err")}}
+$("yr").onchange=loadYear;await loadYear();
+function sync(){const t=$("rt").value;$("exw").hidden=!(t==="res"||t==="sub");$("dw").hidden=$("dw2").hidden=t!=="att"}
+$("rt").onchange=sync;sync();
+const selDiv=()=>{const v=$("dv").value;return{cls:v.startsWith("c:")?v.slice(2):null,div:v.startsWith("d:")?v.slice(2):null}};
+function draw(){const list=$("list");$("csv").disabled=$("prn").disabled=!ROWS.length;
+if(!ROWS.length)return U.state(list,"empty","No records found for these choices.");
+list.innerHTML="<table><thead><tr>"+HEAD.map(h=>`<th>${U.esc(h)}</th>`).join("")+"</tr></thead><tbody>"+ROWS.map(r=>`<tr${r._low?' style="background:#fde8e8"':""}>`+r.c.map(v=>`<td>${U.esc(v)}</td>`).join("")+"</tr>").join("")+"</tbody></table><p class='muted'>"+ROWS.length+" rows</p>"}
+$("f").addEventListener("submit",async ev=>{ev.preventDefault();const t=$("rt").value,y=$("yr").value,{cls,div}=selDiv(),list=$("list");
+if(!y)return U.toast("Choose an academic year.","err");U.state(list,"","Loading...");ROWS=[];$("lh").innerHTML="";
+try{const yn=$("yr").selectedOptions[0].textContent,dn=$("dv").selectedOptions[0].textContent;
+if(t==="att"){const d1=$("d1").value,d2=$("d2").value;if(!d1||!d2||d2<d1)return U.state(list,"error","Choose a valid From and To date.");
+const {data,error}=await db.rpc("report_attendance",{p_year:y,p_from:d1,p_to:d2,p_class:cls,p_division:div});if(error)throw error;
+TITLE="Attendance report";SUB=`${yn} | ${dn} | ${d1} to ${d2}`;
+HEAD=["Class","Div","Roll","Adm. no","Student","Present","Absent","Late","Half day","Leave","Marked days","Attendance %"];
+ROWS=data.sort((a,b)=>a.class_order-b.class_order||a.division_name.localeCompare(b.division_name)||(a.roll_no??9999)-(b.roll_no??9999)||a.student_name.localeCompare(b.student_name)).map(r=>{const att=+r.n_present+ +r.n_late+0.5*+r.n_half,pc=pct(att,+r.n_total);
+return{_low:pc!==null&&pc<alertPct,c:[r.class_name,r.division_name,r.roll_no??"",r.admission_no,r.student_name,r.n_present,r.n_absent,r.n_late,r.n_half,r.n_leave,r.n_total,pc===null?"":pc.toFixed(1)]}});
+}else if(t==="res"||t==="sub"){const ex=$("ex").value;if(!ex)return U.state(list,"error","Choose an exam.");const en=$("ex").selectedOptions[0].textContent;
+if(t==="res"){const {data,error}=await db.rpc("report_exam_results",{p_exam:ex,p_class:cls,p_division:div});if(error)throw error;
+TITLE="Exam results";SUB=`${en} | ${yn} | ${dn}`;HEAD=["Class","Div","Roll","Adm. no","Student","Marks","Out of","Percentage","Subjects","Marks entered","Failed in","Result"];
+const rk=data.filter(r=>+r.max_total>0);
+ROWS=data.sort((a,b)=>a.class_order-b.class_order||a.division_name.localeCompare(b.division_name)||(+b.total/(+b.max_total||1))-(+a.total/(+a.max_total||1))).map(r=>{const pc=+r.max_total>0?Math.round(+r.total/+r.max_total*1000)/10:null,full=+r.n_entered>=+r.n_subjects;
+return{c:[r.class_name,r.division_name,r.roll_no??"",r.admission_no,r.student_name,r.total,r.max_total,pc===null?"":pc.toFixed(1),r.n_subjects,r.n_entered,r.n_failed,!full?"Incomplete":+r.n_failed>0?"Fail":"Pass"]}})}
+else{const {data,error}=await db.rpc("report_subject_performance",{p_exam:ex,p_class:cls,p_division:div});if(error)throw error;
+TITLE="Subject-wise performance";SUB=`${en} | ${yn} | ${dn}`;HEAD=["Subject","Appeared","Absent","Average %","Highest %","Lowest %","Passed","Failed"];
+ROWS=data.sort((a,b)=>a.sort_order-b.sort_order).map(r=>({c:[r.subject_name,r.n_appeared,r.n_absent,r.avg_pct??"",r.highest_pct??"",r.lowest_pct??"",r.n_passed,r.n_failed]}))}
+}else{const rows=await U.fetchAll(()=>{let q=db.from("student_enrollments").select("roll_no,status,students(admission_no,gr_no,first_name,middle_name,last_name,gender,dob,status),divisions!inner(name,class_id,classes(name,sort_order))").eq("academic_year_id",y).order("id");if(div)q=q.eq("division_id",div);else if(cls)q=q.eq("divisions.class_id",cls);return q});
+TITLE="Student list";SUB=`${yn} | ${dn}`;HEAD=["Class","Div","Roll","Adm. no","GR no","Student","Gender","Date of birth","Status"];
+ROWS=rows.sort((a,b)=>a.divisions.classes.sort_order-b.divisions.classes.sort_order||a.divisions.name.localeCompare(b.divisions.name)||(a.roll_no??9999)-(b.roll_no??9999)||a.students.first_name.localeCompare(b.students.first_name)).map(r=>({c:[r.divisions.classes.name,r.divisions.name,r.roll_no??"",r.students.admission_no,r.students.gr_no||"",[r.students.first_name,r.students.middle_name,r.students.last_name].filter(Boolean).join(" "),r.students.gender,r.students.dob,r.status]}))}
+draw();$("lh").innerHTML=await U.letterhead(TITLE,SUB)
+}catch(e){U.friendly(e);U.state(list,"error","Unable to load this report. Please try again.")}});
+$("csv").onclick=()=>{U.download(TITLE.toLowerCase().replace(/\W+/g,"-")+".csv",U.csv([HEAD].concat(ROWS.map(r=>r.c))));U.audit("Report exported: "+TITLE,"reports",null)};
+$("prn").onclick=()=>window.print();
+})();
+</script></body></html>

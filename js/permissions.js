@@ -37,6 +37,10 @@ const NAV = [
   { href: "fee-structure.html", label: "Fee structure", roles: [...ADMIN_ROLES, "accountant"] },
   { href: "fee-check.html", label: "Fee check", roles: [...ADMIN_ROLES, "accountant"] },
   { href: "fee-reports.html", label: "Fee reports", roles: [...ADMIN_ROLES, "accountant"] },
+  { href: "reports.html", label: "Reports", roles: [...ADMIN_ROLES, "teacher", "class_teacher"] },
+  { href: "promotion.html", label: "Student promotion", roles: ["super_admin", "school_admin"] },
+  { href: "year-closing.html", label: "Academic year closing", roles: ["super_admin", "school_admin"] },
+  { href: "settings.html", label: "School settings", roles: ["super_admin", "school_admin"] },
   { href: "users.html", label: "Users and roles", roles: ["super_admin", "school_admin"] },
   { href: "audit-logs.html", label: "Audit logs", roles: ["super_admin", "school_admin"] }
 ];

@@ -20,14 +20,15 @@ try{const {data:e,error}=await db.from("student_enrollments").select("id,roll_no
 if(!e.length)return U.state(list,"empty","No active students in this division.");
 const [a,h]=await Promise.all([db.from("attendance").select("enrollment_id,status").eq("att_date",dt).in("enrollment_id",e.map(x=>x.id)),db.from("school_calendar").select("title").eq("day",dt).in("kind",["holiday","vacation"])]);if(a.error||h.error)throw a.error||h.error;
 const m=Object.fromEntries(a.data.map(x=>[x.enrollment_id,x.status]));const hol=h.data[0];
-if(hol)$("note").innerHTML=`<div class="state error">${U.esc(hol.title)}: this day is a holiday. Attendance cannot be marked.</div>`;else if(new Date(dt+"T00:00").getDay()===0)$("note").innerHTML='<div class="state">This date is a Sunday.</div>';
-$("sv").disabled=!!hol;
+const off=(await db.rpc("day_status",{p_day:dt})).data==="weekly_off";
+if(hol)$("note").innerHTML=`<div class="state error">${U.esc(hol.title)}: this day is a holiday. Attendance cannot be marked.</div>`;else if(off)$("note").innerHTML='<div class="state error">This is a weekly off day. Attendance cannot be marked. To hold school on this day, add a "Special school day" in the School calendar.</div>';
+$("sv").disabled=!!(hol||off);
 list.innerHTML="<table><thead><tr><th>Roll</th><th>Student</th><th>Status</th></tr></thead><tbody>"+e.map(x=>`<tr><td>${U.esc(x.roll_no??"")}</td><td>${U.esc(x.students.first_name+" "+x.students.last_name)}</td><td><select data-e="${x.id}" aria-label="Status for ${U.esc(x.students.first_name)}">${ST.map(s=>`<option value="${s[0]}"${(m[x.id]||"present")===s[0]?" selected":""}>${s[1]}</option>`).join("")}</select></td></tr>`).join("")+"</tbody></table>"}
 catch(e){U.friendly(e);U.state(list,"error","Unable to load attendance. Please try again.")}}
 const setAll=v=>list.querySelectorAll("select[data-e]").forEach(s=>s.value=v);$("ap").onclick=()=>setAll("present");$("aa").onclick=()=>{if(en.length)setAll("absent")};
 $("sv").onclick=async()=>{const rows=[...list.querySelectorAll("select[data-e]")].map(s=>({enrollment_id:s.dataset.e,att_date:$("dt").value,status:s.value}));if(!rows.length)return;
 $("sv").disabled=true;const {error}=await db.from("attendance").upsert(rows,{onConflict:"enrollment_id,att_date"});$("sv").disabled=false;
-if(error){U.friendly(error);return U.toast(String(error.message).includes("holiday")?"This date is a holiday.":"Could not save attendance. Please try again.","err")}
+if(error){U.friendly(error);return U.toast(String(error.message).includes("holiday")?"This date is a holiday or a non-working day.":"Could not save attendance. Please try again.","err")}
 U.audit("Attendance saved ("+rows.length+" students)","attendance",$("dv").value);U.toast("Attendance saved.")};
 $("y").onchange=async()=>{await loadDivs();sheet()};$("dv").onchange=sheet;$("dt").onchange=sheet;
 $("rp").onclick=async()=>{const mo=$("mo").value;if(!mo||!en.length&&!$("dv").value)return;const [yy,mm]=mo.split("-"),last=new Date(yy,mm,0).getDate();

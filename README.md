@@ -50,5 +50,9 @@ Run `supabase/phase9.sql` once. New: Library (books, issue, return, overdue, fin
 ## Phase 10
 Run `supabase/phase10.sql` once. New: Parent portal (child switcher, profile, attendance, results, homework, timetable, fees, receipts, activities, library, notices), Student portal, Teacher portal, and Link parents and students. Students now see only their own records. Accountant and librarian can now see student names (fixes empty lists on the Fees and Library pages for those roles).
 
+## Phase 11
+Run `supabase/phase11.sql` once (after Phase 10). New pages: **Reports** (attendance, exam results, subject performance, student list, each with Print and CSV), **School settings** (details, logo, timings, working days, attendance alert, library fine, receipt prefix, public text), **Audit logs** (filters, CSV, print), **Student promotion** (promote, repeat, transfer, alumni, inactive; bulk, with confirmation) and **Academic year closing** (checks first; nothing is deleted). The School calendar now has a "Special school day". Attendance is refused on holidays, vacations and weekly-off days.
+Notes: marks changed after submission, attendance edits, role changes and setting changes are recorded automatically by the database. Fee and library reports stay on their own pages (linked from Reports). If old exports stop at 1000 rows, raise "Max rows" in Supabase Settings, API.
+
 ## Not built yet
 Phase 2 admin screens (academic years, classes, subjects pages), then students, teachers, staff, attendance, exams, results, report cards, fees, and the rest of your spec. The schema already holds the Phase 2 tables with security rules.

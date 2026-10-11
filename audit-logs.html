@@ -1,0 +1,39 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bitter:wght@600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="css/style.css"><link rel="stylesheet" href="css/print.css" media="print"><title>Audit logs | Saraswati English Medium School</title></head>
+<body><div class="app"><aside id="sidebar" aria-label="Sidebar"></aside>
+<div><header class="top"><button class="btn ghost" id="menu" aria-expanded="false" aria-controls="sidebar">Menu</button><span id="who"></span><button class="btn ghost" id="logout">Sign out</button></header>
+<main><h1>Audit logs</h1>
+<form id="f" class="row noprint"><div><label for="mod">Module</label><select id="mod"><option value="">All</option></select></div>
+<div><label for="act">Action contains</label><input id="act" maxlength="60"></div>
+<div><label for="usr">User</label><select id="usr"><option value="">All</option></select></div>
+<div><label for="d1">From</label><input id="d1" type="date"></div><div><label for="d2">To</label><input id="d2" type="date"></div>
+<button class="btn">Search</button><button type="button" class="btn ghost" id="csv">Export CSV</button><button type="button" class="btn ghost" id="prn">Print</button></form>
+<div id="lh"></div><div id="list" class="tw"><div class="state">Loading...</div></div>
+<p class="noprint"><button class="btn ghost" id="prev">Previous</button> <span id="pg"></span> <button class="btn ghost" id="next">Next</button></p></main></div></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script><script src="js/config.js"></script><script src="js/supabase.js"></script><script src="js/utils.js"></script><script src="js/permissions.js"></script><script src="js/auth.js"></script>
+<script>
+(async()=>{const p=await Auth.require(["super_admin","school_admin"]);Auth.shell(p);const $=id=>document.getElementById(id);const N=50;let page=0,names={};
+const MODS=["profiles","school_settings","academic_years","student_enrollments","marks","attendance","teacher_attendance","fee_payments","students","exams","notices","library","admissions"];
+$("mod").innerHTML='<option value="">All</option>'+MODS.map(m=>`<option>${U.esc(m)}</option>`).join("");
+try{const {data}=await db.from("profiles").select("id,full_name,role").order("full_name");(data||[]).forEach(x=>names[x.id]=x.full_name||"(no name)");
+$("usr").innerHTML='<option value="">All</option>'+(data||[]).map(x=>`<option value="${U.esc(x.id)}">${U.esc(x.full_name||"(no name)")} - ${U.esc(x.role)}</option>`).join("")}catch(e){U.friendly(e)}
+function q(){let r=db.from("audit_logs").select("id,user_id,role,action,module,record_id,metadata,created_at").order("created_at",{ascending:false}).order("id",{ascending:false});
+if($("mod").value)r=r.eq("module",$("mod").value);if($("usr").value)r=r.eq("user_id",$("usr").value);
+const a=$("act").value.trim().replace(/[%,()*]/g,"");if(a)r=r.ilike("action","%"+a+"%");
+if($("d1").value)r=r.gte("created_at",new Date($("d1").value+"T00:00:00").toISOString());
+if($("d2").value)r=r.lt("created_at",new Date(new Date($("d2").value+"T00:00:00").getTime()+864e5).toISOString());return r}
+const when=t=>new Date(t).toLocaleString("en-IN");
+const meta=m=>m?Object.entries(m).map(([k,v])=>k+": "+(v===null?"-":typeof v==="object"?JSON.stringify(v):v)).join("; "):"";
+async function load(){const list=$("list");list.innerHTML='<div class="state">Loading...</div>';
+try{const {data,error}=await q().range(page*N,page*N+N-1);if(error)throw error;
+$("pg").textContent="Page "+(page+1);$("prev").disabled=page===0;$("next").disabled=data.length<N;
+if(!data.length)return U.state(list,"empty",page?"No more records.":"No records match these filters.");
+list.innerHTML="<table><thead><tr><th>When</th><th>User</th><th>Role</th><th>Action</th><th>Module</th><th>Record</th><th>Details</th></tr></thead><tbody>"+data.map(x=>`<tr><td>${U.esc(when(x.created_at))}</td><td>${U.esc(names[x.user_id]||"System")}</td><td>${U.esc(x.role||"")}</td><td>${U.esc(x.action)}</td><td>${U.esc(x.module)}</td><td>${U.esc(x.record_id||"")}</td><td>${U.esc(meta(x.metadata))}</td></tr>`).join("")+"</tbody></table>";
+}catch(e){U.friendly(e);U.state(list,"error","Unable to load the audit logs. Please try again.")}}
+$("f").addEventListener("submit",ev=>{ev.preventDefault();page=0;load()});
+$("prev").onclick=()=>{page--;load()};$("next").onclick=()=>{page++;load()};
+$("csv").onclick=async()=>{try{$("csv").disabled=true;const rows=await U.fetchAll(q);
+U.download("audit-logs.csv",U.csv([["When","User","Role","Action","Module","Record","Details"]].concat(rows.map(x=>[when(x.created_at),names[x.user_id]||"System",x.role||"",x.action,x.module,x.record_id||"",meta(x.metadata)]))));
+U.audit("Audit logs exported","audit_logs",null)}catch(e){U.friendly(e);U.toast("Could not export.","err")}$("csv").disabled=false};
+$("prn").onclick=async()=>{$("lh").innerHTML=await U.letterhead("Audit log",new Date().toLocaleDateString("en-IN"));window.print()};
+load();})();
+</script></body></html>

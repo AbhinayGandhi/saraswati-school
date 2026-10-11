@@ -1,0 +1,66 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bitter:wght@600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="css/style.css"><link rel="stylesheet" href="css/print.css" media="print"><title>Student promotion | Saraswati English Medium School</title></head>
+<body><div class="app"><aside id="sidebar" aria-label="Sidebar"></aside>
+<div><header class="top"><button class="btn ghost" id="menu" aria-expanded="false" aria-controls="sidebar">Menu</button><span id="who"></span><button class="btn ghost" id="logout">Sign out</button></header>
+<main><h1>Student promotion</h1>
+<p class="muted">Choose what happens to each student. Old records are never changed: promoted and repeating students get a <b>new</b> enrollment in the new year, and the old year keeps its history. Nothing is saved until you press Apply.</p>
+<div class="card"><div class="row"><div><label for="fy">From year</label><select id="fy"></select></div><div><label for="ty">To year</label><select id="ty"></select></div><div><label for="fl">Show</label><select id="fl"><option value="">All divisions</option></select></div></div>
+<div class="row noprint"><div><label for="ba">Set shown students to</label><select id="ba"><option value="promote">Promote to next class</option><option value="retain">Repeat same class</option><option value="alumni">Alumni (left after last class)</option><option value="transfer">Transferred out</option><option value="inactive">Inactive</option><option value="skip">Skip (decide later)</option></select></div><button class="btn ghost" id="bapply">Apply to shown</button></div></div>
+<div id="list" class="tw"><div class="state">Loading...</div></div>
+<p id="sum" class="muted"></p><p><button class="btn" id="go" disabled>Apply promotion</button> <button class="btn ghost" id="roll" disabled>Assign roll numbers in new divisions</button></p><div id="out"></div></main></div></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script><script src="js/config.js"></script><script src="js/supabase.js"></script><script src="js/utils.js"></script><script src="js/permissions.js"></script><script src="js/auth.js"></script>
+<script>
+(async()=>{const p=await Auth.require(["super_admin","school_admin"]);Auth.shell(p);const $=id=>document.getElementById(id);
+let years=[],rows=[],tdivs=[],maxOrder=0,usedTargets=new Set();
+const LBL={promote:"Promote",retain:"Repeat",alumni:"Alumni",transfer:"Transferred",inactive:"Inactive",skip:"Skip"};
+try{const {data,error}=await db.from("academic_years").select("*").order("start_date",{ascending:false});if(error)throw error;years=data;
+const c=await db.from("classes").select("sort_order").order("sort_order",{ascending:false}).limit(1);maxOrder=c.data?.[0]?.sort_order??0;
+const ok=y=>!["closed","archived"].includes(y.status);
+$("fy").innerHTML=data.filter(ok).map(y=>`<option value="${U.esc(y.id)}"${y.is_active?" selected":""}>${U.esc(y.name)}</option>`).join("");}catch(e){U.friendly(e);U.state($("list"),"error","Unable to load academic years.")}
+function fillTo(){const f=years.find(y=>y.id===$("fy").value);const t=years.filter(y=>f&&y.start_date>f.start_date&&["upcoming","active"].includes(y.status)).sort((a,b)=>a.start_date.localeCompare(b.start_date));
+$("ty").innerHTML=t.length?t.map(y=>`<option value="${U.esc(y.id)}">${U.esc(y.name)}</option>`).join(""):'<option value="">No later year. Create it first.</option>'}
+const dopts=(cid,sel)=>tdivs.filter(d=>d.class_id===cid).map(d=>`<option value="${U.esc(d.id)}"${d.id===sel?" selected":""}>${U.esc(d.classes.name)} - ${U.esc(d.name)}</option>`).join("");
+function target(r,act){const cur=r.cls_order,pool=tdivs.slice();
+if(act==="retain"){const m=pool.filter(d=>d.class_id===r.class_id);return(m.find(d=>d.name===r.div_name)||m[0])?.id||""}
+if(act==="promote"){const nx=pool.filter(d=>d.classes.sort_order>cur).sort((a,b)=>a.classes.sort_order-b.classes.sort_order);if(!nx.length)return"";const cid=nx[0].class_id,m=nx.filter(d=>d.class_id===cid);return(m.find(d=>d.name===r.div_name)||m[0]).id}
+return""}
+function defAct(r){return r.cls_order>=maxOrder?"alumni":"promote"}
+function setAct(r,act){r.action=act;r.target=(act==="promote"||act==="retain")?target(r,act):""}
+async function load(){const f=$("fy").value,t=$("ty").value;rows=[];$("go").disabled=$("roll").disabled=true;$("out").innerHTML="";
+if(!f||!t)return U.state($("list"),"empty",t?"Choose a year.":"Create the next academic year first (Academic years page).");U.state($("list"),"","Loading...");
+try{const [d,e]=await Promise.all([db.from("divisions").select("id,name,class_id,classes(name,sort_order)").eq("academic_year_id",t),
+U.fetchAll(()=>db.from("student_enrollments").select("id,roll_no,students(admission_no,first_name,last_name),divisions(id,name,class_id,classes(name,sort_order))").eq("academic_year_id",f).eq("status","active").order("id"))]);
+if(d.error)throw d.error;tdivs=d.data;
+const ex=await U.fetchAll(()=>db.from("student_enrollments").select("student_id").eq("academic_year_id",t).order("id"));usedTargets=new Set(ex.map(x=>x.student_id));
+rows=e.map(x=>({id:x.id,sid:x.students?.id,name:[x.students.first_name,x.students.last_name].join(" "),adm:x.students.admission_no,roll:x.roll_no,div_id:x.divisions.id,div_name:x.divisions.name,class_id:x.divisions.class_id,cls:x.divisions.classes.name,cls_order:x.divisions.classes.sort_order,action:"",target:""}));
+rows.sort((a,b)=>a.cls_order-b.cls_order||a.div_name.localeCompare(b.div_name)||(a.roll??9999)-(b.roll??9999)||a.name.localeCompare(b.name));
+rows.forEach(r=>setAct(r,defAct(r)));
+const dv=[...new Map(rows.map(r=>[r.div_id,r.cls+" - "+r.div_name]))];$("fl").innerHTML='<option value="">All divisions</option>'+dv.map(([i,n])=>`<option value="${U.esc(i)}">${U.esc(n)}</option>`).join("");
+draw()}catch(e){U.friendly(e);U.state($("list"),"error","Unable to load students. Please try again.")}}
+const shown=()=>rows.filter(r=>!$("fl").value||r.div_id===$("fl").value);
+function draw(){const list=$("list"),s=shown();
+if(!rows.length){$("sum").textContent="";return U.state(list,"empty","No active students are left in this year. Everyone has been processed.")}
+list.innerHTML="<table><thead><tr><th>Class</th><th>Roll</th><th>Adm. no</th><th>Student</th><th>Action</th><th>New class and division</th></tr></thead><tbody>"+s.map(r=>`<tr data-id="${U.esc(r.id)}"><td>${U.esc(r.cls)} - ${U.esc(r.div_name)}</td><td>${U.esc(r.roll??"")}</td><td>${U.esc(r.adm)}</td><td>${U.esc(r.name)}</td>
+<td><select class="act" aria-label="Action for ${U.esc(r.name)}">${Object.entries(LBL).map(([k,v])=>`<option value="${k}"${r.action===k?" selected":""}>${v}</option>`).join("")}</select></td>
+<td>${r.action==="promote"||r.action==="retain"?`<select class="tgt" aria-label="New division for ${U.esc(r.name)}"><option value="">Choose...</option>${(r.action==="retain"?dopts(r.class_id,r.target):tdivs.filter(d=>d.classes.sort_order>r.cls_order).sort((a,b)=>a.classes.sort_order-b.classes.sort_order||a.name.localeCompare(b.name)).map(d=>`<option value="${U.esc(d.id)}"${d.id===r.target?" selected":""}>${U.esc(d.classes.name)} - ${U.esc(d.name)}</option>`).join(""))}</select>`:"-"}</td></tr>`).join("")+"</tbody></table>";
+summary()}
+function summary(){const c={};let bad=0;rows.forEach(r=>{c[r.action]=(c[r.action]||0)+1;if((r.action==="promote"||r.action==="retain")&&!r.target)bad++});
+$("sum").textContent=Object.entries(LBL).filter(([k])=>c[k]).map(([k,v])=>v+": "+c[k]).join(" | ")+(bad?" | "+bad+" students need a new division":"");
+$("go").disabled=!!bad||rows.every(r=>r.action==="skip")}
+$("list").addEventListener("change",ev=>{const tr=ev.target.closest("tr[data-id]");if(!tr)return;const r=rows.find(x=>x.id===tr.dataset.id);
+if(ev.target.classList.contains("act")){setAct(r,ev.target.value);draw()}else if(ev.target.classList.contains("tgt")){r.target=ev.target.value;summary()}});
+$("bapply").onclick=()=>{const a=$("ba").value;shown().forEach(r=>setAct(r,a));draw()};
+$("fl").onchange=draw;$("fy").onchange=()=>{fillTo();load()};$("ty").onchange=load;
+$("go").onclick=async()=>{const f=$("fy").value,t=$("ty").value,todo=rows.filter(r=>r.action!=="skip");const c={};todo.forEach(r=>c[r.action]=(c[r.action]||0)+1);
+const txt=Object.entries(c).map(([k,v])=>LBL[k]+": "+v).join(", ");
+if(!await U.confirm("Apply promotion for "+todo.length+" students?\n"+txt+"\nOld year records stay unchanged."))return;
+$("go").disabled=true;let done=0,failed=[];
+try{for(let i=0;i<todo.length;i+=100){const chunk=todo.slice(i,i+100).map(r=>({enrollment_id:r.id,action:r.action,division_id:r.target||null}));
+const {data,error}=await db.rpc("promote_students",{p_from:f,p_to:t,p_items:chunk});if(error)throw error;done+=data.done;failed=failed.concat(data.failed)}
+}catch(e){U.friendly(e);U.toast("Stopped because of an error. Reload to see what was saved; saved students are not repeated.","err")}
+const names=Object.fromEntries(rows.map(r=>[r.id,r.name]));
+$("out").innerHTML=`<div class="state">${done} students processed.</div>`+(failed.length?"<h2>Not processed</h2><table><thead><tr><th>Student</th><th>Reason</th></tr></thead><tbody>"+failed.map(x=>`<tr><td>${U.esc(names[x.enrollment_id]||x.enrollment_id)}</td><td>${U.esc(x.reason)}</td></tr>`).join("")+"</tbody></table>":"");
+U.toast("Promotion applied.");await load();$("roll").disabled=false};
+$("roll").onclick=async()=>{if(!await U.confirm("Number students from 1 in alphabetical order in every division of the new year? Existing roll numbers will be replaced."))return;
+$("roll").disabled=true;try{let n=0;for(const d of tdivs){const {data,error}=await db.rpc("assign_roll_numbers",{p_division:d.id});if(error)throw error;n+=data||0}U.toast("Roll numbers assigned to "+n+" students.")}catch(e){U.friendly(e);U.toast("Could not assign roll numbers.","err")}$("roll").disabled=false};
+fillTo();await load();})();
+</script></body></html>

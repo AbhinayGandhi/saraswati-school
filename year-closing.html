@@ -1,0 +1,33 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bitter:wght@600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="css/style.css"><link rel="stylesheet" href="css/print.css" media="print"><title>Academic year closing | Saraswati English Medium School</title></head>
+<body><div class="app"><aside id="sidebar" aria-label="Sidebar"></aside>
+<div><header class="top"><button class="btn ghost" id="menu" aria-expanded="false" aria-controls="sidebar">Menu</button><span id="who"></span><button class="btn ghost" id="logout">Sign out</button></header>
+<main><h1>Academic year closing</h1>
+<p class="muted">Closing a year never deletes anything. Students, fees, marks and attendance of the closed year stay available for reports and history. Move students to the new year first on the <a href="promotion.html">Student promotion</a> page.</p>
+<div class="card"><div class="row"><div><label for="old">Year to close</label><select id="old"></select></div><div><label for="nw">Next year (becomes active)</label><select id="nw"></select></div></div>
+<div id="chk" class="tw"><div class="state">Choose a year.</div></div>
+<div id="forceBox" hidden><label><input type="checkbox" id="force"> Close anyway (I understand some students or exams are not finished)</label></div>
+<div><label for="cf">Type the year name to confirm</label><input id="cf" autocomplete="off"></div>
+<p><button class="btn" id="go" disabled>Close academic year</button></p></div></main></div></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script><script src="js/config.js"></script><script src="js/supabase.js"></script><script src="js/utils.js"></script><script src="js/permissions.js"></script><script src="js/auth.js"></script>
+<script>
+(async()=>{const p=await Auth.require(["super_admin","school_admin"]);Auth.shell(p);const $=id=>document.getElementById(id);let years=[],ready=false;
+async function load(){try{const {data,error}=await db.from("academic_years").select("*").order("start_date",{ascending:false});if(error)throw error;years=data;
+const open=data.filter(y=>!["closed","archived"].includes(y.status));
+$("old").innerHTML=open.length?open.map(y=>`<option value="${U.esc(y.id)}">${U.esc(y.name)} (${U.esc(y.status)})</option>`).join(""):'<option value="">No open year</option>';
+await pick()}catch(e){U.friendly(e);U.state($("chk"),"error","Unable to load academic years.")}}
+async function pick(){const id=$("old").value,y=years.find(v=>v.id===id);ready=false;$("go").disabled=true;$("forceBox").hidden=true;$("force").checked=false;
+if(!y){$("nw").innerHTML='<option value="">-</option>';return U.state($("chk"),"empty","Every academic year is already closed.")}
+const nx=years.filter(v=>v.status==="upcoming"&&v.start_date>y.start_date).sort((a,b)=>a.start_date.localeCompare(b.start_date));
+$("nw").innerHTML=(y.is_active?"":'<option value="">None (just close)</option>')+nx.map(v=>`<option value="${U.esc(v.id)}">${U.esc(v.name)}</option>`).join("");
+if(y.is_active&&!nx.length)return U.state($("chk"),"error","Create the next academic year first (Academic years page), then come back.");
+try{const {data,error}=await db.rpc("year_closing_check",{p_year:id});if(error)throw error;const c=data[0];
+const row=(ok,t)=>`<tr><td>${ok?"OK":"Check"}</td><td>${U.esc(t)}</td></tr>`;
+$("chk").innerHTML="<table><tbody>"+row(+c.active_enrollments===0,c.active_enrollments+" of "+c.total_enrollments+" students not yet promoted, retained, transferred or marked alumni")+row(+c.draft_exams===0,c.draft_exams+" exams not published")+row(+c.open_marks===0,c.open_marks+" subjects with marks not yet submitted")+row(true,"Outstanding fees: Rs. "+Number(c.outstanding).toLocaleString("en-IN")+" (stays on record; fees can still be collected after closing)")+"</tbody></table>";
+ready=+c.active_enrollments===0&&+c.draft_exams===0;$("forceBox").hidden=ready;sync()}catch(e){U.friendly(e);U.state($("chk"),"error","Unable to check this year.")}}
+function sync(){const y=years.find(v=>v.id===$("old").value);$("go").disabled=!y||$("cf").value.trim()!==y.name||!(ready||$("force").checked)||(y.is_active&&!$("nw").value)}
+$("old").onchange=pick;$("nw").onchange=sync;$("cf").oninput=sync;$("force").onchange=sync;
+$("go").onclick=async()=>{const y=years.find(v=>v.id===$("old").value);if(!await U.confirm("Close "+y.name+"? The next year will become active. This cannot be undone from this page."))return;
+$("go").disabled=true;try{const {error}=await db.rpc("close_academic_year",{p_old:y.id,p_new:$("nw").value||null,p_force:!ready&&$("force").checked});if(error)throw error;
+U.toast("Academic year closed.");$("cf").value="";await load()}catch(e){U.friendly(e);U.toast(String(e.message||"").includes("not ready")?"Some students or exams are still pending.":"Could not close the year. Please try again.","err");sync()}};
+load();})();
+</script></body></html>
