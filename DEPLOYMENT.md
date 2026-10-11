@@ -4,7 +4,7 @@ Do these in order. Tick each line. Nothing here needs programming.
 
 ## A. New installation (nothing set up yet)
 1. Supabase (free): create a project. Choose a region near you (for India, Mumbai/Singapore). Save the database password in a safe place (not in GitHub).
-2. SQL Editor: paste the whole of `supabase/schema.sql` and press Run. It already contains every phase up to Phase 12. (If you see "already exists" you are on an old project: use section B instead.)
+2. SQL Editor: paste the whole of `supabase/ALL-IN-ONE.sql` and press Run. It contains every phase up to Phase 12.
 3. Project Settings, API: copy **Project URL** and the **anon / publishable** key. Never use the `service_role` key anywhere in this website.
 4. GitHub: create a repository, upload all files. Edit `js/config.js` and paste the two values.
 5. Create the first admin (see README, Setup step 6).
@@ -13,10 +13,10 @@ Do these in order. Tick each line. Nothing here needs programming.
 8. Sign in as admin. Open **School settings** and fill in the school name, address, phone, email, principal, logo, timings, working days.
 9. Create the academic year, classes and divisions, subjects, then staff logins on **Users and roles**.
 
-## B. Existing project (you already ran earlier phases)
-Run once each, in this order, only the ones you have not run yet, in the Supabase SQL Editor:
-`phase6b, phase7, phase7b, phase7c, phase8, phase9, phase10, phase11, phase12` (all in the `supabase` folder).
+## B. Existing project (you already ran some or all earlier phases)
+Run **only** `supabase/ALL-IN-ONE.sql` in the SQL Editor. It is safe to run again and again: it keeps your data, skips what already exists, adds whatever is missing and brings every rule and function to the latest version. Run it after every new update too.
 Then upload the changed website files to GitHub (never overwrite your own `js/config.js`).
+To see the state of the database at any time, run `supabase/CHECK.sql` (it only reads).
 
 ## C. Before you tell parents and teachers
 - [ ] Sign in with each role (admin, teacher, class teacher, accountant, reception, librarian, parent, student) and check you see only what that person should.

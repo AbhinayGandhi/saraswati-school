@@ -9,7 +9,10 @@
 const list=$("list");let divs=[],cls=[];
 try{const [c,s,t]=await Promise.all([db.from("classes").select("id,name").order("sort_order"),db.from("subjects").select("id,name").eq("is_active",true).order("sort_order").order("name"),db.from("profiles").select("id,full_name").in("role",["teacher","class_teacher"]).eq("is_active",true).order("full_name")]);
 if(c.error||s.error||t.error)throw c.error||s.error||t.error;cls=c.data;await Ex.yearSelect($("y"));
-$("sb").innerHTML=s.data.map(a=>`<option value="${a.id}">${U.esc(a.name)}</option>`).join("");$("tc").innerHTML=t.data.map(a=>`<option value="${a.id}">${U.esc(a.full_name)}</option>`).join("");}catch(e){U.friendly(e);return U.state(list,"error","Unable to load. Please try again.")}
+$("sb").innerHTML=s.data.map(a=>`<option value="${a.id}">${U.esc(a.name)}</option>`).join("");$("tc").innerHTML=t.data.map(a=>`<option value="${a.id}">${U.esc(a.full_name)}</option>`).join("");
+{const m=[];if(!s.data.length)m.push('No subjects yet. Add them on the <a href="subjects.html">Subjects</a> page first.');
+if(!t.data.length)m.push('No active teacher logins yet. On <a href="users.html">Users and roles</a>, give a user the role Teacher or Class teacher and make them Active.');
+if(m.length){const h=document.createElement("div");h.className="state error";h.setAttribute("role","alert");h.innerHTML=m.join("<br>");$("f").before(h)}}}catch(e){U.friendly(e);return U.state(list,"error","Unable to load the subjects or teachers. If this keeps happening, run supabase/ALL-IN-ONE.sql once in Supabase (it adds anything missing), then reload.")}
 async function load(){try{const {data:d,error}=await db.from("divisions").select("id,name,class_id").eq("academic_year_id",$("y").value);if(error)throw error;
 divs=d.map(x=>({...x,label:(cls.find(c=>c.id===x.class_id)?.name||"")+" - "+x.name,o:cls.findIndex(c=>c.id===x.class_id)})).sort((a,b)=>a.o-b.o||a.name.localeCompare(b.name));
 $("dv").innerHTML=divs.map(x=>`<option value="${x.id}">${U.esc(x.label)}</option>`).join("");

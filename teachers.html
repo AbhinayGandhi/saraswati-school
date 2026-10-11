@@ -6,5 +6,9 @@
 <script>
 (async()=>{const p=await Auth.require(ADMIN_ROLES);Auth.shell(p);
 People.init({table:"teachers",label:"Teacher",cols:[["employee_id","Employee ID"],["name","Name"],["qualification","Qualification"],["subject","Subject"],["mobile","Mobile"],["is_public","On public website"]],fields:[{id:"employee_id",label:"Employee ID",required:1},{id:"name",label:"Name",required:1},{id:"qualification",label:"Qualification"},{id:"subject",label:"Subject"},{id:"mobile",label:"Mobile",type:"tel"},{id:"email",label:"Email",type:"email"},{id:"joining_date",label:"Joining date",type:"date"},{id:"is_public",label:"Show on public website",options:["false","true"]}]});
+// Subject suggestions from the Subjects page (you can still type anything, e.g. "Maths, Science")
+try{const {data}=await db.from("subjects").select("name").eq("is_active",true).order("name");const f=document.getElementById("subject");
+if(f&&data&&data.length){const dl=document.createElement("datalist");dl.id="subjlist";dl.innerHTML=data.map(x=>`<option value="${U.esc(x.name)}">`).join("");document.body.appendChild(dl);f.setAttribute("list","subjlist");f.placeholder="Choose or type"}
+else if(f){f.placeholder="Add subjects on the Subjects page first"}}catch(e){U.friendly(e)}
 })();
 </script></body></html>
