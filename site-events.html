@@ -1,0 +1,12 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="manifest" href="manifest.json"><meta name="theme-color" content="#1f3a5f"><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bitter:wght@600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="css/style.css"><link rel="stylesheet" href="css/public.css"><link rel="stylesheet" href="css/print.css" media="print"><meta name="description" content="School events at Saraswati English Medium School."><title>Events | Saraswati English Medium School</title></head>
+<body class="pub"><a class="skip" href="#main">Skip to content</a><header id="sh"></header><main id="main" style="padding:0">
+<div class="page-title"><div class="wrap"><h1>Events</h1><p class="ph" style="margin:.3rem 0 0"></p></div></div><section class="sec"><div class="wrap"><h2>Upcoming</h2><div class="cards" id="up"></div></div></section><section class="sec alt"><div class="wrap"><h2>Past events</h2><div class="cards" id="past"></div></div></section>
+</main><footer id="sf"></footer>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script><script src="js/config.js"></script><script src="js/supabase.js"></script><script src="js/public.js"></script>
+<script>
+(()=>{const t=new Date().toLocaleDateString("en-CA");const dr=(c,e)=>{c.append(P.el("h3",e.title),P.el("p",e.event_type+" | "+e.event_date+(e.start_time?" "+e.start_time.slice(0,5):"")+(e.venue?" | "+e.venue:""),"meta"),P.el("p",e.description||""))};
+const q=()=>db.from("events").select("title,event_type,event_date,start_time,venue,description").eq("is_public",true).eq("status","published");
+P.load(document.getElementById("up"),q().gte("event_date",t).order("event_date"),dr,"No upcoming events at the moment.");
+P.load(document.getElementById("past"),q().lt("event_date",t).order("event_date",{ascending:false}).limit(20),dr,"No past events yet.");})();
+</script>
+</body></html>

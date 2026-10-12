@@ -1,0 +1,9 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="manifest" href="manifest.json"><meta name="theme-color" content="#1f3a5f"><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bitter:wght@600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="css/style.css"><link rel="stylesheet" href="css/public.css"><link rel="stylesheet" href="css/print.css" media="print"><meta name="description" content="Public notices of Saraswati English Medium School."><title>Notices | Saraswati English Medium School</title></head>
+<body class="pub"><a class="skip" href="#main">Skip to content</a><header id="sh"></header><main id="main" style="padding:0">
+<div class="page-title"><div class="wrap"><h1>Notices</h1><p class="ph" style="margin:.3rem 0 0"></p></div></div><section class="sec"><div class="wrap"><div class="cards" id="nl" style="grid-template-columns:1fr"></div></div></section>
+</main><footer id="sf"></footer>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script><script src="js/config.js"></script><script src="js/supabase.js"></script><script src="js/public.js"></script>
+<script>
+P.load(document.getElementById("nl"),db.from("notices").select("title,description,notice_date,notice_type,priority").eq("is_public",true).eq("status","published").order("notice_date",{ascending:false}).limit(50),(c,n)=>{c.append(P.el("h3",n.title),P.el("p",(n.notice_type||"General")+(n.priority!=="normal"?" | "+n.priority:"")+" | "+n.notice_date,"meta"));const p=P.el("p",n.description||"");p.style.whiteSpace="pre-wrap";c.append(p)},"No notices at the moment.");
+</script>
+</body></html>
