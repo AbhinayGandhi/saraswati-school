@@ -1857,6 +1857,14 @@ do $__s$ begin execute $__q$create index if not exists enquiries_class_idx on ad
 
 do $__s$ begin execute $__q$create index if not exists enquiries_created_idx on admission_enquiries (created_at desc)$__q$; exception when duplicate_table or duplicate_object or duplicate_function or duplicate_column or duplicate_schema or duplicate_alias or unique_violation or invalid_function_definition then null; end $__s$;
 
+do $__s$ begin execute $__q$alter table notices add column if not exists notice_type text not null default 'General'$__q$; exception when duplicate_table or duplicate_object or duplicate_function or duplicate_column or duplicate_schema or duplicate_alias or unique_violation or invalid_function_definition then null; end $__s$;
+
+do $__s$ begin execute $__q$do $$ begin
+  alter table notices add constraint notices_type_chk check (notice_type in ('General','Holiday','Exam','Fee','Parent','Student','Teacher','Emergency'));
+exception when duplicate_object then null; end $$$__q$; exception when duplicate_table or duplicate_object or duplicate_function or duplicate_column or duplicate_schema or duplicate_alias or unique_violation or invalid_function_definition then null; end $__s$;
+
+do $__s$ begin execute $__q$alter table teachers add column if not exists photo_path text$__q$; exception when duplicate_table or duplicate_object or duplicate_function or duplicate_column or duplicate_schema or duplicate_alias or unique_violation or invalid_function_definition then null; end $__s$;
+
 
 -- Finished. If you see 'Success' with no red error, your database is complete and up to date.
 select 'ALL-IN-ONE finished' as result;
