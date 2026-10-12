@@ -1,7 +1,12 @@
 const Auth = {
   async login(email, password) {
     const { error } = await db.auth.signInWithPassword({ email, password });
-    if (error) throw new Error("Incorrect email or password.");
+    if (error) {
+      console.error(error);
+      // Wrong password and unknown user are the normal cases; anything else is a server problem, so show its real message.
+      if (error.status === 400 && /invalid login|invalid_credentials/i.test((error.code || "") + " " + (error.message || ""))) throw new Error("Incorrect email or password.");
+      throw new Error("Sign-in problem: " + (error.message || "unknown error") + (error.status ? " (code " + error.status + ")" : ""));
+    }
   },
   async logout() { await db.auth.signOut(); location.href = "login.html"; },
   async resetPassword(email) {
