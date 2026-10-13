@@ -2159,14 +2159,22 @@ begin
     where e.id = new.enrollment_id;
   if nm is null then return new; end if;
   dt := to_char(new.att_date, 'DD-MM-YYYY');
+  begin
   insert into notifications (user_id, title, message, type, related_module, related_record)
   select distinct g.user_id, 'Absent: ' || nm, nm || ' (' || cls || ') was marked absent on ' || dt || '. If this is not expected, please contact the school. / '
          || nm || ' (' || cls || ') हे ' || dt || ' रोजी गैरहजर होते. हे अपेक्षित नसल्यास कृपया शाळेशी संपर्क साधा.', 'notice', 'attendance', new.id::text
   from student_guardians g join profiles p on p.id = g.user_id and p.is_active
   where g.student_id = (select student_id from student_enrollments where id = new.enrollment_id) and g.user_id is not null
     and not exists (select 1 from notifications n where n.user_id = g.user_id and n.related_module = 'attendance' and n.related_record = new.id::text);
+  exception when others then null; -- attendance must never fail because of a notification problem
+  end;
   return new;
 end $$$__q$; exception when duplicate_table or duplicate_object or duplicate_function or duplicate_column or duplicate_schema or duplicate_alias or unique_violation or invalid_function_definition then null; end $__s$;
+
+do $__s$ begin execute $__q$create or replace function can_mark_attendance(eid uuid) returns boolean language sql stable security definer set search_path = public as $$
+  select coalesce(current_role_name() in ('super_admin','school_admin','principal'), false)
+  or exists (select 1 from student_enrollments e join divisions d on d.id = e.division_id where e.id = eid
+      and (d.class_teacher_id = auth.uid() or exists (select 1 from class_subjects cs where cs.division_id = d.id and cs.teacher_id = auth.uid()))) $$$__q$; exception when duplicate_table or duplicate_object or duplicate_function or duplicate_column or duplicate_schema or duplicate_alias or unique_violation or invalid_function_definition then null; end $__s$;
 
 do $__s$ begin execute $__q$revoke all on function notify_absence() from public, anon, authenticated$__q$; exception when duplicate_table or duplicate_object or duplicate_function or duplicate_column or duplicate_schema or duplicate_alias or unique_violation or invalid_function_definition then null; end $__s$;
 

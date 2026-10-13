@@ -47,6 +47,6 @@ $("list").addEventListener("change",e=>{const s=e.target.closest("select[data-e]
 $("rem").onclick=async()=>{const n=enr.filter(e=>!st[e.id]).length;if(!n)return U.toast("Everyone is already marked.");if(!await U.confirm("Mark the remaining "+n+" students as ABSENT? Their parents will be notified when you save."))return;enr.forEach(e=>{if(!st[e.id])st[e.id]="absent"});draw()};
 $("sv").onclick=async()=>{const rows=enr.filter(e=>st[e.id]&&st[e.id]!==orig[e.id]).map(e=>({enrollment_id:e.id,att_date:$("dt").value,status:st[e.id]}));if(!rows.length)return U.toast("Nothing new to save.");
 $("sv").disabled=true;try{const {error}=await db.from("attendance").upsert(rows,{onConflict:"enrollment_id,att_date"});if(error)throw error;rows.forEach(r=>orig[r.enrollment_id]=r.status);U.audit("QR attendance saved","attendance",$("dv").value);U.toast("Saved "+rows.length+" students.")}
-catch(e){U.friendly(e);U.toast(/holiday/i.test(e.message||"")?"This date is a holiday.":"Could not save. Please try again.","err")}$("sv").disabled=holiday};
+catch(e){U.friendly(e);console.error(e);U.toast(/holiday/i.test(e.message||"")?"This date is a holiday.":"Could not save: "+((e&&(e.message||e.details))||"unknown error"),"err")}$("sv").disabled=holiday};
 $("dv").onchange=load;$("dt").onchange=load;load();
 })();</script><script src="js/i18n.js"></script></body></html>
