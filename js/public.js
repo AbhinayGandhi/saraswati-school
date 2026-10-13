@@ -3,7 +3,7 @@
   const PAGES = [["index.html","Home"],["about.html","About"],["academics.html","Academics"],["site-admissions.html","Admissions"],["faculty.html","Faculty"],["facilities.html","Facilities"],["site-activities.html","Activities"],["site-events.html","Events"],["gallery.html","Gallery"],["site-notices.html","Notices"],["contact.html","Contact"]];
   const here = location.pathname.split("/").pop() || "index.html";
   const el = (tag, txt, cls) => { const e = document.createElement(tag); if (txt != null) e.textContent = txt; if (cls) e.className = cls; return e; };
-  const S = { school_name: "Saraswati English Medium School", address: "[School Address]", phone: "[School Phone]", email: "[School Email]", principal: "[Principal Name]" };
+  const S = { home_tagline: "", about_text: "", vision: "", mission: "", principal_message: "", school_name: "Saraswati English Medium School", address: "[School Address]", phone: "[School Phone]", email: "[School Email]", principal: "[Principal Name]" };
 
   function header() {
     const h = document.getElementById("sh"); if (!h) return;
@@ -29,7 +29,7 @@
     cols.append(a, b, c); w.append(cols, el("small", "© Saraswati English Medium School")); f.appendChild(w);
   }
   function fill() {
-    document.querySelectorAll("[data-set]").forEach(n => { const v = S[n.dataset.set]; if (v) n.textContent = v; });
+    document.querySelectorAll("[data-set]").forEach(n => { const v = S[n.dataset.set]; if (v) { n.textContent = v; n.classList.remove("ph"); if (n.dataset.set === "about_text" || n.dataset.set === "principal_message") n.style.whiteSpace = "pre-wrap"; } });
     document.querySelectorAll(".d-address").forEach(n => n.textContent = S.address);
     document.querySelectorAll(".d-phone").forEach(n => n.textContent = S.phone);
     document.querySelectorAll(".d-email").forEach(n => n.textContent = S.email);

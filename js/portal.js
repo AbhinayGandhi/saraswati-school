@@ -64,9 +64,19 @@ const Portal = {
         const [f, pay] = await Promise.all([db.from("student_fees").select("assigned_amount,concession_amount,paid_amount,balance,due_date,status,fee_types(name)").eq("enrollment_id", k.e.id), db.from("fee_payments").select("receipt_no,amount,payment_date,mode,student_fees!inner(enrollment_id)").eq("student_fees.enrollment_id", k.e.id).order("payment_date", { ascending: false }).limit(100)]);
         if (f.error || pay.error) throw f.error || pay.error; if (!f.data.length) return none("No fees have been assigned yet.");
         const sum = c => f.data.reduce((a, x) => a + Number(x[c]), 0), rc = {}; pay.data.forEach(x => { const r = rc[x.receipt_no] = rc[x.receipt_no] || { d: x.payment_date, m: x.mode, a: 0 }; r.a += Number(x.amount); });
+        let upi = ""; try {
+          const [pi, cl] = await Promise.all([db.rpc("payment_info"), db.from("payment_claims").select("amount,paid_on,upi_ref,status,review_note,receipt_no,created_at").eq("enrollment_id", k.e.id).order("created_at", { ascending: false }).limit(20)]);
+          if (pi.error || cl.error) throw pi.error || cl.error; const bal = sum("balance"), id = pi.data && pi.data.upi_id;
+          if (id && bal > 0 || cl.data.length) {
+            upi = `<h3 style="margin-top:1.5rem">Pay by UPI</h3>`;
+            if (id && bal > 0) upi += `<p>Pay to UPI ID <b>${U.esc(id)}</b> (${U.esc(pi.data.payee)}) from any UPI app. <a class="btn sm" href="upi://pay?pa=${encodeURIComponent(id)}&pn=${encodeURIComponent(pi.data.payee)}&cu=INR&tn=${encodeURIComponent("School fee")}">Open my UPI app</a></p>
+<form id="upif" class="panel row"><p style="grid-column:1/-1;margin:0">After paying, enter the UPI reference number (also called UTR or transaction ID). The school office checks it and then issues your receipt.</p><div><label for="ua">Amount paid (Rs.)</label><input id="ua" type="number" step="0.01" min="1" max="${bal}" value="${bal}" required></div><div><label for="ud">Payment date</label><input id="ud" type="date" max="${Fee.today()}" value="${Fee.today()}" required></div><div><label for="ur">UPI reference number</label><input id="ur" maxlength="30" pattern="[A-Za-z0-9]{6,30}" title="6 to 30 letters or digits" required></div><div><label for="un">Note (optional)</label><input id="un" maxlength="300"></div><div><button class="btn" id="ub">Send for verification</button></div></form>`;
+            if (cl.data.length) upi += `<div class="tw"><table><thead><tr><th>Date</th><th>Amount</th><th>Reference</th><th>Status</th></tr></thead><tbody>${cl.data.map(x => `<tr><td>${U.esc(x.paid_on)}</td><td>${Fee.inr(x.amount)}</td><td>${U.esc(x.upi_ref)}</td><td>${x.status === "approved" ? `Confirmed${x.receipt_no ? ` (<a href="receipt.html?no=${encodeURIComponent(x.receipt_no)}">${U.esc(x.receipt_no)}</a>)` : ""}` : x.status === "rejected" ? `Not confirmed${x.review_note ? ": " + U.esc(x.review_note) : ""}` : "Waiting for verification"}</td></tr>`).join("")}</tbody></table></div>`;
+          }
+        } catch (e) { console.error(e); }
         return `<div class="grid"><div class="card"><b>${Fee.inr(sum("assigned_amount"))}</b>Total fee</div><div class="card"><b>${Fee.inr(sum("concession_amount"))}</b>Concession</div><div class="card"><b>${Fee.inr(sum("paid_amount"))}</b>Paid</div><div class="card"><b>${Fee.inr(sum("balance"))}</b>Outstanding</div></div>
 <div class="tw" style="margin-top:1rem"><table><thead><tr><th>Fee</th><th>Amount</th><th>Concession</th><th>Paid</th><th>Balance</th><th>Last date</th><th>Status</th></tr></thead><tbody>${f.data.map(x => `<tr><td>${U.esc(x.fee_types.name)}</td><td>${Fee.inr(x.assigned_amount)}</td><td>${Fee.inr(x.concession_amount)}</td><td>${Fee.inr(x.paid_amount)}</td><td>${Fee.inr(x.balance)}</td><td>${U.esc(x.due_date)}</td><td>${U.esc(Fee.label(Fee.status(x)))}</td></tr>`).join("")}</tbody></table></div>
-<h3 style="margin-top:1rem">Payment history</h3>${Object.keys(rc).length ? `<div class="tw"><table><thead><tr><th>Receipt</th><th>Date</th><th>Mode</th><th>Amount</th></tr></thead><tbody>${Object.entries(rc).map(([n, r]) => `<tr><td><a href="receipt.html?no=${encodeURIComponent(n)}">${U.esc(n)}</a></td><td>${U.esc(r.d)}</td><td>${U.esc(r.m.replace("_", " "))}</td><td>${Fee.inr(r.a)}</td></tr>`).join("")}</tbody></table></div>` : "<p>No payments yet.</p>"}`;
+<h3 style="margin-top:1rem">Payment history</h3>${Object.keys(rc).length ? `<div class="tw"><table><thead><tr><th>Receipt</th><th>Date</th><th>Mode</th><th>Amount</th></tr></thead><tbody>${Object.entries(rc).map(([n, r]) => `<tr><td><a href="receipt.html?no=${encodeURIComponent(n)}">${U.esc(n)}</a></td><td>${U.esc(r.d)}</td><td>${U.esc(r.m.replace("_", " "))}</td><td>${Fee.inr(r.a)}</td></tr>`).join("")}</tbody></table></div>` : "<p>No payments yet.</p>"}${upi}`;
       },
       async activities(k) {
         if (!k.e) return noEnr;
@@ -94,6 +104,16 @@ const Portal = {
     $("tb").addEventListener("click", ev => { const b = ev.target.closest("button[data-t]"); if (b) { tab = b.dataset.t; render(); } });
     if ($("ks")) $("ks").onchange = () => { cur = kids[Number($("ks").value)]; hwSub = hwFrom = ""; render(); };
     pane.addEventListener("change", ev => { if (ev.target.id === "hs") { hwSub = ev.target.value; render(); } if (ev.target.id === "hf") { hwFrom = ev.target.value; render(); } });
+    pane.addEventListener("submit", async ev => {
+      if (ev.target.id !== "upif") return; ev.preventDefault();
+      const amt = Number($("ua").value); if (!(amt > 0)) return U.toast("Enter the amount.", "err");
+      $("ub").disabled = true;
+      try {
+        const { error } = await db.rpc("submit_payment_claim", { p_enrollment: cur.e.id, p_amount: amt, p_date: $("ud").value, p_ref: $("ur").value.trim(), p_note: $("un").value.trim() || null });
+        if (error) { const m = error.message || ""; U.toast(/duplicate/.test(m) ? "This reference number was already sent." : /exceeds/.test(m) ? "The amount is more than the balance." : /too many/.test(m) ? "Several payments are already waiting. Please wait for the school to verify them." : /invalid/.test(m) ? "Please check the amount, date and reference number." : "Could not send. Please try again.", "err"); $("ub").disabled = false; return; }
+        U.toast("Sent. The school will verify it and issue a receipt."); render();
+      } catch (e) { U.friendly(e); U.toast("Could not send. Please try again.", "err"); $("ub").disabled = false; }
+    });
     pane.addEventListener("click", async ev => {
       const b = ev.target.closest("button[data-hw],button[data-nt]"); if (!b) return;
       try { if (b.dataset.hw) await Gal.open("homework", cur.hw.find(x => x.id === b.dataset.hw).attachment_path); else await Gal.open("notices", Portal._n.find(x => x.id === b.dataset.nt).attachment_path); }

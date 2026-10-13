@@ -51,3 +51,7 @@ td input[type=number]{width:6rem}
 .idb{display:flex;gap:.7rem;align-items:center}.idp{width:64px;height:76px;border:1px dashed #666;display:grid;place-items:center;font-weight:700;font-size:1.3rem;flex:none}
 .idf{font-size:.75rem;text-align:center;border-top:1px solid #16233b;padding-top:.3rem}
 .hall,.rc{background:#fff;color:#000;border:2px solid #000;padding:1.2rem;margin:1rem 0}.rc table,.hall table{width:100%;border-collapse:collapse}.rc th,.rc td,.hall th,.hall td{border:1px solid #000;padding:4px 8px;text-align:left}
+
+.idq{flex:none;width:64px}.idq svg{width:64px;height:64px;display:block}
+.qrbox{max-width:420px}.qrbox video{width:100%;border-radius:8px;background:#000}.qrlog{max-height:150px;overflow:auto;font-size:.9rem}
+.chip{display:inline-block;padding:.1rem .6rem;border-radius:99px;border:1px solid var(--line);font-size:.85rem}.chip.p{background:#d8f0e6;color:#0d5c3d}.chip.a{background:#f8d9d6;color:#8c1d14}
