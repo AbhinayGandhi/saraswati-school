@@ -26,4 +26,4 @@ out.innerHTML=`<p>Academic year ${U.esc(y.name)}. ${dow>6?"Today is Sunday.":""}
 <h2 style="margin-top:1.2rem">Quick links</h2><div class="row">${links.map(l=>`<a class="btn ghost" href="${l[0]}">${l[1]}</a>`).join("")}</div>`}
 catch(e){U.friendly(e);U.state(out,"error","Unable to load your dashboard. Please try again.")}
 })();
-</script></body></html>
+</script><script src="js/i18n.js"></script></body></html>

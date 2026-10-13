@@ -11,4 +11,4 @@ try{const {data}=await db.from("subjects").select("name").eq("is_active",true).o
 if(f&&data&&data.length){const dl=document.createElement("datalist");dl.id="subjlist";dl.innerHTML=data.map(x=>`<option value="${U.esc(x.name)}">`).join("");document.body.appendChild(dl);f.setAttribute("list","subjlist");f.placeholder="Choose or type"}
 else if(f){f.placeholder="Add subjects on the Subjects page first"}}catch(e){U.friendly(e)}
 })();
-</script></body></html>
+</script><script src="js/i18n.js"></script></body></html>

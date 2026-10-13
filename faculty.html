@@ -6,4 +6,4 @@
 <script>
 P.load(document.getElementById("tl"),db.from("teachers_public").select("name,qualification,subject").order("name"),(c,t)=>{c.append(P.el("h3",t.name),P.el("p",t.subject||"","meta"),P.el("p",t.qualification||"","meta"))},"Faculty details will appear here.");
 </script>
-</body></html>
+<script src="js/i18n.js"></script></body></html>

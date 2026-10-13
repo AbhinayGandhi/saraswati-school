@@ -9,4 +9,4 @@ const q=()=>db.from("events").select("title,event_type,event_date,start_time,ven
 P.load(document.getElementById("up"),q().gte("event_date",t).order("event_date"),dr,"No upcoming events at the moment.");
 P.load(document.getElementById("past"),q().lt("event_date",t).order("event_date",{ascending:false}).limit(20),dr,"No past events yet.");})();
 </script>
-</body></html>
+<script src="js/i18n.js"></script></body></html>

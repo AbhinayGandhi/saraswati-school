@@ -15,4 +15,4 @@ if(!n.is_read){const {error}=await db.from("notifications").update({is_read:true
 if(b.dataset.o)location.href=MAP[n.related_module];else load()});
 $("ma").onclick=async()=>{const {error}=await db.from("notifications").update({is_read:true}).eq("is_read",false);if(error){U.friendly(error);return U.toast("Could not update.","err")}U.toast("All marked as read.");load()};load();
 })();
-</script></body></html>
+</script><script src="js/i18n.js"></script></body></html>

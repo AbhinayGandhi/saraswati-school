@@ -38,4 +38,4 @@ $("reg").innerHTML=data.length?`<table><thead><tr><th>No</th><th>Type</th><th>St
 $("reg").onclick=async ev=>{const b=ev.target.closest("[data-r]");if(!b)return;const c=reg[b.dataset.r];try{await show(c,c.students)}catch(e){U.friendly(e);U.toast("Could not open it.","err")}};
 try{const s=await U.settings();school=s.school_name||school}catch(e){}loadReg();
 })();
-</script></body></html>
+</script><script src="js/i18n.js"></script></body></html>

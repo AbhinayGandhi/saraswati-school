@@ -6,4 +6,4 @@
 <script>
 P.load(document.getElementById("nl"),db.from("notices").select("title,description,notice_date,notice_type,priority").eq("is_public",true).eq("status","published").order("notice_date",{ascending:false}).limit(50),(c,n)=>{c.append(P.el("h3",n.title),P.el("p",(n.notice_type||"General")+(n.priority!=="normal"?" | "+n.priority:"")+" | "+n.notice_date,"meta"));const p=P.el("p",n.description||"");p.style.whiteSpace="pre-wrap";c.append(p)},"No notices at the moment.");
 </script>
-</body></html>
+<script src="js/i18n.js"></script></body></html>

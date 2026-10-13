@@ -34,4 +34,4 @@ $("ub").disabled=false;$("up").textContent="";U.toast(`Uploaded ${ok} photo(s).`
 $("fa").onchange=()=>{page=0;load()};$("fs").onchange=()=>{page=0;load()};$("pv").onclick=()=>{page--;load()};$("nx").onclick=()=>{page++;load()};
 try{await loadAlbums();load()}catch(e){U.friendly(e);U.state(list,"error","Unable to load the gallery. Please try again.")}
 })();
-</script></body></html>
+</script><script src="js/i18n.js"></script></body></html>

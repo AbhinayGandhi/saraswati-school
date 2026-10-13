@@ -27,4 +27,4 @@ if(f){const path=`${crypto.randomUUID()}/${f.name.replace(/[^A-Za-z0-9._-]/g,"_"
 const {data,error}=await db.from("notices").insert(row).select("id").single();if(error)throw error;U.audit("Notice created (draft)","notices",data.id);U.toast("Saved as draft. Press Publish when ready.");ev.target.reset();$("nd").value=Fee.today();load()}
 catch(e){U.friendly(e);U.toast("Could not save the notice. Please check the details.","err")}$("nb").disabled=false});load();
 })();
-</script></body></html>
+</script><script src="js/i18n.js"></script></body></html>

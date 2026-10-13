@@ -30,4 +30,4 @@ $("go").onclick=async()=>{const y=years.find(v=>v.id===$("old").value);if(!await
 $("go").disabled=true;try{const {error}=await db.rpc("close_academic_year",{p_old:y.id,p_new:$("nw").value||null,p_force:!ready&&$("force").checked});if(error)throw error;
 U.toast("Academic year closed.");$("cf").value="";await load()}catch(e){U.friendly(e);U.toast(String(e.message||"").includes("not ready")?"Some students or exams are still pending.":"Could not close the year. Please try again.","err");sync()}};
 load();})();
-</script></body></html>
+</script><script src="js/i18n.js"></script></body></html>

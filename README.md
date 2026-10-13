@@ -65,3 +65,15 @@ Run `supabase/phase12.sql` once (after Phase 11). Closes functions to public vis
 
 ## Known limits
 Admission and GR numbers are typed by the office. Roll numbers are assigned alphabetically per division (no one-by-one editing screen). Fee and library reports are on their own pages. No two-factor login and no Content Security Policy (GitHub Pages limitation).
+
+## New features (after Phase 12)
+Run `supabase/phase13.sql`, `phase14.sql` and `phase15.sql` once each (or just run ALL-IN-ONE.sql on a new project).
+- Certificates (Bonafide, Transfer, Character) with a register, ID cards, exam hall tickets, fee reminder list, birthdays on the dashboard.
+- Parents can report a UPI payment (set the school UPI ID in School settings). The accountant approves it on "UPI payment claims" and a receipt is made.
+- Marathi / English switch (button in the top bar). It changes menus, headings and buttons only, not names or typed text.
+- Leave balance (set days per year on the Staff leave page) and Teacher diary (what was taught each day).
+
+## Round 3: Install as app, QR attendance, absence alerts
+- **Install as app (PWA):** manifest.json, sw.js, offline.html, js/pwa.js. Icons in images/icon-192.png and icon-512.png are placeholders; replace with the school logo (same names and sizes).
+- **QR attendance:** qr-attendance.html. ID cards carry a QR with `SES|<admission_no>`. Camera needs HTTPS (GitHub Pages is HTTPS). Manual admission-no entry is the fallback.
+- **Absence alerts:** run supabase/phase16.sql. Marking a student absent (today or within 2 days) notifies active guardians in the portal. No SMS.

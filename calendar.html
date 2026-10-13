@@ -16,4 +16,4 @@ $("f").addEventListener("submit",async ev=>{ev.preventDefault();const {data,erro
 if(error){U.friendly(error);return U.toast(error.code==="23505"?"This date already has that type.":"Could not add the date.","err")}U.audit("Calendar entry added","school_calendar",data.id);ev.target.reset();U.toast("Added.");load()});
 load();
 })();
-</script></body></html>
+</script><script src="js/i18n.js"></script></body></html>

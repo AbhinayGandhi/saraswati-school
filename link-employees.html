@@ -14,4 +14,4 @@ list.addEventListener("click",async ev=>{const b=ev.target.closest("button");if(
 const {error}=await db.from(tr.dataset.k==="t"?"teachers":"staff").update({profile_id:v}).eq("id",tr.dataset.id);if(error){U.friendly(error);return U.toast(error.code==="23505"?"This login is already linked to another employee.":"Could not save.","err")}
 U.audit("Login linked to employee",tr.dataset.k==="t"?"teachers":"staff",tr.dataset.id);U.toast("Saved.");load()});load();
 })();
-</script></body></html>
+</script><script src="js/i18n.js"></script></body></html>

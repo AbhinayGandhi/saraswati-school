@@ -6,7 +6,7 @@
 <div><label for="dv">Class and division (active year)</label><select id="dv"></select></div><div id="exw" hidden><label for="ex">Exam</label><select id="ex"></select></div></div>
 <p class="noprint"><button class="btn" id="go">Show</button> <button class="btn ghost" id="pr" hidden onclick="window.print()">Print or save as PDF</button></p>
 <p class="noprint"><small>Photos are not stored yet, so a circle with the student's initials is printed. Stick the photo on the card.</small></p><div id="out"></div></main></div></div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script><script src="js/config.js"></script><script src="js/supabase.js"></script><script src="js/utils.js"></script><script src="js/permissions.js"></script><script src="js/auth.js"></script><script src="js/fees.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script><script src="js/config.js"></script><script src="js/supabase.js"></script><script src="js/utils.js"></script><script src="js/permissions.js"></script><script src="js/auth.js"></script><script src="js/fees.js"></script><script src="js/vendor/qrcode.js"></script>
 <script>
 
 (async()=>{const p=await Auth.require([...ADMIN_ROLES,"reception","class_teacher"]);Auth.shell(p);const $=id=>document.getElementById(id);let school="Saraswati English Medium School",addr="",year=null;
@@ -22,8 +22,8 @@ try{const {data:en,error}=await db.from("student_enrollments").select("id,roll_n
 if(!en.length)return U.state(out,"empty","No students in this division.");
 const ids=en.map(x=>x.students.id);const {data:g,error:ge}=await db.from("student_guardians").select("student_id,relation,name,mobile").in("student_id",ids);if(ge)throw ge;
 const par=sid=>{const a=(g||[]).filter(x=>x.student_id===sid);return a.find(x=>x.relation==="father")||a[0]||{}};
-const ini=s=>U.esc((s.first_name[0]||"")+(s.last_name?s.last_name[0]:""));
-if($("md").value==="id"){out.innerHTML='<div class="idgrid">'+en.map(x=>{const s=x.students,pp=par(s.id);return `<div class="idc"><div class="idh"><b>${U.esc(school)}</b><small>${U.esc(addr)}</small></div><div class="idb"><div class="idp">${ini(s)}</div><div class="idt"><b>${U.esc(nm(s))}</b><br>Class: ${U.esc(x.divisions.classes.name+" - "+x.divisions.name)} | Roll: ${x.roll_no??"-"}<br>Adm no: ${U.esc(s.admission_no)}<br>DOB: ${U.esc(s.dob||"-")} | Blood: ${U.esc(s.blood_group||"-")}<br>Parent: ${U.esc(pp.name||"-")} ${U.esc(pp.mobile||"")}</div></div><div class="idf">Academic year ${U.esc(year.name)}</div></div>`}).join("")+'</div>'}
+const qr=a=>{try{const q=qrcode(0,"M");q.addData("SES|"+a);q.make();return q.createSvgTag({cellSize:2,margin:0})}catch(e){return ""}};const ini=s=>U.esc((s.first_name[0]||"")+(s.last_name?s.last_name[0]:""));
+if($("md").value==="id"){out.innerHTML='<div class="idgrid">'+en.map(x=>{const s=x.students,pp=par(s.id);return `<div class="idc"><div class="idh"><b>${U.esc(school)}</b><small>${U.esc(addr)}</small></div><div class="idb"><div class="idp">${ini(s)}</div><div class="idt"><b>${U.esc(nm(s))}</b><br>Class: ${U.esc(x.divisions.classes.name+" - "+x.divisions.name)} | Roll: ${x.roll_no??"-"}<br>Adm no: ${U.esc(s.admission_no)}<br>DOB: ${U.esc(s.dob||"-")} | Blood: ${U.esc(s.blood_group||"-")}<br>Parent: ${U.esc(pp.name||"-")} ${U.esc(pp.mobile||"")}</div><div class="idq">${qr(s.admission_no)}</div></div><div class="idf">Academic year ${U.esc(year.name)}</div></div>`}).join("")+'</div>'}
 else{if(!$("ex").value)return U.state(out,"empty","Create an exam first.");
 const {data:sub,error:se}=await db.from("exam_subjects").select("exam_date,max_marks,subjects(name)").eq("exam_id",$("ex").value).eq("division_id",$("dv").value).order("exam_date");if(se)throw se;
 if(!sub.length)return U.state(out,"empty","This exam has no subjects for this division yet.");
@@ -31,4 +31,4 @@ const exn=$("ex").selectedOptions[0].textContent;
 out.innerHTML=en.map((x,i)=>{const s=x.students;return `<div class="hall${i?" pbreak":""}"><h2>${U.esc(school)}</h2><p style="text-align:center">${U.esc(addr)}</p><h3 style="text-align:center">Hall ticket - ${U.esc(exn)}</h3><p><b>${U.esc(nm(s))}</b><br>Class: ${U.esc(x.divisions.classes.name+" - "+x.divisions.name)} | Roll no: ${x.roll_no??"-"} | Adm no: ${U.esc(s.admission_no)} | GR no: ${U.esc(s.gr_no||"-")}<br>Academic year: ${U.esc(year.name)}</p><table><thead><tr><th>Date</th><th>Subject</th><th>Max marks</th></tr></thead><tbody>${sub.map(r=>`<tr><td>${U.esc(r.exam_date||"To be announced")}</td><td>${U.esc(r.subjects.name)}</td><td>${r.max_marks}</td></tr>`).join("")}</tbody></table><p style="margin-top:2.5rem;display:flex;justify-content:space-between"><span>Class teacher</span><span>Principal</span></p></div>`}).join("")}
 $("pr").hidden=false;U.audit("Printed "+($("md").value==="id"?"ID cards":"hall tickets"),"students",$("dv").value)}catch(e){U.friendly(e);U.state(out,"error","Unable to load. Please try again.")}};
 })();
-</script></body></html>
+</script><script src="js/i18n.js"></script></body></html>

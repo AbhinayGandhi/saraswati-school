@@ -19,4 +19,4 @@ $("f").addEventListener("submit",async ev=>{ev.preventDefault();const {data,erro
 if(error){U.friendly(error);return U.toast(error.code==="23505"?"This subject name or code already exists.":"Could not add the subject.","err")}
 U.audit("Subject created","subjects",data.id);ev.target.reset();U.toast("Subject added.");load()});load();
 })();
-</script></body></html>
+</script><script src="js/i18n.js"></script></body></html>

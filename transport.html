@@ -32,4 +32,4 @@ csv=[["route","stop","student","admission_no","class","start_date"],...data.map(
 $("rep").innerHTML=data.length?"<table><thead><tr>"+csv[0].map(h=>`<th>${h}</th>`).join("")+"</tr></thead><tbody>"+csv.slice(1).map(r=>"<tr>"+r.map(v=>`<td>${U.esc(v)}</td>`).join("")+"</tr>").join("")+"</tbody></table>":"<div class=\"state\">No students assigned.</div>"}catch(e){U.friendly(e);U.state($("rep"),"error","Unable to load the report. Please try again.")}}
 $("ex").onclick=()=>csv.length>1?Students.download("transport-report.csv",Students.csv(csv)):U.toast("Nothing to export.","err");loadRoutes();
 })();
-</script></body></html>
+</script><script src="js/i18n.js"></script></body></html>

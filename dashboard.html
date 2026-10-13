@@ -15,4 +15,4 @@ out.innerHTML=`<div class="card"><b>${U.esc(y.data?y.data.name:"None")}</b>Activ
 <div class="card"><b>${c.count??0}</b>Classes</div><div class="card"><b>${d.count??0}</b>Divisions</div>`;
 }catch(e){U.state(out,"error","Unable to load the dashboard. Please try again.");U.friendly(e)}
 try{const {data,error}=await db.rpc("upcoming_birthdays",{p_days:7});if(error)throw error;if(data&&data.length){const L=document.getElementById("bdl");L.innerHTML="";data.forEach(b=>{const c=document.createElement("div");c.className="card";c.style.marginBottom=".4rem";const t=document.createElement("b");t.textContent=b.student_name;const m=document.createElement("span");m.textContent=" "+b.class_name+" - "+b.division_name+" | "+(b.days_ahead===0?"Today":b.days_ahead===1?"Tomorrow":b.birthday);c.append(t,m);L.appendChild(c)});document.getElementById("bd").hidden=false}}catch(e){console.error(e)}})();
-</script></body></html>
+</script><script src="js/i18n.js"></script></body></html>

@@ -14,6 +14,7 @@
 <fieldset><legend>Working days</legend><div id="wd"></div><p class="muted">Holidays and vacations in the School calendar are always off. A "Special school day" in the calendar makes a weekly off day a working day.</p></fieldset>
 <h2>Rules</h2>
 <div class="row"><div><label for="attendance_alert_percent">Low attendance alert below (%)</label><input id="attendance_alert_percent" inputmode="numeric" maxlength="3"></div><div><label for="library_fine_per_day">Library fine per day (Rs.)</label><input id="library_fine_per_day" inputmode="decimal" maxlength="8"></div><div><label for="receipt_prefix">Fee receipt prefix (letters or digits, up to 6)</label><input id="receipt_prefix" maxlength="6"></div></div>
+<h2>Fee payment by UPI</h2><div class="row"><div><label for="upi_id">School UPI ID (for example school@bank)</label><input id="upi_id" maxlength="100" autocomplete="off"></div><div><label for="upi_payee">Payee name shown to parents</label><input id="upi_payee" maxlength="80"></div></div><p class="muted">Parents see this only after login, on the Fees tab. Leave empty to switch UPI payment off.</p>
 <p class="muted">Grading rules (A+, A, B...) are managed on the <a href="exams.html">Exams</a> page. Admission and GR numbers are typed by the office when a student is admitted.</p>
 <h2>Public website text</h2>
 <div><label for="home_tagline">Home page tagline</label><input id="home_tagline" maxlength="200"></div>
@@ -25,7 +26,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script><script src="js/config.js"></script><script src="js/supabase.js"></script><script src="js/utils.js"></script><script src="js/permissions.js"></script><script src="js/auth.js"></script>
 <script>
 (async()=>{const p=await Auth.require(["super_admin","school_admin"]);Auth.shell(p);const $=id=>document.getElementById(id);
-const TXT=["school_name","principal","address","phone","email","website","school_start_time","school_end_time","attendance_alert_percent","library_fine_per_day","receipt_prefix","home_tagline","about_text","vision","mission","principal_message"];
+const TXT=["school_name","principal","address","phone","email","website","school_start_time","school_end_time","attendance_alert_percent","library_fine_per_day","receipt_prefix","upi_id","upi_payee","home_tagline","about_text","vision","mission","principal_message"];
 const DAYS=[[1,"Mon"],[2,"Tue"],[3,"Wed"],[4,"Thu"],[5,"Fri"],[6,"Sat"],[7,"Sun"]];
 $("wd").innerHTML=DAYS.map(([n,l])=>`<label style="display:inline-block;margin-right:12px"><input type="checkbox" class="wdc" value="${n}"> ${l}</label>`).join("");
 let cur={};
@@ -38,6 +39,7 @@ const days=[...document.querySelectorAll(".wdc")].filter(c=>c.checked).map(c=>c.
 const pr=$("receipt_prefix").value.trim();if(pr&&!/^[A-Za-z0-9-]{1,6}$/.test(pr))return U.toast("Receipt prefix: up to 6 letters or digits.","err");
 const ap=$("attendance_alert_percent").value.trim();if(ap&&(!/^\d{1,3}$/.test(ap)||+ap>100))return U.toast("Attendance alert must be 0 to 100.","err");
 const fine=$("library_fine_per_day").value.trim();if(fine&&!/^\d{1,5}(\.\d{1,2})?$/.test(fine))return U.toast("Library fine must be a number.","err");
+const upi=$("upi_id").value.trim();if(upi&&!/^[A-Za-z0-9._-]{2,64}@[A-Za-z0-9]{2,32}$/.test(upi))return U.toast("UPI ID looks wrong. Example: school@bank","err");
 const site=$("website").value.trim();if(site&&!/^https?:\/\//i.test(site))return U.toast("Website must start with http:// or https://","err");
 $("save").disabled=true;
 try{const rows=TXT.map(k=>({key:k,value:$(k).value.trim()}));rows.push({key:"working_days",value:days.join(",")});
@@ -49,4 +51,4 @@ const {error}=await db.from("school_settings").upsert(rows,{onConflict:"key"});i
 U._settings=null;U.toast("Settings saved.");$("logo").value="";await load()}
 catch(e){U.friendly(e);U.toast("Could not save. Check the logo (under 1 MB) and the values.","err")}$("save").disabled=false});
 load();})();
-</script></body></html>
+</script><script src="js/i18n.js"></script></body></html>

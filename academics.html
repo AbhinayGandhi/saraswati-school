@@ -7,4 +7,4 @@
 <script>
 (async()=>{const b=document.getElementById("cl");try{const {data,error}=await db.from("classes").select("name,sort_order").order("sort_order");if(error)throw error;b.innerHTML="";(data||[]).forEach(c=>b.appendChild(P.el("span",c.name,"pill")));if(!data||!data.length)b.appendChild(P.el("div","Classes will appear here.","ph"))}catch(e){console.error(e);b.appendChild(P.el("div","Not available right now.","state error"))}})();
 </script>
-</body></html>
+<script src="js/i18n.js"></script></body></html>

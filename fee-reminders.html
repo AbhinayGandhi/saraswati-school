@@ -26,4 +26,4 @@ $("list").addEventListener("click",async ev=>{const b=ev.target.closest("[data-c
 const r=rows[b.dataset.c];try{await navigator.clipboard.writeText(fill(r));U.toast("Message copied.")}catch(e){window.prompt("Copy this message:",fill(r))}U.audit("Fee reminder copied","fees",r.enrollment_id)});
 $("csv").onclick=()=>{if(!rows.length)return U.toast("Nothing to download.","err");U.download("fee-reminders.csv",U.csv([["Student","Admission no","Class","Division","Overdue","Total balance","Oldest due","Parent","Mobile"],...rows.map(r=>[r.student_name,r.admission_no,r.class_name,r.division_name,r.overdue,r.total_balance,r.oldest_due,r.guardian_name,r.guardian_mobile])]))};
 load()})();
-</script></body></html>
+</script><script src="js/i18n.js"></script></body></html>

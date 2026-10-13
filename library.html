@@ -47,4 +47,4 @@ $("tl").addEventListener("click",async ev=>{const b=ev.target.closest("button[da
 $("ts").onchange=loadTx;$("tq").addEventListener("input",U.debounce(drawTx));
 $("tx2").onclick=()=>txr.length?Students.download("library-transactions.csv",Students.csv([["book","borrower","issued","due","returned","fine","status"],...txr.map(x=>[x.books.title,x.who,x.issue_date,x.due_date,x.return_date,x.fine,x.status])])):U.toast("Nothing to export.","err");loadBooks();
 })();
-</script></body></html>
+</script><script src="js/i18n.js"></script></body></html>

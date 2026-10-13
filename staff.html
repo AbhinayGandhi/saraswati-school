@@ -7,4 +7,4 @@
 (async()=>{const p=await Auth.require(ADMIN_ROLES);Auth.shell(p);
 People.init({table:"staff",label:"Staff",cols:[["employee_id","Employee ID"],["name","Name"],["staff_type","Type"],["mobile","Mobile"]],fields:[{id:"employee_id",label:"Employee ID",required:1},{id:"name",label:"Name",required:1},{id:"staff_type",label:"Staff type",options:["Teaching Staff","Non-Teaching Staff","Administrative Staff","Support Staff"]},{id:"mobile",label:"Mobile",type:"tel"},{id:"email",label:"Email",type:"email"},{id:"joining_date",label:"Joining date",type:"date"}]});
 })();
-</script></body></html>
+</script><script src="js/i18n.js"></script></body></html>

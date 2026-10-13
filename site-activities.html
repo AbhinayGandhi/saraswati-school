@@ -7,4 +7,4 @@
 <script>
 P.load(document.getElementById("ac"),db.from("achievements_public").select("title,who,position,event_name,achievement_date").order("achievement_date",{ascending:false}).limit(30),(c,a)=>{c.append(P.el("h3",a.title),P.el("p",[a.who,a.position,a.event_name].filter(Boolean).join(" | "),"meta"),P.el("p",a.achievement_date||"","meta"))},"Achievements will appear here.");
 </script>
-</body></html>
+<script src="js/i18n.js"></script></body></html>

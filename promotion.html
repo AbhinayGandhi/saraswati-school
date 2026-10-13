@@ -63,4 +63,4 @@ U.toast("Promotion applied.");await load();$("roll").disabled=false};
 $("roll").onclick=async()=>{if(!await U.confirm("Number students from 1 in alphabetical order in every division of the new year? Existing roll numbers will be replaced."))return;
 $("roll").disabled=true;try{let n=0;for(const d of tdivs){const {data,error}=await db.rpc("assign_roll_numbers",{p_division:d.id});if(error)throw error;n+=data||0}U.toast("Roll numbers assigned to "+n+" students.")}catch(e){U.friendly(e);U.toast("Could not assign roll numbers.","err")}$("roll").disabled=false};
 fillTo();await load();})();
-</script></body></html>
+</script><script src="js/i18n.js"></script></body></html>

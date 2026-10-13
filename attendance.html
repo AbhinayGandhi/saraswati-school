@@ -41,4 +41,4 @@ catch(e){U.friendly(e);U.state($("rep"),"error","Unable to load the report. Plea
 $("rx").onclick=()=>repRows.length?Students.download("attendance-"+$("mo").value+".csv",Students.csv([["roll","student","present","absent","late","half_day","leave","percent"],...repRows])):U.toast("Show the report first.","err");
 await loadDivs();sheet();
 })();
-</script></body></html>
+</script><script src="js/i18n.js"></script></body></html>

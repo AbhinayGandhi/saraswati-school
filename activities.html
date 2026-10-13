@@ -33,4 +33,4 @@ $("f").addEventListener("submit",async ev=>{ev.preventDefault();const {data,erro
 if(error){U.friendly(error);return U.toast("Could not add the activity.","err")}U.audit("Activity created","activities",data.id);U.toast("Added.");ev.target.reset();$("ad").value=Fee.today();load()});
 await loadDivs();
 })();
-</script></body></html>
+</script><script src="js/i18n.js"></script></body></html>

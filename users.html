@@ -36,4 +36,4 @@ if(!await U.confirm("Save changes for this user?"))return;
 const {error}=await db.from("profiles").update({full_name:tr.querySelector(".un").value.trim()||null,role,is_active:act}).eq("id",id);
 if(error){U.friendly(error);return U.toast("Could not save. Only a Super Admin can give Admin roles.","err")}U.audit("User role or status changed","profiles",id);U.toast("Saved.");load()});load();
 })();
-</script></body></html>
+</script><script src="js/i18n.js"></script></body></html>

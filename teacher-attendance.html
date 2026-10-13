@@ -28,4 +28,4 @@ rep=t.data.map(x=>{const r=a.data.filter(i=>i.teacher_id===x.id),c=s=>r.filter(i
 $("rep").innerHTML="<table><thead><tr><th>ID</th><th>Teacher</th><th>Present</th><th>Absent</th><th>Late</th><th>Half day</th><th>Leave</th><th>Attendance %</th></tr></thead><tbody>"+rep.map(r=>"<tr>"+r.map(v=>`<td>${U.esc(v)}</td>`).join("")+"</tr>").join("")+"</tbody></table>"}catch(e){U.friendly(e);U.state($("rep"),"error","Unable to load the report. Please try again.")}};
 $("rx").onclick=()=>rep.length?Students.download("teacher-attendance-"+$("mo").value+".csv",Students.csv([["employee_id","teacher","present","absent","late","half_day","leave","percent"],...rep])):U.toast("Show the report first.","err");sheet();
 })();
-</script></body></html>
+</script><script src="js/i18n.js"></script></body></html>

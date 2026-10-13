@@ -16,4 +16,4 @@ if(r.error){U.friendly(r.error);return U.toast(r.error.code==="23505"?"This name
 $("f").addEventListener("submit",async ev=>{ev.preventDefault();const {data,error}=await db.from("fee_types").insert({name:$("n").value.trim()}).select("id").single();
 if(error){U.friendly(error);return U.toast(error.code==="23505"?"This fee type already exists.":"Could not add.","err")}U.audit("Fee type created","fee_types",data.id);ev.target.reset();load()});load();
 })();
-</script></body></html>
+</script><script src="js/i18n.js"></script></body></html>

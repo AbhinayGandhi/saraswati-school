@@ -23,4 +23,4 @@ const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([JSON.st
 const n=Object.values(out.tables).reduce((s,r)=>s+r.length,0);$("prog").textContent="Done: "+n+" rows from "+T.length+" tables.";U.audit("Full backup downloaded","backup",null)}
 catch(e){U.friendly(e);$("prog").textContent="";U.toast("Backup stopped because of an error. Please try again.","err")}$("all").disabled=false};
 })();
-</script></body></html>
+</script><script src="js/i18n.js"></script></body></html>

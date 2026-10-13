@@ -58,4 +58,4 @@ draw();$("lh").innerHTML=await U.letterhead(TITLE,SUB)
 $("csv").onclick=()=>{U.download(TITLE.toLowerCase().replace(/\W+/g,"-")+".csv",U.csv([HEAD].concat(ROWS.map(r=>r.c))));U.audit("Report exported: "+TITLE,"reports",null)};
 $("prn").onclick=()=>window.print();
 })();
-</script></body></html>
+</script><script src="js/i18n.js"></script></body></html>

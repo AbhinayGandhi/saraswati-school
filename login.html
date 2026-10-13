@@ -21,4 +21,4 @@ location.href="dashboard.html"}catch(err){msg.textContent=err.message}finally{go
 document.getElementById("forgot").addEventListener("click",async e=>{e.preventDefault();
 const email=document.getElementById("email").value.trim();if(!email){msg.textContent="Type your email above first.";return}
 try{await Auth.resetPassword(email);U.toast("Password reset email sent.")}catch(err){msg.textContent=err.message}});
-</script></body></html>
+</script><script src="js/i18n.js"></script></body></html>

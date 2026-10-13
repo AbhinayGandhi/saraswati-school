@@ -1,0 +1,32 @@
+<!doctype html><html lang="en"><head><meta name="description" content="Saraswati English Medium School: school management portal."><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bitter:wght@600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="css/style.css"><link rel="stylesheet" href="css/print.css" media="print"><title>Teacher diary | Saraswati English Medium School</title></head>
+<body><div class="app"><aside id="sidebar" class="noprint" aria-label="Sidebar"></aside>
+<div><header class="top noprint"><button class="btn ghost" id="menu" aria-expanded="false" aria-controls="sidebar">Menu</button><span id="who"></span><button class="btn ghost" id="logout">Sign out</button></header>
+<main><h1 class="noprint">Teacher diary</h1>
+<form id="f" class="panel row noprint" hidden><h3 style="grid-column:1/-1">What did you teach?</h3><div><label for="dv">Class and subject</label><select id="dv"></select></div><div><label for="dt">Date</label><input id="dt" type="date" required></div><div><label for="tp">Topic taught</label><input id="tp" maxlength="200" required></div><div style="grid-column:1/-1"><label for="dd">Details (optional)</label><textarea id="dd" rows="3" maxlength="2000"></textarea></div><div><button class="btn" id="sb">Save</button></div></form>
+<div class="row noprint"><div><label for="fr">From</label><input id="fr" type="date"></div><div><label for="to">To</label><input id="to" type="date"></div><div id="tw" hidden><label for="tf">Teacher</label><select id="tf"><option value="">All teachers</option></select></div></div>
+<p class="noprint"><button class="btn ghost" id="csv">Download CSV</button> <button class="btn ghost" onclick="window.print()">Print</button></p>
+<div id="list" class="tw"><div class="state">Loading...</div></div></main></div></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script><script src="js/config.js"></script><script src="js/supabase.js"></script><script src="js/utils.js"></script><script src="js/permissions.js"></script><script src="js/auth.js"></script><script src="js/fees.js"></script>
+<script>
+
+(async()=>{const p=await Auth.require([...ADMIN_ROLES,"teacher","class_teacher"]);Auth.shell(p);const $=id=>document.getElementById(id),adm=Perm.isAdmin(p.role);let rows=[],names={};
+$("dt").value=Fee.today();$("dt").max=Fee.today();const d0=new Date();d0.setDate(d0.getDate()-30);$("fr").value=d0.toLocaleDateString("en-CA");
+if(adm)$("tw").hidden=false;else $("f").hidden=false;
+try{if(!adm){const y=await db.from("academic_years").select("id").eq("is_active",true).maybeSingle();if(y.error)throw y.error;
+const c=y.data?await db.from("class_subjects").select("division_id,subject_id,divisions(name,classes(name,sort_order)),subjects(name)").eq("academic_year_id",y.data.id).eq("teacher_id",p.id):{data:[]};if(c.error)throw c.error;
+$("dv").innerHTML=c.data.sort((a,b)=>a.divisions.classes.sort_order-b.divisions.classes.sort_order||a.divisions.name.localeCompare(b.divisions.name)).map(x=>`<option value="${x.division_id}|${x.subject_id}">${U.esc(x.divisions.classes.name+" - "+x.divisions.name+" | "+x.subjects.name)}</option>`).join("");
+if(!c.data.length){$("f").innerHTML="<p>No class and subject is assigned to you yet. Ask the administrator (Subject teachers page).</p>"}}}catch(e){U.friendly(e)}
+async function load(){const L=$("list");L.innerHTML='<div class="state">Loading...</div>';try{let q=db.from("teacher_diary").select("id,teacher_id,diary_date,topic,details,divisions(name,classes(name)),subjects(name),profiles(full_name)").order("diary_date",{ascending:false}).limit(500);
+if($("fr").value)q=q.gte("diary_date",$("fr").value);if($("to").value)q=q.lte("diary_date",$("to").value);if(adm&&$("tf").value)q=q.eq("teacher_id",$("tf").value);
+const {data,error}=await q;if(error)throw error;rows=data;
+if(adm){const m={};data.forEach(r=>{if(r.profiles)m[r.teacher_id]=r.profiles.full_name});const cur=$("tf").value;Object.assign(names,m);$("tf").innerHTML='<option value="">All teachers</option>'+Object.entries(names).map(([id,n])=>`<option value="${id}">${U.esc(n)}</option>`).join("");$("tf").value=cur}
+if(!rows.length)return U.state(L,"empty","No diary entries in this period.");
+L.innerHTML=`<table><thead><tr><th>Date</th>${adm?"<th>Teacher</th>":""}<th>Class</th><th>Subject</th><th>Topic</th><th>Details</th><th class="noprint"></th></tr></thead><tbody>${rows.map((r,i)=>`<tr><td>${U.esc(r.diary_date)}</td>${adm?`<td>${U.esc(r.profiles?r.profiles.full_name:"")}</td>`:""}<td>${U.esc(r.divisions.classes.name+" - "+r.divisions.name)}</td><td>${U.esc(r.subjects.name)}</td><td>${U.esc(r.topic)}</td><td style="white-space:pre-wrap">${U.esc(r.details||"")}</td><td class="noprint">${r.teacher_id===p.id?`<button class="btn sm ghost" data-d="${i}">Delete</button>`:""}</td></tr>`).join("")}</tbody></table>`}catch(e){U.friendly(e);U.state(L,"error","Unable to load. Please try again.")}}
+$("f").addEventListener("submit",async ev=>{ev.preventDefault();if(!$("dv")||!$("dv").value)return U.toast("Choose a class and subject.","err");const [d,s]=$("dv").value.split("|");$("sb").disabled=true;
+const {error}=await db.from("teacher_diary").insert({teacher_id:p.id,division_id:d,subject_id:s,diary_date:$("dt").value,topic:$("tp").value.trim(),details:$("dd").value.trim()||null});
+$("sb").disabled=false;if(error){U.friendly(error);return U.toast("Could not save. Check the date and that this class is yours.","err")}U.toast("Saved.");$("tp").value=$("dd").value="";load()});
+$("list").addEventListener("click",async ev=>{const b=ev.target.closest("[data-d]");if(!b)return;if(!await U.confirm("Delete this diary entry?"))return;const {error}=await db.from("teacher_diary").delete().eq("id",rows[b.dataset.d].id);if(error){U.friendly(error);return U.toast("Could not delete.","err")}U.toast("Deleted.");load()});
+["fr","to","tf"].forEach(i=>$(i).onchange=load);
+$("csv").onclick=()=>rows.length?U.download("teacher-diary.csv",U.csv([["date","teacher","class","subject","topic","details"],...rows.map(r=>[r.diary_date,r.profiles?r.profiles.full_name:"",r.divisions.classes.name+" - "+r.divisions.name,r.subjects.name,r.topic,r.details])])):U.toast("Nothing to download.","err");
+load()})();
+</script><script src="js/i18n.js"></script></body></html>

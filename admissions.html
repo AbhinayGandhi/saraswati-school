@@ -26,4 +26,4 @@ $("fs").onchange=()=>{page=0;load()};$("q").addEventListener("input",U.debounce(
 if(canConv){try{const [y,c]=await Promise.all([db.from("academic_years").select("id").eq("is_active",true).maybeSingle(),db.from("classes").select("id,name,sort_order").order("sort_order")]);if(y.error||c.error)throw y.error||c.error;
 if(y.data){const {data,error}=await db.from("divisions").select("id,name,class_id").eq("academic_year_id",y.data.id);if(error)throw error;$("dv").innerHTML=data.map(x=>({...x,l:(c.data.find(k=>k.id===x.class_id)?.name||"")+" - "+x.name,o:c.data.findIndex(k=>k.id===x.class_id)})).sort((a,b)=>a.o-b.o||a.name.localeCompare(b.name)).map(x=>`<option value="${x.id}">${U.esc(x.l)}</option>`).join("")}}catch(e){U.friendly(e)}}load();
 })();
-</script></body></html>
+</script><script src="js/i18n.js"></script></body></html>

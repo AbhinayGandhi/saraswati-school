@@ -23,4 +23,4 @@ window.subsCache=subs}catch(e){U.friendly(e);U.state(list,"error","Unable to loa
 $("rx").onclick=()=>{if(!out.length)return U.toast("No results to export.","err");Students.download("results.csv",Students.csv([["roll","student",...window.subsCache.map(s=>s.subjects.name),"total","max","percent","grade","result","rank"],...out.map(o=>[o.e.roll_no,o.e.students.first_name+" "+o.e.students.last_name,...o.r.cells.map(c=>c.v),o.r.tot,o.r.max,o.r.pct,o.r.grade,o.r.result,o.rank])]))};
 $("y").onchange=loadExams;$("ex").onchange=show;$("dv").onchange=show;loadExams();
 })();
-</script></body></html>
+</script><script src="js/i18n.js"></script></body></html>

@@ -41,4 +41,4 @@ const {error:e0}=await db.from("grading_rules").delete().neq("min_pct",-1);if(e0
 const {error}=await db.from("grading_rules").insert(rules.map(r=>({min_pct:Number(r.min_pct),grade:r.grade.trim()})));if(error){U.friendly(error);U.toast("Saving failed. Reload and check the rules.","err");return}U.audit("Grading rules changed","grading_rules",null);U.toast("Saved.");loadRules()};
 loadRules();load();
 })();
-</script></body></html>
+</script><script src="js/i18n.js"></script></body></html>

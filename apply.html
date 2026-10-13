@@ -19,4 +19,4 @@ $("go").disabled=true;$("go").textContent="Sending...";
 const {data,error}=await db.rpc("submit_enquiry",{p_student_name:v("sn"),p_dob:$("dob").value,p_gender:$("g").value,p_class:$("k").value||null,p_parent:v("pn"),p_mobile:v("mo"),p_email:v("em")||null,p_address:v("ad")||null,p_prev_school:v("ps")||null,p_prev_class:v("pc")||null,p_message:v("ms")||null});
 if(error){console.error(error);const m=String(error.message);msg.textContent=m.includes("duplicate")?"We already received an enquiry for this student from this mobile number.":m.includes("too many")?"Too many enquiries from this number today. Please call the school.":"Could not send the enquiry. Please check the details and try again.";$("go").disabled=false;$("go").textContent="Send enquiry";return}
 $("f").innerHTML="<h1>Thank you</h1><p>Your enquiry was received. Your application number is:</p><p style='font-size:1.6rem'><b>"+U.esc(data)+"</b></p><p>Please keep this number. The school will contact you.</p><p><a href='index.html'>Back to website</a></p>"})})();
-</script></body></html>
+</script><script src="js/i18n.js"></script></body></html>

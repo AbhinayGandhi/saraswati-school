@@ -33,4 +33,4 @@ if(f){const path=`${crypto.randomUUID()}/${f.name.replace(/[^A-Za-z0-9._-]/g,"_"
 const {data,error}=await db.from("events").insert(row).select("id").single();if(error)throw error;U.audit("Event created (draft)","events",data.id);U.toast("Saved as draft. Press Publish when ready.");ev.target.reset();load()}
 catch(e){U.friendly(e);U.toast("Could not save the event. Please check the details.","err")}$("eb").disabled=false});load();
 })();
-</script></body></html>
+</script><script src="js/i18n.js"></script></body></html>

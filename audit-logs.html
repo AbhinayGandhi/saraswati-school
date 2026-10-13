@@ -36,4 +36,4 @@ U.download("audit-logs.csv",U.csv([["When","User","Role","Action","Module","Reco
 U.audit("Audit logs exported","audit_logs",null)}catch(e){U.friendly(e);U.toast("Could not export.","err")}$("csv").disabled=false};
 $("prn").onclick=async()=>{$("lh").innerHTML=await U.letterhead("Audit log",new Date().toLocaleDateString("en-IN"));window.print()};
 load();})();
-</script></body></html>
+</script><script src="js/i18n.js"></script></body></html>
