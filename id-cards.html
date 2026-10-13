@@ -1,0 +1,34 @@
+<!doctype html><html lang="en"><head><meta name="description" content="Saraswati English Medium School: school management portal."><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bitter:wght@600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="css/style.css"><link rel="stylesheet" href="css/print.css" media="print"><title>ID cards and hall tickets | Saraswati English Medium School</title></head>
+<body><div class="app"><aside id="sidebar" class="noprint" aria-label="Sidebar"></aside>
+<div><header class="top noprint"><button class="btn ghost" id="menu" aria-expanded="false" aria-controls="sidebar">Menu</button><span id="who"></span><button class="btn ghost" id="logout">Sign out</button></header>
+<main><h1 class="noprint">ID cards and hall tickets</h1>
+<div class="row noprint"><div><label for="md">What to print</label><select id="md"><option value="id">Student ID cards</option><option value="hall">Exam hall tickets</option></select></div>
+<div><label for="dv">Class and division (active year)</label><select id="dv"></select></div><div id="exw" hidden><label for="ex">Exam</label><select id="ex"></select></div></div>
+<p class="noprint"><button class="btn" id="go">Show</button> <button class="btn ghost" id="pr" hidden onclick="window.print()">Print or save as PDF</button></p>
+<p class="noprint"><small>Photos are not stored yet, so a circle with the student's initials is printed. Stick the photo on the card.</small></p><div id="out"></div></main></div></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script><script src="js/config.js"></script><script src="js/supabase.js"></script><script src="js/utils.js"></script><script src="js/permissions.js"></script><script src="js/auth.js"></script><script src="js/fees.js"></script>
+<script>
+
+(async()=>{const p=await Auth.require([...ADMIN_ROLES,"reception","class_teacher"]);Auth.shell(p);const $=id=>document.getElementById(id);let school="Saraswati English Medium School",addr="",year=null;
+try{const s=await U.settings();school=s.school_name||school;addr=[s.address,s.phone].filter(Boolean).join(" | ")}catch(e){}
+const nm=s=>[s.first_name,s.middle_name,s.last_name].filter(Boolean).join(" ");
+try{const y=await db.from("academic_years").select("id,name").eq("is_active",true).maybeSingle();if(y.error)throw y.error;year=y.data;if(!year){U.state($("out"),"empty","Set an active academic year first.");return}
+const d=await db.from("divisions").select("id,name,classes(name,sort_order)").eq("academic_year_id",year.id);if(d.error)throw d.error;
+$("dv").innerHTML=d.data.sort((a,b)=>a.classes.sort_order-b.classes.sort_order||a.name.localeCompare(b.name)).map(x=>`<option value="${x.id}">${U.esc(x.classes.name+" - "+x.name)}</option>`).join("")||'<option value="">No division</option>';
+const e=await db.from("exams").select("id,name").eq("academic_year_id",year.id).order("created_at",{ascending:false});if(e.error)throw e.error;$("ex").innerHTML=e.data.map(x=>`<option value="${x.id}">${U.esc(x.name)}</option>`).join("")||'<option value="">No exam</option>'}catch(e){U.friendly(e);U.state($("out"),"error","Unable to load the lists. Please try again.");return}
+$("md").onchange=()=>{$("exw").hidden=$("md").value!=="hall"};
+$("go").onclick=async()=>{const out=$("out");if(!$("dv").value)return U.toast("Choose a division.","err");$("pr").hidden=true;out.innerHTML='<div class="state">Loading...</div>';
+try{const {data:en,error}=await db.from("student_enrollments").select("id,roll_no,students(id,admission_no,gr_no,first_name,middle_name,last_name,dob,blood_group,gender),divisions(name,classes(name))").eq("division_id",$("dv").value).eq("academic_year_id",year.id).eq("status","active").order("roll_no");if(error)throw error;
+if(!en.length)return U.state(out,"empty","No students in this division.");
+const ids=en.map(x=>x.students.id);const {data:g,error:ge}=await db.from("student_guardians").select("student_id,relation,name,mobile").in("student_id",ids);if(ge)throw ge;
+const par=sid=>{const a=(g||[]).filter(x=>x.student_id===sid);return a.find(x=>x.relation==="father")||a[0]||{}};
+const ini=s=>U.esc((s.first_name[0]||"")+(s.last_name?s.last_name[0]:""));
+if($("md").value==="id"){out.innerHTML='<div class="idgrid">'+en.map(x=>{const s=x.students,pp=par(s.id);return `<div class="idc"><div class="idh"><b>${U.esc(school)}</b><small>${U.esc(addr)}</small></div><div class="idb"><div class="idp">${ini(s)}</div><div class="idt"><b>${U.esc(nm(s))}</b><br>Class: ${U.esc(x.divisions.classes.name+" - "+x.divisions.name)} | Roll: ${x.roll_no??"-"}<br>Adm no: ${U.esc(s.admission_no)}<br>DOB: ${U.esc(s.dob||"-")} | Blood: ${U.esc(s.blood_group||"-")}<br>Parent: ${U.esc(pp.name||"-")} ${U.esc(pp.mobile||"")}</div></div><div class="idf">Academic year ${U.esc(year.name)}</div></div>`}).join("")+'</div>'}
+else{if(!$("ex").value)return U.state(out,"empty","Create an exam first.");
+const {data:sub,error:se}=await db.from("exam_subjects").select("exam_date,max_marks,subjects(name)").eq("exam_id",$("ex").value).eq("division_id",$("dv").value).order("exam_date");if(se)throw se;
+if(!sub.length)return U.state(out,"empty","This exam has no subjects for this division yet.");
+const exn=$("ex").selectedOptions[0].textContent;
+out.innerHTML=en.map((x,i)=>{const s=x.students;return `<div class="hall${i?" pbreak":""}"><h2>${U.esc(school)}</h2><p style="text-align:center">${U.esc(addr)}</p><h3 style="text-align:center">Hall ticket - ${U.esc(exn)}</h3><p><b>${U.esc(nm(s))}</b><br>Class: ${U.esc(x.divisions.classes.name+" - "+x.divisions.name)} | Roll no: ${x.roll_no??"-"} | Adm no: ${U.esc(s.admission_no)} | GR no: ${U.esc(s.gr_no||"-")}<br>Academic year: ${U.esc(year.name)}</p><table><thead><tr><th>Date</th><th>Subject</th><th>Max marks</th></tr></thead><tbody>${sub.map(r=>`<tr><td>${U.esc(r.exam_date||"To be announced")}</td><td>${U.esc(r.subjects.name)}</td><td>${r.max_marks}</td></tr>`).join("")}</tbody></table><p style="margin-top:2.5rem;display:flex;justify-content:space-between"><span>Class teacher</span><span>Principal</span></p></div>`}).join("")}
+$("pr").hidden=false;U.audit("Printed "+($("md").value==="id"?"ID cards":"hall tickets"),"students",$("dv").value)}catch(e){U.friendly(e);U.state(out,"error","Unable to load. Please try again.")}};
+})();
+</script></body></html>

@@ -43,3 +43,11 @@ td input[type=number]{width:6rem}
 .top #who{min-width:0;overflow-wrap:anywhere}
 .tw{overflow-x:auto;-webkit-overflow-scrolling:touch}
 @media (max-width:800px){main{padding-left:1rem;padding-right:1rem}.top{padding:.6rem 1rem}}
+
+/* Phase 14 screen styles (print rules are in print.css) */
+.idgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1rem}
+.idc{border:1.5px solid var(--ink);border-radius:10px;padding:.8rem;background:#fff;color:#000;font-size:.85rem;display:flex;flex-direction:column;gap:.4rem}
+.idh{text-align:center;border-bottom:1px solid #16233b;padding-bottom:.4rem}.idh small{display:block}
+.idb{display:flex;gap:.7rem;align-items:center}.idp{width:64px;height:76px;border:1px dashed #666;display:grid;place-items:center;font-weight:700;font-size:1.3rem;flex:none}
+.idf{font-size:.75rem;text-align:center;border-top:1px solid #16233b;padding-top:.3rem}
+.hall,.rc{background:#fff;color:#000;border:2px solid #000;padding:1.2rem;margin:1rem 0}.rc table,.hall table{width:100%;border-collapse:collapse}.rc th,.rc td,.hall th,.hall td{border:1px solid #000;padding:4px 8px;text-align:left}

@@ -4,3 +4,12 @@
 
 .lh{display:none;text-align:center;margin-bottom:6mm}.lh h2{margin:2mm 0;font-size:14pt}
 @media print{.lh{display:block}table{border-collapse:collapse;width:100%;font-size:10pt}th,td{border:1px solid #444;padding:2px 5px}thead{display:table-header-group}tr{page-break-inside:avoid}.pbreak{page-break-before:always}main{padding:0}h1{display:none}}
+
+/* Phase 14: ID cards, hall tickets, certificates */
+.idgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(90mm,1fr));gap:6mm}
+.idc{border:1.5px solid #16233b;border-radius:3mm;width:90mm;min-height:55mm;padding:3mm;font-size:9pt;background:#fff;color:#000;page-break-inside:avoid;display:flex;flex-direction:column;justify-content:space-between}
+.idh{text-align:center;border-bottom:1px solid #16233b;padding-bottom:1.5mm}.idh small{display:block;font-size:7pt}
+.idb{display:flex;gap:3mm;align-items:center;padding:2mm 0}.idp{width:20mm;height:24mm;border:1px dashed #666;display:grid;place-items:center;font-weight:700;font-size:14pt;flex:none}
+.idf{font-size:7pt;text-align:center;border-top:1px solid #16233b;padding-top:1mm}
+.hall{border:2px solid #000;padding:8mm;margin-bottom:6mm;background:#fff;color:#000}
+@media print{.idgrid{display:grid;grid-template-columns:repeat(2,90mm)}.hall{page-break-after:always;margin:0}.rc th{text-align:left}}

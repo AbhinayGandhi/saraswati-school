@@ -1,0 +1,29 @@
+<!doctype html><html lang="en"><head><meta name="description" content="Saraswati English Medium School: school management portal."><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bitter:wght@600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="css/style.css"><link rel="stylesheet" href="css/print.css" media="print"><title>Fee reminders | Saraswati English Medium School</title></head>
+<body><div class="app"><aside id="sidebar" class="noprint" aria-label="Sidebar"></aside>
+<div><header class="top noprint"><button class="btn ghost" id="menu" aria-expanded="false" aria-controls="sidebar">Menu</button><span id="who"></span><button class="btn ghost" id="logout">Sign out</button></header>
+<main><h1 class="noprint">Fee reminders</h1>
+<p class="noprint">Parents whose fee is overdue. The button opens WhatsApp with the message ready; you press Send yourself. Nothing is sent automatically.</p>
+<div class="row noprint"><div><label for="cl">Class</label><select id="cl"><option value="">All classes</option></select></div>
+<div><label for="mt">Message language</label><select id="mt"><option value="en">English</option><option value="mr">Marathi</option></select></div></div>
+<label for="msg" class="noprint">Message (you can edit; {student} {class} {amount} {school} are filled in)</label><textarea id="msg" rows="3" class="noprint"></textarea>
+<p class="noprint"><button class="btn ghost" id="csv">Download CSV</button></p><div id="sum"></div><div id="list" class="tw"><div class="state">Loading...</div></div></main></div></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script><script src="js/config.js"></script><script src="js/supabase.js"></script><script src="js/utils.js"></script><script src="js/permissions.js"></script><script src="js/auth.js"></script><script src="js/fees.js"></script>
+<script>
+
+(async()=>{const p=await Auth.require([...ADMIN_ROLES,"accountant"]);Auth.shell(p);const $=id=>document.getElementById(id);let rows=[],school="Saraswati English Medium School";
+const T={en:"Dear parent, the school fee of Rs. {amount} for {student} ({class}) is pending. Please pay at the school office. - {school}",mr:"नमस्कार, {student} ({class}) यांची शाळेची फी रु. {amount} बाकी आहे. कृपया शाळेच्या कार्यालयात भरावी. - {school}"};
+$("msg").value=T.en;$("mt").onchange=()=>{$("msg").value=T[$("mt").value]};
+try{const s=await U.settings();if(s.school_name)school=s.school_name}catch(e){}
+try{const {data,error}=await db.from("classes").select("id,name").order("sort_order");if(error)throw error;$("cl").insertAdjacentHTML("beforeend",data.map(c=>`<option value="${c.id}">${U.esc(c.name)}</option>`).join(""))}catch(e){U.friendly(e)}
+const fill=(r)=>$("msg").value.replace(/\{student\}/g,r.student_name).replace(/\{class\}/g,r.class_name+" - "+r.division_name).replace(/\{amount\}/g,Number(r.overdue).toFixed(0)).replace(/\{school\}/g,school);
+const phone=m=>{const d=String(m||"").replace(/\D/g,"");if(d.length===10)return "91"+d;if(d.length===12&&d.startsWith("91"))return d;return ""};
+function draw(){const L=$("list");if(!rows.length){$("sum").innerHTML="";return U.state(L,"empty","No overdue fees. Nothing to remind.")}
+const tot=rows.reduce((a,r)=>a+Number(r.overdue),0);$("sum").innerHTML=`<div class="card"><b>${Fee.inr(tot)}</b>Overdue from ${rows.length} students</div>`;
+L.innerHTML=`<table><thead><tr><th>Student</th><th>Class</th><th>Overdue</th><th>Total balance</th><th>Oldest due</th><th>Parent</th><th class="noprint">Reminder</th></tr></thead><tbody>${rows.map((r,i)=>{const ph=phone(r.guardian_mobile);return `<tr><td>${U.esc(r.student_name)}<br><small>${U.esc(r.admission_no)}</small></td><td>${U.esc(r.class_name+" - "+r.division_name)}</td><td>${Fee.inr(r.overdue)}</td><td>${Fee.inr(r.total_balance)}</td><td>${U.esc(r.oldest_due||"")}</td><td>${U.esc(r.guardian_name||"-")}<br>${U.esc(r.guardian_mobile||"no mobile")}</td><td class="noprint">${ph?`<a class="btn sm" data-i="${i}" target="_blank" rel="noopener" href="https://wa.me/${ph}?text=${encodeURIComponent(fill(r))}">WhatsApp</a> `:"<small>No valid mobile</small> "}<button class="btn sm ghost" data-c="${i}">Copy</button></td></tr>`}).join("")}</tbody></table>`}
+async function load(){$("list").innerHTML='<div class="state">Loading...</div>';try{const {data,error}=await db.rpc("fee_defaulters",{p_class:$("cl").value||null});if(error)throw error;rows=data||[];draw()}catch(e){U.friendly(e);U.state($("list"),"error","Unable to load the list. Please try again.")}}
+$("cl").onchange=load;$("msg").oninput=draw;
+$("list").addEventListener("click",async ev=>{const b=ev.target.closest("[data-c],[data-i]");if(!b)return;if(b.dataset.i){U.audit("Fee reminder opened","fees",rows[b.dataset.i].enrollment_id);return}
+const r=rows[b.dataset.c];try{await navigator.clipboard.writeText(fill(r));U.toast("Message copied.")}catch(e){window.prompt("Copy this message:",fill(r))}U.audit("Fee reminder copied","fees",r.enrollment_id)});
+$("csv").onclick=()=>{if(!rows.length)return U.toast("Nothing to download.","err");U.download("fee-reminders.csv",U.csv([["Student","Admission no","Class","Division","Overdue","Total balance","Oldest due","Parent","Mobile"],...rows.map(r=>[r.student_name,r.admission_no,r.class_name,r.division_name,r.overdue,r.total_balance,r.oldest_due,r.guardian_name,r.guardian_mobile])]))};
+load()})();
+</script></body></html>
