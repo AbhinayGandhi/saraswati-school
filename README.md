@@ -77,3 +77,9 @@ Run `supabase/phase13.sql`, `phase14.sql` and `phase15.sql` once each (or just r
 - **Install as app (PWA):** manifest.json, sw.js, offline.html, js/pwa.js. Icons in images/icon-192.png and icon-512.png are placeholders; replace with the school logo (same names and sizes).
 - **QR attendance:** qr-attendance.html. ID cards carry a QR with `SES|<admission_no>`. Camera needs HTTPS (GitHub Pages is HTTPS). Manual admission-no entry is the fallback.
 - **Absence alerts:** run supabase/phase16.sql. Marking a student absent (today or within 2 days) notifies active guardians in the portal. No SMS.
+
+## Round 4: Live bus tracking (free)
+- Run supabase/phase17.sql. On the Transport page: set each stop's map location (type lat/lng or press "Use my current location" while standing at the stop), then copy the **Driver link** for each bus and give it to that driver. "Make new link" cancels the old link.
+- Driver opens the link on his phone, presses Start trip (pickup or drop). Phone GPS is sent every 10 seconds. Page must stay open with the screen on.
+- Parents: menu "Track bus" shows the bus on an OpenStreetMap map, their child's stop, distance and a rough time. They also get in-portal notifications "Bus started" and "Bus is near <stop>" (within 500 m, once per trip).
+- Cost: zero. Map tiles from OpenStreetMap (fine for a school; keep traffic light). Leaflet is vendored (BSD-2).

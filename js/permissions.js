@@ -25,6 +25,7 @@ const NAV = [
   { href: "gallery.html", label: "Gallery", roles: "*" },
   { href: "library.html", label: "Library", roles: [...ADMIN_ROLES, "librarian", "teacher", "class_teacher", "reception"] },
   { href: "admissions.html", label: "Admission enquiries", roles: [...ADMIN_ROLES, "reception"] },
+  { href: "track-bus.html", label: "Track bus", roles: ["parent", "student", ...ADMIN_ROLES, "reception"] },
   { href: "transport.html", label: "Transport", roles: [...ADMIN_ROLES, "reception"] },
   { href: "leave.html", label: "Staff leave", roles: [...ADMIN_ROLES, "teacher", "class_teacher", "accountant", "librarian", "reception"] },
   { href: "teacher-attendance.html", label: "Teacher attendance", roles: [...ADMIN_ROLES, "reception"] },

@@ -1,0 +1,43 @@
+<!doctype html><html lang="en"><head><meta name="description" content="Saraswati English Medium School: school management portal."><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bitter:wght@600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="css/style.css"><link rel="stylesheet" href="css/leaflet.css"><link rel="stylesheet" href="css/print.css" media="print"><title>Track bus | Saraswati English Medium School</title>
+<style>#map{height:min(62vh,30rem);border-radius:.6rem;border:1px solid #cfd6e0;margin:.8rem 0}.busdot{font-size:1.7rem;line-height:1;filter:drop-shadow(0 1px 2px #0006)}.stopdot{background:#16233b;color:#fff;border-radius:50%;width:1.4rem;height:1.4rem;line-height:1.4rem;text-align:center;font-size:.75rem;font-weight:700;border:2px solid #fff}.stopdot.me{background:#c0392b;width:1.8rem;height:1.8rem;line-height:1.8rem}.big{font-size:1.15rem;font-weight:700}</style></head>
+<body><div class="app"><aside id="sidebar" class="noprint" aria-label="Sidebar"></aside>
+<div><header class="top noprint"><button class="btn ghost" id="menu" aria-expanded="false" aria-controls="sidebar">Menu</button><span id="who"></span><button class="btn ghost" id="logout">Sign out</button></header>
+<main><h1>Track bus</h1>
+<div class="row"><div><label for="rt">Bus route</label><select id="rt"></select></div></div>
+<p id="sum" class="big" role="status" aria-live="polite">Loading...</p><p id="sub"></p>
+<div id="map" role="region" aria-label="Bus map"></div>
+<p style="font-size:.9rem">The map updates by itself every few seconds while the bus is running. Time shown is an estimate. Map: OpenStreetMap contributors.</p>
+<div id="stops"></div></main></div></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script><script src="js/config.js"></script><script src="js/supabase.js"></script><script src="js/utils.js"></script><script src="js/permissions.js"></script><script src="js/auth.js"></script><script src="js/vendor/leaflet.js"></script>
+<script>
+(async()=>{const p=await Auth.require("*");Auth.shell(p);const $=id=>document.getElementById(id);
+if(!["parent","student",...ADMIN_ROLES,"reception"].includes(p.role)){U.state($("sum"),"error","This page is for parents and office staff.");return}
+const staff=p.role!=="parent"&&p.role!=="student";let routes=[],mine={},map,bus,layer,line,timer;
+function dist(a,b,c,d){const R=6371000,t=x=>x*Math.PI/180,s=Math.sin(t(c-a)/2)**2+Math.cos(t(a))*Math.cos(t(c))*Math.sin(t(d-b)/2)**2;return 2*R*Math.asin(Math.sqrt(s))}
+function ago(ts){const s=Math.max(0,Math.round((Date.now()-new Date(ts))/1000));return s<60?s+" sec ago":s<3600?Math.round(s/60)+" min ago":new Date(ts).toLocaleString()}
+try{L.Icon.Default.imagePath="css/images/";map=L.map("map").setView([18.52,73.85],12);L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:"&copy; OpenStreetMap contributors"}).addTo(map);layer=L.layerGroup().addTo(map)}catch(e){$("map").textContent="Map could not load."}
+try{const q=db.from("transport_routes").select("id,name,vehicle_no,driver_name,driver_contact,pickup_time,drop_time,transport_stops(id,name,stop_order,lat,lng)").eq("status","active").order("name");const {data,error}=await q;if(error)throw error;routes=data;
+if(!staff){const {data:as,error:e2}=await db.from("transport_assignments").select("route_id,stop_id,student_enrollments(students(first_name,last_name))").eq("status","active");if(e2)throw e2;as.forEach(a=>{(mine[a.route_id]=mine[a.route_id]||[]).push({stop:a.stop_id,name:a.student_enrollments.students.first_name+" "+a.student_enrollments.students.last_name})})}}
+catch(e){U.friendly(e);U.state($("sum"),"error","Unable to load. Please try again.");return}
+if(!routes.length){$("sum").textContent=staff?"No active routes.":"No school bus is assigned to your child.";$("rt").parentElement.hidden=true;return}
+$("rt").innerHTML=routes.map(r=>`<option value="${r.id}">${U.esc(r.name)}</option>`).join("");
+async function draw(){const r=routes.find(x=>x.id===$("rt").value);if(!r)return;
+const stops=[...r.transport_stops].sort((a,b)=>a.stop_order-b.stop_order),my=(mine[r.id]||[]).map(m=>m.stop);
+let b=null;try{const {data,error}=await db.from("bus_live").select("*").eq("route_id",r.id).maybeSingle();if(error)throw error;b=data}catch(e){U.friendly(e);$("sum").textContent="Could not refresh. Retrying...";return}
+const live=b&&b.trip_active&&(Date.now()-new Date(b.updated_at))<180000;
+if(layer){layer.clearLayers();const pts=[];stops.filter(s=>s.lat!=null).forEach(s=>{const me=my.includes(s.id);pts.push([s.lat,s.lng]);L.marker([s.lat,s.lng],{icon:L.divIcon({className:"",html:`<div class="stopdot${me?" me":""}">${s.stop_order}</div>`,iconSize:[26,26]})}).bindTooltip(s.name+(me?" (your stop)":"")).addTo(layer)});
+if(pts.length>1)L.polyline(pts,{color:"#16233b",weight:3,opacity:.5,dashArray:"6 6"}).addTo(layer);
+if(b&&b.lat!=null){pts.push([b.lat,b.lng]);L.marker([b.lat,b.lng],{icon:L.divIcon({className:"",html:'<div class="busdot" aria-hidden="true">&#128652;</div>',iconSize:[28,28]}),opacity:live?1:.5}).bindTooltip(live?"Bus":"Last seen").addTo(layer)}
+if(pts.length&&!draw.fit){map.fitBounds(pts,{padding:[30,30],maxZoom:16});draw.fit=r.id}else if(draw.fit!==r.id&&pts.length){map.fitBounds(pts,{padding:[30,30],maxZoom:16});draw.fit=r.id}}
+let s1="",s2="";
+if(live){s1="Bus is running ("+(b.trip==="pickup"?"morning pickup":"drop trip")+")";s2="Updated "+ago(b.updated_at)+(b.speed_kmh!=null?" | Speed "+Math.round(b.speed_kmh)+" km/h":"");
+const t=stops.find(s=>my.includes(s.id)&&s.lat!=null);if(t){const d=dist(b.lat,b.lng,t.lat,t.lng),sp=Math.max(b.speed_kmh||0,15),mins=Math.max(1,Math.round(d/1000/sp*60));s2+=" | "+(d<150?"Bus is at your stop \""+t.name+"\"":"About "+(d<1000?Math.round(d/10)*10+" m":(d/1000).toFixed(1)+" km")+" from \""+t.name+"\" (about "+mins+" min)")}}
+else{s1="Bus is not running now";s2=b&&b.lat!=null?"Last seen "+ago(b.updated_at):"Live tracking starts when the driver starts the trip."+(r.pickup_time?" Usual pickup "+String(r.pickup_time).slice(0,5)+".":"")}
+if(r.driver_name)s2+=" | Driver: "+r.driver_name+(r.driver_contact?" "+r.driver_contact:"");
+$("sum").textContent=s1;$("sub").textContent=s2;
+const miss=stops.filter(s=>s.lat==null).length;$("stops").innerHTML=miss&&staff?`<p class="state">${miss} stop(s) have no map location yet. Add it on the Transport page.</p>`:"";}
+$("rt").onchange=()=>{draw.fit=null;draw()};
+function loop(){clearInterval(timer);timer=setInterval(()=>{if(!document.hidden)draw()},8000)}
+await draw();loop();document.addEventListener("visibilitychange",()=>{if(!document.hidden)draw()});
+})();
+</script><script src="js/i18n.js"></script></body></html>

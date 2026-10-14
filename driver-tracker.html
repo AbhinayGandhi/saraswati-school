@@ -1,0 +1,33 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><meta name="description" content="Saraswati English Medium School: school bus driver page."><link rel="stylesheet" href="css/style.css"><title>Bus driver | Saraswati English Medium School</title>
+<style>body{padding:1rem;max-width:30rem;margin:0 auto}.big{display:block;width:100%;padding:1.1rem;font-size:1.15rem;margin:.6rem 0}.st{padding:.8rem;border-radius:.5rem;background:#eef2f7;margin:.8rem 0;font-weight:700}.ok{background:#e3f4ea}.bad{background:#fde8e8}</style></head>
+<body><h1>School bus / स्कूल बस</h1>
+<p id="rt" style="font-size:1.1rem;font-weight:700">Loading...</p>
+<div id="stat" class="st" role="status" aria-live="polite">Checking link...</div>
+<div id="ctl" hidden>
+<button class="btn big" id="b1">Start morning pickup / सकाळची फेरी सुरू करा</button>
+<button class="btn big" id="b2">Start drop trip / घरी सोडण्याची फेरी सुरू करा</button>
+<button class="btn big ghost" id="b3" hidden>End trip / फेरी संपवा</button>
+</div>
+<p style="font-size:.9rem">Keep this page open and the screen on while driving. Parents see the bus on the map only while a trip is running.<br>गाडी चालवताना हे पेज उघडे आणि स्क्रीन चालू ठेवा. फेरी सुरू असतानाच पालकांना बस नकाशावर दिसते.</p>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script><script src="js/config.js"></script>
+<script>
+(()=>{const $=id=>document.getElementById(id);let db;try{db=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{auth:{persistSession:false}})}catch(e){$("stat").textContent="Setup problem. Please tell the school office.";return}
+let tok="";try{const q=new URLSearchParams(location.search).get("k");if(q){localStorage.setItem("ses_drv",q)}tok=q||localStorage.getItem("ses_drv")||""}catch(e){tok=new URLSearchParams(location.search).get("k")||""}
+let watch=null,timer=null,last=null,active=false,wake=null,fails=0;
+const say=(t,c)=>{$("stat").textContent=t;$("stat").className="st "+(c||"")};
+async function rpc(a,trip,p){const {data,error}=await db.rpc("driver_ping",{p_token:tok,p_action:a,p_trip:trip||null,p_lat:p?p.latitude:null,p_lng:p?p.longitude:null,p_speed:p&&p.speed!=null?p.speed*3.6:null,p_heading:p&&p.heading!=null?p.heading:null,p_acc:p?p.accuracy:null});if(error)throw error;return data}
+function pos(){return new Promise((ok,no)=>navigator.geolocation?navigator.geolocation.getCurrentPosition(x=>ok(x.coords),no,{enableHighAccuracy:true,timeout:15000,maximumAge:3000}):no(new Error("no gps")))}
+async function lock(){try{if("wakeLock" in navigator)wake=await navigator.wakeLock.request("screen")}catch(e){}}
+document.addEventListener("visibilitychange",()=>{if(active&&document.visibilityState==="visible")lock()});
+function ui(){$("b1").hidden=$("b2").hidden=active;$("b3").hidden=!active}
+async function send(){if(!active||!last)return;try{const r=await rpc("ping",null,last);if(r.ok){fails=0;say("Sending location. Last sent "+new Date().toLocaleTimeString()+" (GPS accuracy "+Math.round(last.accuracy)+" m)","ok")}else if(r.error==="no_trip"){stopAll();say("Trip is not running.","bad")}}catch(e){fails++;say("No internet. Trying again... ("+fails+")","bad")}}
+function begin(){active=true;ui();lock();watch=navigator.geolocation.watchPosition(x=>{last=x.coords},()=>say("GPS is off. Turn on location and allow it for this page. / लोकेशन चालू करा.","bad"),{enableHighAccuracy:true,maximumAge:2000,timeout:20000});timer=setInterval(send,10000)}
+function stopAll(){active=false;if(watch!=null)navigator.geolocation.clearWatch(watch);watch=null;clearInterval(timer);try{wake&&wake.release()}catch(e){}ui()}
+async function start(trip){say("Finding GPS...");try{const c=await pos();last=c;const r=await rpc("start",trip,c);if(!r.ok)return say("Could not start ("+r.error+").","bad");begin();say("Trip started. Parents have been told.","ok")}catch(e){say("Could not get GPS. Turn on location and allow it. / लोकेशन चालू करून परवानगी द्या.","bad")}}
+$("b1").onclick=()=>start("pickup");$("b2").onclick=()=>start("drop");
+$("b3").onclick=async()=>{if(!confirm("End this trip? / फेरी संपवायची?"))return;try{await rpc("end")}catch(e){}stopAll();say("Trip ended. Thank you.","ok")};
+(async()=>{if(!tok){say("This link is not complete. Ask the school office for your bus link.","bad");$("rt").textContent="";return}
+try{const r=await rpc("info");if(!r.ok){say("This link is not valid or was changed. Ask the school office for the new link.","bad");$("rt").textContent="";return}
+$("rt").textContent=r.route+(r.vehicle?" | "+r.vehicle:"");$("ctl").hidden=false;if(r.active){say("A trip is already running. Press start again to continue sending.")}else say("Ready.")}catch(e){say("Could not connect. Check internet.","bad")}})();
+})();
+</script></body></html>
