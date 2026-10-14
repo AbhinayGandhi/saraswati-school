@@ -107,3 +107,7 @@ Run `supabase/phase13.sql`, `phase14.sql` and `phase15.sql` once each (or just r
 - `dashboard.html` now shows KPIs, "needs attention" links, attendance trend/by class, strength, gender split, fee collection (fee roles only).
 - `fee-reports.html` has an overview (monthly collection, outstanding by class, ageing, payment modes, top 10 overdue) above the old detailed reports (unchanged).
 - `js/charts.js`: dependency-free SVG charts with tooltips and a Table view for every chart.
+
+## Round 8: offline QR attendance
+- `qr-attendance.html` now uses `js/offline.js` like `attendance.html`: the roster is cached on the phone, Save queues records when there is no internet, and they are sent automatically (or via "Sync now") when it returns. The server still enforces holidays and permissions; refused rows are listed in the banner.
+- Teachers should open each division once while online so it is available offline. `sw.js` cache bumped to `ses-v3`.

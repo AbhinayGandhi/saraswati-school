@@ -3,7 +3,8 @@
 <div><header class="top noprint"><button class="btn ghost" id="menu" aria-expanded="false" aria-controls="sidebar">Menu</button><span id="who"></span><button class="btn ghost" id="logout">Sign out</button></header>
 <main><h1>QR attendance</h1>
 <p>Choose the division, start the camera and scan each student's ID card QR code. Scanned students are marked <b>present</b>. Nothing is saved until you press Save.</p>
-<div class="row"><div><label for="dv">Class and division (active year)</label><select id="dv"></select></div><div><label for="dt">Date</label><input id="dt" type="date"></div></div>
+<p class="ch-note">Works without internet too: open the division once while online, and later (even with no network) scan and Save; the attendance is sent automatically when the internet returns.</p>
+<div id="ob"></div><div class="row"><div><label for="dv">Class and division (active year)</label><select id="dv"></select></div><div><label for="dt">Date</label><input id="dt" type="date"></div></div>
 <p id="hol" class="state error" hidden></p>
 <div class="qrbox"><video id="vid" playsinline muted hidden></video><canvas id="cv" hidden></canvas></div>
 <p><button class="btn" id="cam">Start camera</button> <button class="btn ghost" id="stop" hidden>Stop camera</button></p>
@@ -12,14 +13,17 @@
 <div id="cnt" class="grid"></div>
 <p><button class="btn" id="sv">Save attendance</button> <button class="btn ghost" id="rem">Mark remaining as absent</button></p>
 <div id="list" class="tw"><div class="state">Loading...</div></div></main></div></div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script><script src="js/config.js"></script><script src="js/supabase.js"></script><script src="js/utils.js"></script><script src="js/permissions.js"></script><script src="js/auth.js"></script><script src="js/fees.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script><script src="js/config.js"></script><script src="js/supabase.js"></script><script src="js/utils.js"></script><script src="js/permissions.js"></script><script src="js/offline.js"></script><script src="js/auth.js"></script><script src="js/fees.js"></script>
 <script>
 (async()=>{const p=await Auth.require([...ADMIN_ROLES,"teacher","class_teacher"]);Auth.shell(p);const $=id=>document.getElementById(id);
 let year=null,enr=[],st={},orig={},stream=null,last="",lastAt=0,holiday=false;const nm=s=>[s.first_name,s.middle_name,s.last_name].filter(Boolean).join(" ");
 const ST=["present","absent","late","half_day","leave"];$("dt").value=Fee.today();$("dt").max=Fee.today();
+const DK="qr_dv_"+p.id;
 try{const y=await db.from("academic_years").select("id,name").eq("is_active",true).maybeSingle();if(y.error)throw y.error;year=y.data;if(!year){U.state($("list"),"empty","Set an active academic year first.");return}
 const d=await db.from("divisions").select("id,name,classes(name,sort_order)").eq("academic_year_id",year.id);if(d.error)throw d.error;
-$("dv").innerHTML=d.data.sort((a,b)=>a.classes.sort_order-b.classes.sort_order||a.name.localeCompare(b.name)).map(x=>`<option value="${x.id}">${U.esc(x.classes.name+" - "+x.name)}</option>`).join("")||'<option value="">No division</option>'}catch(e){U.friendly(e);U.state($("list"),"error","Unable to load. Please try again.");return}
+const opts=d.data.sort((a,b)=>a.classes.sort_order-b.classes.sort_order||a.name.localeCompare(b.name)).map(x=>({id:x.id,label:x.classes.name+" - "+x.name}));Offline.set(DK,{year,opts});
+$("dv").innerHTML=opts.map(x=>`<option value="${x.id}">${U.esc(x.label)}</option>`).join("")||'<option value="">No division</option>'}
+catch(e){const c=Offline.isNet(e)&&Offline.get(DK);if(!c){U.friendly(e);U.state($("list"),"error","Unable to load. Please try again.");return}year=c.year;$("dv").innerHTML=c.opts.map(x=>`<option value="${x.id}">${U.esc(x.label)}</option>`).join("")}
 function beep(ok){try{const c=new (window.AudioContext||window.webkitAudioContext)(),o=c.createOscillator(),g=c.createGain();o.frequency.value=ok?880:220;g.gain.value=.08;o.connect(g);g.connect(c.destination);o.start();setTimeout(()=>{o.stop();c.close()},ok?120:300)}catch(e){}if(navigator.vibrate)navigator.vibrate(ok?60:[80,60,80])}
 function say(t,ok){const m=$("msg");m.textContent=t;m.style.color=ok?"var(--chalk-d)":"var(--bad)"}
 function draw(){const L=$("list");if(!enr.length){$("cnt").innerHTML="";return U.state(L,"empty","No students in this division.")}
@@ -27,10 +31,13 @@ const c={present:0,absent:0,other:0,none:0};enr.forEach(e=>{const s=st[e.id];if(
 $("cnt").innerHTML=`<div class="card"><b>${c.present}</b>Present</div><div class="card"><b>${c.absent}</b>Absent</div><div class="card"><b>${c.other}</b>Late, half day or leave</div><div class="card"><b>${c.none}</b>Not marked yet</div>`;
 L.innerHTML=`<table><thead><tr><th>Roll</th><th>Student</th><th>Admission no</th><th>Status</th></tr></thead><tbody>${enr.map(e=>{const s=e.students,v=st[e.id]||"";return `<tr><td>${e.roll_no??""}</td><td>${U.esc(nm(s))}</td><td>${U.esc(s.admission_no)}</td><td><select data-e="${e.id}" aria-label="Status of ${U.esc(nm(s))}"><option value="">Not marked</option>${ST.map(x=>`<option value="${x}"${v===x?" selected":""}>${x.replace("_"," ")}</option>`).join("")}</select></td></tr>`}).join("")}</tbody></table>`}
 async function load(){$("list").innerHTML='<div class="state">Loading...</div>';st={};orig={};holiday=false;$("hol").hidden=true;$("sv").disabled=false;
-try{if(!$("dv").value)return U.state($("list"),"empty","No division available.");
-const {data,error}=await db.from("student_enrollments").select("id,roll_no,students(admission_no,first_name,middle_name,last_name)").eq("division_id",$("dv").value).eq("academic_year_id",year.id).eq("status","active").order("roll_no");if(error)throw error;enr=data||[];
+try{if(!$("dv").value)return U.state($("list"),"empty","No division available.");const rk="qr_r_"+$("dv").value;let offline=false;
+try{const {data,error}=await db.from("student_enrollments").select("id,roll_no,students(admission_no,first_name,middle_name,last_name)").eq("division_id",$("dv").value).eq("academic_year_id",year.id).eq("status","active").order("roll_no");if(error)throw error;enr=data||[];Offline.set(rk,enr);
 if(enr.length){const [a,h]=await Promise.all([db.from("attendance").select("enrollment_id,status").eq("att_date",$("dt").value).in("enrollment_id",enr.map(x=>x.id)),db.from("school_calendar").select("title").eq("day",$("dt").value).in("kind",["holiday","vacation"])]);if(a.error||h.error)throw a.error||h.error;
-(a.data||[]).forEach(r=>{st[r.enrollment_id]=r.status;orig[r.enrollment_id]=r.status});if(h.data&&h.data.length){holiday=true;$("hol").textContent="This date is a holiday ("+h.data[0].title+"). Attendance cannot be saved.";$("hol").hidden=false;$("sv").disabled=true}}
+(a.data||[]).forEach(r=>{st[r.enrollment_id]=r.status;orig[r.enrollment_id]=r.status});if(h.data&&h.data.length){holiday=true;$("hol").textContent="This date is a holiday ("+h.data[0].title+"). Attendance cannot be saved.";$("hol").hidden=false;$("sv").disabled=true}}}
+catch(e){if(Offline.isNet(e)&&Offline.get(rk)){offline=true;enr=Offline.get(rk)}else throw e}
+const q=Offline.queuedFor($("dt").value);enr.forEach(e=>{if(q[e.id])st[e.id]=q[e.id]});
+if(offline){$("hol").textContent="Offline: using the saved student list. Holidays are checked when the attendance is sent.";$("hol").hidden=false}
 draw()}catch(e){U.friendly(e);U.state($("list"),"error","Unable to load the students. Please try again.")}}
 function mark(code){const m=/^SES\|(.{1,40})$/.exec(String(code).trim());const adm=m?m[1].trim().toLowerCase():String(code).trim().toLowerCase();if(!adm)return;
 const now=Date.now();if(adm===last&&now-lastAt<2500)return;last=adm;lastAt=now;
@@ -46,7 +53,9 @@ $("manb").onclick=()=>{mark($("man").value);$("man").value="";lastAt=0};$("man")
 $("list").addEventListener("change",e=>{const s=e.target.closest("select[data-e]");if(!s)return;if(s.value)st[s.dataset.e]=s.value;else delete st[s.dataset.e];draw()});
 $("rem").onclick=async()=>{const n=enr.filter(e=>!st[e.id]).length;if(!n)return U.toast("Everyone is already marked.");if(!await U.confirm("Mark the remaining "+n+" students as ABSENT? Their parents will be notified when you save."))return;enr.forEach(e=>{if(!st[e.id])st[e.id]="absent"});draw()};
 $("sv").onclick=async()=>{const rows=enr.filter(e=>st[e.id]&&st[e.id]!==orig[e.id]).map(e=>({enrollment_id:e.id,att_date:$("dt").value,status:st[e.id]}));if(!rows.length)return U.toast("Nothing new to save.");
+const keep=()=>{Offline.add(rows);rows.forEach(r=>orig[r.enrollment_id]=r.status);ob.draw();U.toast("No internet: saved on this phone. It will be sent automatically.")};
+if(navigator.onLine===false)return keep();
 $("sv").disabled=true;try{const {error}=await db.from("attendance").upsert(rows,{onConflict:"enrollment_id,att_date"});if(error)throw error;rows.forEach(r=>orig[r.enrollment_id]=r.status);U.audit("QR attendance saved","attendance",$("dv").value);U.toast("Saved "+rows.length+" students.")}
-catch(e){U.friendly(e);console.error(e);U.toast(/holiday/i.test(e.message||"")?"This date is a holiday.":"Could not save: "+((e&&(e.message||e.details))||"unknown error"),"err")}$("sv").disabled=holiday};
-$("dv").onchange=load;$("dt").onchange=load;load();
+catch(e){if(Offline.isNet(e))keep();else{U.friendly(e);console.error(e);U.toast(/holiday/i.test(e.message||"")?"This date is a holiday.":"Could not save: "+((e&&(e.message||e.details))||"unknown error"),"err")}}$("sv").disabled=holiday};
+const ob=Offline.banner($("ob"),()=>load());$("dv").onchange=load;$("dt").onchange=load;load();if(navigator.onLine!==false)fetch("js/vendor/jsQR.js").catch(()=>{});
 })();</script><script src="js/i18n.js"></script></body></html>
