@@ -1,18 +1,30 @@
 <!doctype html><html lang="en"><head><meta name="description" content="Saraswati English Medium School: school management portal."><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bitter:wght@600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="css/style.css"><link rel="stylesheet" href="css/print.css" media="print"><title>Dashboard | Saraswati English Medium School</title></head>
 <body><div class="app"><aside id="sidebar" aria-label="Sidebar"></aside>
 <div><header class="top"><button class="btn ghost" id="menu" aria-expanded="false" aria-controls="sidebar">Menu</button><span id="who"></span><button class="btn ghost" id="logout">Sign out</button></header>
-<main><h1>Dashboard</h1><div id="out" class="grid"><div class="state">Loading...</div></div><section id="bd" style="margin-top:1.5rem" hidden><h2>Birthdays</h2><div id="bdl"></div></section></main></div></div>
+<main><h1>Dashboard</h1><div id="out"><div class="state">Loading...</div></div><div id="alerts" class="alerts"></div><div id="kp" class="kpis"></div><div id="ch" class="charts"></div><section id="bd" style="margin-top:1.5rem" hidden><h2>Birthdays</h2><div id="bdl"></div></section></main></div></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script>
-<script src="js/config.js"></script><script src="js/supabase.js"></script><script src="js/utils.js"></script><script src="js/permissions.js"></script><script src="js/auth.js"></script>
+<script src="js/config.js"></script><script src="js/supabase.js"></script><script src="js/utils.js"></script><script src="js/permissions.js"></script><script src="js/auth.js"></script><script src="js/fees.js"></script><script src="js/charts.js"></script>
 <script>
-(async()=>{const p=await Auth.require("*");const RD={parent:"parent-portal.html",student:"student-portal.html",teacher:"teacher-portal.html",class_teacher:"teacher-portal.html"};if(RD[p.role]){location.replace(RD[p.role]);return}Auth.shell(p);const out=document.getElementById("out");
-try{const [y,c,d]=await Promise.all([
-db.from("academic_years").select("name").eq("is_active",true).maybeSingle(),
-db.from("classes").select("id",{count:"exact",head:true}),
-db.from("divisions").select("id",{count:"exact",head:true})]);
-if(y.error||c.error||d.error)throw y.error||c.error||d.error;
-out.innerHTML=`<div class="card"><b>${U.esc(y.data?y.data.name:"None")}</b>Active academic year</div>
-<div class="card"><b>${c.count??0}</b>Classes</div><div class="card"><b>${d.count??0}</b>Divisions</div>`;
+(async()=>{const p=await Auth.require("*");const RD={parent:"parent-portal.html",student:"student-portal.html",teacher:"teacher-portal.html",class_teacher:"teacher-portal.html"};if(RD[p.role]){location.replace(RD[p.role]);return}Auth.shell(p);
+const $=id=>document.getElementById(id),out=$("out"),kp=$("kp"),ch=$("ch"),al=$("alerts");
+const tile=(l,v,sub)=>{const d=document.createElement("div");d.className="card";const s=document.createElement("small");s.textContent=l;const b=document.createElement("b");b.textContent=v;d.append(s,b);if(sub){const x=document.createElement("small");x.textContent=sub;d.appendChild(x)}return d};
+const pct=(a,b)=>b?Math.round(a*100/b):0;
+try{const {data:o,error}=await db.rpc("dashboard_overview");if(error)throw error;out.innerHTML="";
+const h=document.createElement("p");h.className="ch-note";h.textContent="Academic year "+(o.year||"-")+" | "+new Date().toLocaleDateString("en-IN",{weekday:"long",day:"numeric",month:"long"});out.appendChild(h);
+const F=o.fees,at=o.att_today||{},atN=Object.values(at).reduce((a,b)=>a+b,0),pres=(at.present||0)+(at.late||0)+(at.half_day||0);
+if(o.students!==undefined){kp.append(tile("Students",o.students),tile("Teachers",o.teachers),tile("Classes",o.classes,o.divisions+" divisions"))}
+if(o.att_today!==undefined){const t=tile("Attendance today",atN?pct(pres,atN)+"%":"-",atN?pres+" of "+atN+" present":"Not marked yet");if(atN){const m=document.createElement("div");m.className="meter";m.innerHTML='<span style="width:'+pct(pres,atN)+'%"></span>';t.appendChild(m)}kp.appendChild(t)}
+if(F){kp.append(tile("Collected today",Fee.inr(o.fee_today)),tile("Outstanding",Fee.inr(F.balance),Fee.inr(F.overdue)+" overdue"))}
+const link=(href,n,txt)=>{if(!n)return;const a=document.createElement("a");a.href=href;a.innerHTML="<b></b> ";a.firstChild.textContent=n;a.append(txt);al.appendChild(a)};
+link("attendance.html",o.att_unmarked,"divisions not marked today");link("requests.html",o.pending_requests,"parent requests pending");link("leave.html",o.pending_leave,"leave requests pending");link("payment-claims.html",o.pending_claims,"UPI payment claims to review");link("fee-reports.html",F&&F.overdue_n,"students with overdue fees");
+if(o.att_days)Charts.series(ch.appendChild(document.createElement("div")),"Attendance, last 14 days",o.att_days.map(d=>({label:d.d.slice(5),value:pct(d.p,d.n),note:d.p+" of "+d.n+" present"})),{kind:"line",max:100,fmt:v=>v+"%",axisFmt:v=>v+"%",valueHead:"Present %"});
+if(o.att_classes)Charts.bars(ch.appendChild(document.createElement("div")),"Attendance today by class",o.att_classes.map(c=>({label:c.c,value:pct(c.p,c.n),note:c.p+" of "+c.n})),{fmt:v=>v+"%",max:100,labelHead:"Class",valueHead:"Present %"});
+if(o.strength)Charts.bars(ch.appendChild(document.createElement("div")),"Students per class",o.strength.map(c=>({label:c.c,value:c.n})),{color:"--c3",labelHead:"Class",valueHead:"Students"});
+if(o.gender)Charts.split(ch.appendChild(document.createElement("div")),"Boys and girls",[{label:"Boys",value:o.gender.Male||0,color:"--c1"},{label:"Girls",value:o.gender.Female||0,color:"--c2"},{label:"Other",value:o.gender.Other||0,color:"--c4"}],{fmt:v=>String(v)});
+if(o.fee_months)Charts.series(ch.appendChild(document.createElement("div")),"Fee collection, last 6 months",o.fee_months.map(m=>({label:m.m,value:Number(m.a)})),{fmt:v=>"₹"+Charts.compact(v),axisFmt:Charts.compact,valueHead:"Collected"});
+if(F)Charts.split(ch.appendChild(document.createElement("div")),"Fees this year",[{label:"Collected",value:Number(F.paid),color:"--c1"},{label:"Overdue",value:Number(F.overdue),color:"--c2"},{label:"Not yet due",value:Math.max(0,Number(F.balance)-Number(F.overdue)),color:"--c5"}],{fmt:v=>Fee.inr(v)});
+if(o.events&&o.events.length){const d=document.createElement("div");d.className="chart-card";d.innerHTML="<h3>Upcoming events</h3>";const u=document.createElement("ul");o.events.forEach(e=>{const l=document.createElement("li");l.textContent=e.d+" - "+e.t;u.appendChild(l)});d.appendChild(u);ch.appendChild(d)}
+if(!kp.children.length&&!ch.children.length)out.append(Object.assign(document.createElement("div"),{className:"state",textContent:"Nothing to show for your role yet."}));
 }catch(e){U.state(out,"error","Unable to load the dashboard. Please try again.");U.friendly(e)}
-try{const {data,error}=await db.rpc("upcoming_birthdays",{p_days:7});if(error)throw error;if(data&&data.length){const L=document.getElementById("bdl");L.innerHTML="";data.forEach(b=>{const c=document.createElement("div");c.className="card";c.style.marginBottom=".4rem";const t=document.createElement("b");t.textContent=b.student_name;const m=document.createElement("span");m.textContent=" "+b.class_name+" - "+b.division_name+" | "+(b.days_ahead===0?"Today":b.days_ahead===1?"Tomorrow":b.birthday);c.append(t,m);L.appendChild(c)});document.getElementById("bd").hidden=false}}catch(e){console.error(e)}})();
+try{const {data,error}=await db.rpc("upcoming_birthdays",{p_days:7});if(error)throw error;if(data&&data.length){const L=$("bdl");L.innerHTML="";data.forEach(b=>{const c=document.createElement("div");c.className="card";c.style.marginBottom=".4rem";const t=document.createElement("b");t.style.fontSize="1rem";t.textContent=b.student_name;const m=document.createElement("span");m.textContent=" "+b.class_name+" - "+b.division_name+" | "+(b.days_ahead===0?"Today":b.days_ahead===1?"Tomorrow":b.birthday);c.append(t,m);L.appendChild(c)});$("bd").hidden=false}}catch(e){console.error(e)}})();
 </script><script src="js/i18n.js"></script></body></html>

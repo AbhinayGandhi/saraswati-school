@@ -3,6 +3,7 @@
 (function () {
   var MR = {
     // menu (ERP)
+    "Students per class": "वर्गनिहाय विद्यार्थी", "Boys and girls": "मुले आणि मुली", "Attendance, last 14 days": "उपस्थिती, गेले १४ दिवस", "Attendance today by class": "आजची उपस्थिती (वर्गनिहाय)", "Fee collection, last 6 months": "फी वसुली, गेले ६ महिने", "Fees this year": "या वर्षाची फी", "Upcoming events": "आगामी कार्यक्रम", "Collection by month": "महिन्यानुसार वसुली", "Outstanding by class": "वर्गनिहाय थकबाकी", "Overdue ageing": "थकबाकीचे वय", "Payment modes": "भरणा पद्धती", "Top 10 overdue students": "सर्वाधिक थकबाकी असलेले १० विद्यार्थी", "Detailed reports": "सविस्तर अहवाल", "Outstanding": "थकबाकी", "Collected today": "आज जमा", "Attendance today": "आजची उपस्थिती", "Table": "तक्ता", "Chart": "चार्ट",
     "Dashboard": "डॅशबोर्ड", "Academic years": "शैक्षणिक वर्षे", "Classes and divisions": "वर्ग आणि तुकड्या", "Subjects": "विषय", "Teachers": "शिक्षक", "Staff": "कर्मचारी",
     "Attendance": "हजेरी", "School calendar": "शाळेची दिनदर्शिका", "Subject teachers": "विषय शिक्षक", "Exams": "परीक्षा", "Marks entry": "गुण नोंदणी", "Results": "निकाल",
     "Timetable": "वेळापत्रक", "Homework": "गृहपाठ", "Notices": "सूचना", "Notifications": "संदेश", "Events": "कार्यक्रम", "Activities": "उपक्रम", "Achievements": "यश",

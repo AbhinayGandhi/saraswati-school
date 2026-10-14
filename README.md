@@ -101,3 +101,9 @@ Run `supabase/phase13.sql`, `phase14.sql` and `phase15.sql` once each (or just r
 - Run supabase/phase20.sql, deploy supabase/functions/ai-assistant/index.ts as an Edge Function named `ai-assistant`, add the secret GEMINI_API_KEY. Full steps: AI-SETUP-GUIDE.md.
 - Menu "AI assistant": notice writer, translator, report remarks, question maker (teachers/office/admin) and "Ask the school" (parents). Admin control panel: on/off switch, daily limits, school notes the parent chat may use.
 - Safety: login required; students never get AI; phone numbers/e-mails removed before sending; AI only returns text; daily limits; nothing the user types is stored (only a use count).
+
+## Round 7: dashboard charts and fee overview
+- Run `supabase/phase21.sql` once (adds `dashboard_overview()` and `fee_overview()`; read-only, role-gated).
+- `dashboard.html` now shows KPIs, "needs attention" links, attendance trend/by class, strength, gender split, fee collection (fee roles only).
+- `fee-reports.html` has an overview (monthly collection, outstanding by class, ageing, payment modes, top 10 overdue) above the old detailed reports (unchanged).
+- `js/charts.js`: dependency-free SVG charts with tooltips and a Table view for every chart.
