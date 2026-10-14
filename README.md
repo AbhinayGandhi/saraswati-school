@@ -83,3 +83,9 @@ Run `supabase/phase13.sql`, `phase14.sql` and `phase15.sql` once each (or just r
 - Driver opens the link on his phone, presses Start trip (pickup or drop). Phone GPS is sent every 10 seconds. Page must stay open with the screen on.
 - Parents: menu "Track bus" shows the bus on an OpenStreetMap map, their child's stop, distance and a rough time. They also get in-portal notifications "Bus started" and "Bus is near <stop>" (within 500 m, once per trip).
 - Cost: zero. Map tiles from OpenStreetMap (fine for a school; keep traffic light). Leaflet is vendored (BSD-2).
+
+## Round 5A: Bus boarding scan, photos, insights
+- Run supabase/phase18.sql (needs phase17 first). It creates the private `photos` bucket, boarding log and the insights function.
+- **Boarding:** driver page now has a student QR scanner (ID card QR). Pickup trip: "boarded". Drop trip: "got off". Parents get a notification and see it on Track bus.
+- **Photos:** student profile page and Teachers page have Add/Change photo (shrunk to ~400 px, max 1 MB, private). Photos print on ID cards.
+- **Student insights:** menu "Student insights" lists students needing attention (attendance, marks trend, overdue fees) with the reason for every flag. Teachers see only their own division. Fees are shown only to fee staff.

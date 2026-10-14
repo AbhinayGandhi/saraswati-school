@@ -7,7 +7,7 @@
 <p id="sum" class="big" role="status" aria-live="polite">Loading...</p><p id="sub"></p>
 <div id="map" role="region" aria-label="Bus map"></div>
 <p style="font-size:.9rem">The map updates by itself every few seconds while the bus is running. Time shown is an estimate. Map: OpenStreetMap contributors.</p>
-<div id="stops"></div></main></div></div>
+<div id="stops"></div><div id="brd"></div></main></div></div>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script><script src="js/config.js"></script><script src="js/supabase.js"></script><script src="js/utils.js"></script><script src="js/permissions.js"></script><script src="js/auth.js"></script><script src="js/vendor/leaflet.js"></script>
 <script>
 (async()=>{const p=await Auth.require("*");Auth.shell(p);const $=id=>document.getElementById(id);
@@ -35,6 +35,8 @@ const t=stops.find(s=>my.includes(s.id)&&s.lat!=null);if(t){const d=dist(b.lat,b
 else{s1="Bus is not running now";s2=b&&b.lat!=null?"Last seen "+ago(b.updated_at):"Live tracking starts when the driver starts the trip."+(r.pickup_time?" Usual pickup "+String(r.pickup_time).slice(0,5)+".":"")}
 if(r.driver_name)s2+=" | Driver: "+r.driver_name+(r.driver_contact?" "+r.driver_contact:"");
 $("sum").textContent=s1;$("sub").textContent=s2;
+if(!staff){try{const {data:bd,error:be}=await db.from("bus_boarding").select("trip,event,at,student_enrollments(students(first_name))").eq("route_id",r.id).eq("event_date",new Date(Date.now()+19800000).toISOString().slice(0,10)).order("at");if(be)throw be;
+$("brd").innerHTML=bd.length?"<h2>Today</h2><ul>"+bd.map(x=>`<li>${U.esc(x.student_enrollments.students.first_name)} ${x.event==="board"?"boarded the bus":"got off the bus"} at ${new Date(x.at).toLocaleTimeString([],{hour:"2-digit",minute:"2-digit"})}</li>`).join("")+"</ul>":""}catch(e){}}
 const miss=stops.filter(s=>s.lat==null).length;$("stops").innerHTML=miss&&staff?`<p class="state">${miss} stop(s) have no map location yet. Add it on the Transport page.</p>`:"";}
 $("rt").onchange=()=>{draw.fit=null;draw()};
 function loop(){clearInterval(timer);timer=setInterval(()=>{if(!document.hidden)draw()},8000)}

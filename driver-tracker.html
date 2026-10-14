@@ -8,6 +8,10 @@
 <button class="btn big" id="b2">Start drop trip / घरी सोडण्याची फेरी सुरू करा</button>
 <button class="btn big ghost" id="b3" hidden>End trip / फेरी संपवा</button>
 </div>
+<div id="scanbox" hidden><h2 style="font-size:1.1rem">Student QR scan / विद्यार्थी QR स्कॅन</h2><div class="qrbox"><video id="vid" playsinline muted style="width:100%;border-radius:.5rem" hidden></video><canvas id="cv" hidden></canvas></div>
+<button class="btn big ghost" id="cam">Start scanner / स्कॅनर सुरू करा</button>
+<div class="row" style="display:flex;gap:.5rem"><input id="man" placeholder="Admission no" autocomplete="off" maxlength="40" style="flex:1"><button class="btn ghost" id="manb" type="button">OK</button></div>
+<div id="bmsg" class="st" role="status" aria-live="polite" hidden></div></div>
 <p style="font-size:.9rem">Keep this page open and the screen on while driving. Parents see the bus on the map only while a trip is running.<br>गाडी चालवताना हे पेज उघडे आणि स्क्रीन चालू ठेवा. फेरी सुरू असतानाच पालकांना बस नकाशावर दिसते.</p>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script><script src="js/config.js"></script>
 <script>
@@ -19,7 +23,7 @@ async function rpc(a,trip,p){const {data,error}=await db.rpc("driver_ping",{p_to
 function pos(){return new Promise((ok,no)=>navigator.geolocation?navigator.geolocation.getCurrentPosition(x=>ok(x.coords),no,{enableHighAccuracy:true,timeout:15000,maximumAge:3000}):no(new Error("no gps")))}
 async function lock(){try{if("wakeLock" in navigator)wake=await navigator.wakeLock.request("screen")}catch(e){}}
 document.addEventListener("visibilitychange",()=>{if(active&&document.visibilityState==="visible")lock()});
-function ui(){$("b1").hidden=$("b2").hidden=active;$("b3").hidden=!active}
+function ui(){$("b1").hidden=$("b2").hidden=active;$("b3").hidden=!active;$("scanbox").hidden=!active;if(!active)stopCam()}
 async function send(){if(!active||!last)return;try{const r=await rpc("ping",null,last);if(r.ok){fails=0;say("Sending location. Last sent "+new Date().toLocaleTimeString()+" (GPS accuracy "+Math.round(last.accuracy)+" m)","ok")}else if(r.error==="no_trip"){stopAll();say("Trip is not running.","bad")}}catch(e){fails++;say("No internet. Trying again... ("+fails+")","bad")}}
 function begin(){active=true;ui();lock();watch=navigator.geolocation.watchPosition(x=>{last=x.coords},()=>say("GPS is off. Turn on location and allow it for this page. / लोकेशन चालू करा.","bad"),{enableHighAccuracy:true,maximumAge:2000,timeout:20000});timer=setInterval(send,10000)}
 function stopAll(){active=false;if(watch!=null)navigator.geolocation.clearWatch(watch);watch=null;clearInterval(timer);try{wake&&wake.release()}catch(e){}ui()}
@@ -29,5 +33,18 @@ $("b3").onclick=async()=>{if(!confirm("End this trip? / फेरी संप�
 (async()=>{if(!tok){say("This link is not complete. Ask the school office for your bus link.","bad");$("rt").textContent="";return}
 try{const r=await rpc("info");if(!r.ok){say("This link is not valid or was changed. Ask the school office for the new link.","bad");$("rt").textContent="";return}
 $("rt").textContent=r.route+(r.vehicle?" | "+r.vehicle:"");$("ctl").hidden=false;if(r.active){say("A trip is already running. Press start again to continue sending.")}else say("Ready.")}catch(e){say("Could not connect. Check internet.","bad")}})();
+
+let stream=null,raf=null,lastCode="",lastAt=0,jq=null;
+function beep(ok){try{const c=new (window.AudioContext||window.webkitAudioContext)(),o=c.createOscillator(),g=c.createGain();o.frequency.value=ok?880:220;g.gain.value=.08;o.connect(g);g.connect(c.destination);o.start();setTimeout(()=>{o.stop();c.close()},ok?120:300)}catch(e){}if(navigator.vibrate)navigator.vibrate(ok?60:[80,60,80])}
+async function board(adm){const m=$("bmsg");m.hidden=false;try{const {data,error}=await db.rpc("driver_board",{p_token:tok,p_admission:adm});if(error)throw error;
+if(data.ok){beep(true);m.className="st ok";m.textContent=(data.event==="board"?"Boarded: ":"Got off: ")+data.name+(data.repeat?" (already noted)":"")+"  |  "+data.done+" / "+data.total}
+else{beep(false);m.className="st bad";m.textContent=data.error==="not_on_route"?"This student is not on this bus.":data.error==="no_trip"?"Start the trip first.":"Could not note this student."}}
+catch(e){beep(false);m.className="st bad";m.textContent="No internet. Try again."}}
+function code(t){const m=/^SES\|(.{1,40})$/.exec(String(t||"").trim());return m?m[1]:null}
+function stopCam(){if(raf)cancelAnimationFrame(raf);raf=null;if(stream)stream.getTracks().forEach(t=>t.stop());stream=null;$("vid").hidden=true;$("cam").textContent="Start scanner / स्कॅनर सुरू करा"}
+function loop(){const v=$("vid"),c=$("cv");if(!stream)return;if(v.readyState===v.HAVE_ENOUGH_DATA&&jq){c.width=v.videoWidth;c.height=v.videoHeight;const g=c.getContext("2d",{willReadFrequently:true});g.drawImage(v,0,0);const r=jq(g.getImageData(0,0,c.width,c.height).data,c.width,c.height),a=r&&code(r.data);if(a&&(a!==lastCode||Date.now()-lastAt>4000)){lastCode=a;lastAt=Date.now();board(a)}}setTimeout(()=>{raf=requestAnimationFrame(loop)},150)}
+$("cam").onclick=async()=>{if(stream)return stopCam();try{if(!jq){await new Promise((ok,no)=>{const sc=document.createElement("script");sc.src="js/vendor/jsQR.js";sc.onload=ok;sc.onerror=no;document.head.appendChild(sc)});jq=window.jsQR}
+stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"},audio:false});const v=$("vid");v.srcObject=stream;v.hidden=false;await v.play();$("cam").textContent="Stop scanner / स्कॅनर बंद करा";loop()}catch(e){stream=null;const m=$("bmsg");m.hidden=false;m.className="st bad";m.textContent="Camera did not start. Allow camera, or type the admission number."}};
+$("manb").onclick=()=>{const v=$("man").value.trim();if(v){board(v);$("man").value=""}};
 })();
 </script></body></html>
