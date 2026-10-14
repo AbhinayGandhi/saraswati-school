@@ -27,6 +27,7 @@ const NAV = [
   { href: "admissions.html", label: "Admission enquiries", roles: [...ADMIN_ROLES, "reception"] },
   { href: "ptm.html", label: "Meetings (PTM)", roles: ["parent", ...ADMIN_ROLES, "reception", "teacher", "class_teacher"] },
   { href: "requests.html", label: "Requests", roles: ["parent", ...ADMIN_ROLES, "reception", "teacher", "class_teacher"] },
+  { href: "ai.html", label: "AI assistant", roles: ["parent", ...ADMIN_ROLES, "reception", "teacher", "class_teacher"] },
   { href: "track-bus.html", label: "Track bus", roles: ["parent", "student", ...ADMIN_ROLES, "reception"] },
   { href: "transport.html", label: "Transport", roles: [...ADMIN_ROLES, "reception"] },
   { href: "leave.html", label: "Staff leave", roles: [...ADMIN_ROLES, "teacher", "class_teacher", "accountant", "librarian", "reception"] },

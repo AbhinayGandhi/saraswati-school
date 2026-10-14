@@ -96,3 +96,8 @@ Run `supabase/phase13.sql`, `phase14.sql` and `phase15.sql` once each (or just r
 - **Requests:** parents send leave or certificate requests. Class teacher decides leave requests for their own division; the office decides certificate requests. The parent is notified of the decision.
 - **Library:** "Send overdue reminders to parents" (once per book per parent per 7 days), "Mark paid" for fines, and the parent portal Library tab shows paid/unpaid.
 - Fix: elements with the `hidden` attribute are now really hidden (global CSS rule), so forms meant for staff are no longer shown to parents.
+
+## Round 6: AI assistant
+- Run supabase/phase20.sql, deploy supabase/functions/ai-assistant/index.ts as an Edge Function named `ai-assistant`, add the secret GEMINI_API_KEY. Full steps: AI-SETUP-GUIDE.md.
+- Menu "AI assistant": notice writer, translator, report remarks, question maker (teachers/office/admin) and "Ask the school" (parents). Admin control panel: on/off switch, daily limits, school notes the parent chat may use.
+- Safety: login required; students never get AI; phone numbers/e-mails removed before sending; AI only returns text; daily limits; nothing the user types is stored (only a use count).
