@@ -12,7 +12,7 @@
     "UPI payment claims": "UPI भरणा दावे", "Fee reports": "फी अहवाल", "Reports": "अहवाल", "Student promotion": "विद्यार्थी पदोन्नती", "Academic year closing": "शैक्षणिक वर्ष समाप्ती",
     "School settings": "शाळा सेटिंग्ज", "Users and roles": "वापरकर्ते आणि भूमिका", "Backup": "बॅकअप", "Audit logs": "ऑडिट नोंदी", "Certificates (TC, Bonafide)": "प्रमाणपत्रे (TC, बोनाफाईड)",
     "ID cards and hall tickets": "ओळखपत्रे आणि हॉल तिकिटे", "Teacher diary": "शिक्षक नोंदवही",
-    "QR attendance": "QR हजेरी", "Track bus": "बस ट्रॅक करा", "Student insights": "विद्यार्थी विश्लेषण", "Bus route": "बस मार्ग", "Install app": "अॅप इन्स्टॉल करा", "Fee reminders": "फी आठवण", "Certificates (TC, Bonafide)": "प्रमाणपत्रे (TC, बोनाफाईड)",
+    "QR attendance": "QR हजेरी", "Track bus": "बस ट्रॅक करा", "Meetings (PTM)": "पालक-शिक्षक भेट", "Requests": "अर्ज", "Parent-teacher meetings": "पालक-शिक्षक भेटी", "Student insights": "विद्यार्थी विश्लेषण", "Bus route": "बस मार्ग", "Install app": "अॅप इन्स्टॉल करा", "Fee reminders": "फी आठवण", "Certificates (TC, Bonafide)": "प्रमाणपत्रे (TC, बोनाफाईड)",
     // public site
     "Home": "मुख्यपृष्ठ", "About": "शाळेबद्दल", "Academics": "शैक्षणिक", "Admissions": "प्रवेश", "Faculty": "शिक्षकवृंद", "Facilities": "सुविधा", "Contact": "संपर्क", "Login": "लॉगिन",
     "LKG to Grade 10": "LKG ते इयत्ता 10वी", "Admission enquiry": "प्रवेश चौकशी", "About the school": "शाळेबद्दल", "Parent / Teacher login": "पालक / शिक्षक लॉगिन", "Welcome": "स्वागत",

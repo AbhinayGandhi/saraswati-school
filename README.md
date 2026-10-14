@@ -89,3 +89,10 @@ Run `supabase/phase13.sql`, `phase14.sql` and `phase15.sql` once each (or just r
 - **Boarding:** driver page now has a student QR scanner (ID card QR). Pickup trip: "boarded". Drop trip: "got off". Parents get a notification and see it on Track bus.
 - **Photos:** student profile page and Teachers page have Add/Change photo (shrunk to ~400 px, max 1 MB, private). Photos print on ID cards.
 - **Student insights:** menu "Student insights" lists students needing attention (attendance, marks trend, overdue fees) with the reason for every flag. Teachers see only their own division. Fees are shown only to fee staff.
+
+## Round 5B: Meetings (PTM), parent requests, library reminders
+- Run supabase/phase19.sql. Then use the new menu items **Meetings (PTM)** and **Requests**.
+- **PTM:** a class teacher or the office plans a meeting (date, time range, minutes per parent). Time slots are made automatically and parents of that division are notified. A parent books one slot per child, can cancel, and the teacher gets a notification. Teacher notes are private (parents cannot read them).
+- **Requests:** parents send leave or certificate requests. Class teacher decides leave requests for their own division; the office decides certificate requests. The parent is notified of the decision.
+- **Library:** "Send overdue reminders to parents" (once per book per parent per 7 days), "Mark paid" for fines, and the parent portal Library tab shows paid/unpaid.
+- Fix: elements with the `hidden` attribute are now really hidden (global CSS rule), so forms meant for staff are no longer shown to parents.

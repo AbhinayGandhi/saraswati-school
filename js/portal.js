@@ -86,9 +86,9 @@ const Portal = {
       },
       async library(k) {
         if (!k.e) return noEnr;
-        const { data, error } = await db.from("book_transactions").select("issue_date,due_date,return_date,status,fine,books(title)").eq("enrollment_id", k.e.id).order("issue_date", { ascending: false }).limit(50); if (error) throw error;
+        const { data, error } = await db.from("book_transactions").select("issue_date,due_date,return_date,status,fine,fine_paid,books(title)").eq("enrollment_id", k.e.id).order("issue_date", { ascending: false }).limit(50); if (error) throw error;
         if (!data.length) return none("No library books issued.");
-        return `<div class="tw"><table><thead><tr><th>Book</th><th>Issued</th><th>Due</th><th>Returned</th><th>Fine</th></tr></thead><tbody>${data.map(x => `<tr><td>${U.esc(x.books.title)}</td><td>${U.esc(x.issue_date)}</td><td${x.status === "issued" && x.due_date < Fee.today() ? ' style="color:var(--bad)"' : ""}>${U.esc(x.due_date)}</td><td>${U.esc(x.return_date || "Not returned")}</td><td>${Fee.inr(x.fine)}</td></tr>`).join("")}</tbody></table></div>`;
+        return `<div class="tw"><table><thead><tr><th>Book</th><th>Issued</th><th>Due</th><th>Returned</th><th>Fine</th></tr></thead><tbody>${data.map(x => `<tr><td>${U.esc(x.books.title)}</td><td>${U.esc(x.issue_date)}</td><td${x.status === "issued" && x.due_date < Fee.today() ? ' style="color:var(--bad)"' : ""}>${U.esc(x.due_date)}</td><td>${U.esc(x.return_date || "Not returned")}</td><td>${Fee.inr(x.fine)}${x.fine > 0 ? (x.fine_paid ? " (paid)" : " (unpaid)") : ""}</td></tr>`).join("")}</tbody></table></div>`;
       },
       async notices() {
         const [n, e] = await Promise.all([db.from("notices").select("id,title,description,notice_date,priority,attachment_path").eq("status", "published").order("notice_date", { ascending: false }).limit(10), db.from("events").select("title,event_type,event_date,venue,status").eq("status", "published").gte("event_date", Fee.today()).order("event_date").limit(8)]);

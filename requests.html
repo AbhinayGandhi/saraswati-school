@@ -1,0 +1,43 @@
+<!doctype html><html lang="en"><head><meta name="description" content="Saraswati English Medium School: school management portal."><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bitter:wght@600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="css/style.css"><link rel="stylesheet" href="css/print.css" media="print"><title>Requests | Saraswati English Medium School</title></head>
+<body><div class="app"><aside id="sidebar" class="noprint" aria-label="Sidebar"></aside>
+<div><header class="top noprint"><button class="btn ghost" id="menu" aria-expanded="false" aria-controls="sidebar">Menu</button><span id="who"></span><button class="btn ghost" id="logout">Sign out</button></header>
+<main><h1>Requests</h1>
+<p id="intro"></p>
+<form id="nf" class="panel row" hidden><h3 style="grid-column:1/-1">New request</h3>
+<div><label for="kid">Student</label><select id="kid"></select></div>
+<div><label for="kd">Type</label><select id="kd"><option value="leave">Leave (absence)</option><option value="certificate">Certificate (bonafide, etc.)</option><option value="other">Other</option></select></div>
+<div><label for="sj">Subject</label><input id="sj" required minlength="3" maxlength="120"></div>
+<div class="dt"><label for="fd">From date</label><input id="fd" type="date"></div><div class="dt"><label for="td">To date</label><input id="td" type="date"></div>
+<div style="grid-column:1/-1"><label for="dl">Details</label><textarea id="dl" rows="3" maxlength="1000"></textarea></div><button class="btn">Send request</button></form>
+<div class="row noprint"><div><label for="fs">Show</label><select id="fs"><option value="">All</option><option value="pending">Pending</option><option value="approved">Approved</option><option value="rejected">Rejected</option><option value="cancelled">Cancelled</option></select></div></div>
+<div id="out" class="tw"><div class="state">Loading...</div></div></main></div></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script><script src="js/config.js"></script><script src="js/supabase.js"></script><script src="js/utils.js"></script><script src="js/permissions.js"></script><script src="js/auth.js"></script>
+<script>
+(async()=>{const p=await Auth.require("*");Auth.shell(p);const $=id=>document.getElementById(id);
+const parent=p.role==="parent",staffOk=[...ADMIN_ROLES,"reception","teacher","class_teacher"].includes(p.role);
+if(!parent&&!staffOk){U.state($("out"),"error","This page is for parents and teachers.");return}
+$("intro").textContent=parent?"Send a leave application or ask for a certificate. The school will reply here and you will get a notification.":"Requests from parents. Class teachers handle leave requests for their own division. The office handles certificate requests.";
+let rows=[];const KIND={leave:"Leave",certificate:"Certificate",other:"Other"};
+function showDates(){document.querySelectorAll(".dt").forEach(d=>d.hidden=$("kd").value==="certificate"||$("kd").value==="other"&&false)}
+$("kd").onchange=()=>{const l=$("kd").value==="leave";document.querySelectorAll(".dt").forEach(d=>d.hidden=!l);$("fd").required=$("td").required=l};
+async function load(){try{let q=db.from("parent_requests").select("id,kind,subject,details,from_date,to_date,status,response,created_at,student_enrollments(divisions(name,classes(name)),students(first_name,last_name,admission_no))").order("created_at",{ascending:false}).limit(300);if($("fs").value)q=q.eq("status",$("fs").value);const {data,error}=await q;if(error)throw error;rows=data;draw()}catch(e){U.friendly(e);U.state($("out"),"error","Unable to load. Please try again.")}}
+function draw(){if(!rows.length)return U.state($("out"),"empty","No requests.");
+$("out").innerHTML="<table><thead><tr><th>Date</th><th>Student</th><th>Request</th><th>Status</th><th></th></tr></thead><tbody>"+rows.map(r=>{const s=r.student_enrollments.students,d=r.student_enrollments.divisions;
+const when=r.from_date?"<br><small>"+U.esc(r.from_date)+(r.to_date&&r.to_date!==r.from_date?" to "+U.esc(r.to_date):"")+"</small>":"";
+const act=r.status==="pending"?(parent?'<button class="btn sm ghost" data-c="'+r.id+'">Cancel</button>':'<input class="rs" maxlength="500" placeholder="Reply (optional)" aria-label="Reply"> <button class="btn sm" data-a="'+r.id+'">Approve</button> <button class="btn sm ghost" data-r="'+r.id+'">Reject</button>'):(r.response?"<small>"+U.esc(r.response)+"</small>":"");
+return "<tr><td>"+U.esc(r.created_at.slice(0,10))+"</td><td>"+U.esc(s.first_name+" "+s.last_name)+"<br><small>"+U.esc((d?.classes?.name||"")+" - "+(d?.name||""))+"</small></td><td><b>"+U.esc(KIND[r.kind])+": "+U.esc(r.subject)+"</b>"+when+(r.details?"<br><small>"+U.esc(r.details)+"</small>":"")+"</td><td><span class=\"badge "+(r.status==="approved"?"on":"")+"\">"+U.esc(r.status)+"</span></td><td>"+act+"</td></tr>"}).join("")+"</tbody></table>"}
+$("fs").onchange=load;
+$("out").addEventListener("click",async ev=>{const b=ev.target.closest("button");if(!b)return;
+try{if(b.dataset.c){if(!await U.confirm("Cancel this request?"))return;const {error}=await db.rpc("cancel_parent_request",{p_id:b.dataset.c});if(error)throw error}
+else if(b.dataset.a||b.dataset.r){const id=b.dataset.a||b.dataset.r,st=b.dataset.a?"approved":"rejected";if(!await U.confirm((st==="approved"?"Approve":"Reject")+" this request?"))return;const {error}=await db.rpc("review_parent_request",{p_id:id,p_status:st,p_response:b.closest("tr").querySelector(".rs").value.trim()||null});if(error)throw error;U.audit("Request "+st,"parent_requests",id)}
+else return;U.toast("Done.");load()}catch(e){U.friendly(e);U.toast(/not allowed/.test(e.message||"")?"You cannot decide this request.":/already decided/.test(e.message||"")?"Someone already decided this request.":"Could not save. Please try again.","err");load()}});
+if(parent){try{const {data,error}=await db.from("student_enrollments").select("id,students(first_name,last_name)").eq("status","active");if(error)throw error;
+if(!data.length){U.state($("out"),"empty","No student is linked to your login. Please ask the school office.");return}
+$("kid").innerHTML=data.map(k=>'<option value="'+k.id+'">'+U.esc(k.students.first_name+" "+k.students.last_name)+'</option>').join("");$("nf").hidden=false;$("kd").onchange();$("fd").min=new Date(Date.now()-6*864e5).toISOString().slice(0,10)}catch(e){U.friendly(e)}
+$("nf").addEventListener("submit",async ev=>{ev.preventDefault();const k=$("kd").value;if(k==="leave"&&(!$("fd").value||!$("td").value||$("td").value<$("fd").value))return U.toast("Choose the leave dates correctly.","err");
+const {error}=await db.rpc("submit_parent_request",{p_enrollment:$("kid").value,p_kind:k,p_subject:$("sj").value.trim(),p_details:$("dl").value.trim()||null,p_from:k==="leave"?$("fd").value:null,p_to:k==="leave"?$("td").value:null});
+if(error){U.friendly(error);return U.toast(/too many pending/.test(error.message)?"You already have 5 pending requests for this student.":"Could not send. Please check the details.","err")}
+ev.target.reset();$("kd").onchange();U.toast("Request sent.");load()})}
+load();
+})();
+</script><script src="js/i18n.js"></script></body></html>
