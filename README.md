@@ -111,3 +111,7 @@ Run `supabase/phase13.sql`, `phase14.sql` and `phase15.sql` once each (or just r
 ## Round 8: offline QR attendance
 - `qr-attendance.html` now uses `js/offline.js` like `attendance.html`: the roster is cached on the phone, Save queues records when there is no internet, and they are sent automatically (or via "Sync now") when it returns. The server still enforces holidays and permissions; refused rows are listed in the banner.
 - Teachers should open each division once while online so it is available offline. `sw.js` cache bumped to `ses-v3`.
+
+## Round 9: parent portal
+- New default tab "Today" (parent and student portals): today's attendance, 30-day attendance %, fee outstanding/overdue (parents only), today's timetable, homework due soon, latest notices, upcoming events, quick links (bus, requests, meetings, AI).
+- Attendance tab gets a monthly % chart; Results tab gets an exam-by-exam percentage trend. Uses only existing RLS-protected tables; no SQL needed.

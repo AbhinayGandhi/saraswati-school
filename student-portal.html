@@ -2,7 +2,7 @@
 <body><div class="app"><aside id="sidebar" class="noprint" aria-label="Sidebar"></aside>
 <div><header class="top noprint"><button class="btn ghost" id="menu" aria-expanded="false" aria-controls="sidebar">Menu</button><span id="who"></span><button class="btn ghost" id="logout">Sign out</button></header>
 <main><h1 class="noprint">My school</h1><div class="row" id="kw"></div><div class="row" id="tb"></div><div id="pane"><div class="state">Loading...</div></div></main></div></div>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script><script src="js/config.js"></script><script src="js/supabase.js"></script><script src="js/utils.js"></script><script src="js/permissions.js"></script><script src="js/auth.js"></script><script src="js/students.js"></script><script src="js/exams.js"></script><script src="js/fees.js"></script><script src="js/gallery.js"></script><script src="js/portal.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script><script src="js/config.js"></script><script src="js/supabase.js"></script><script src="js/utils.js"></script><script src="js/permissions.js"></script><script src="js/auth.js"></script><script src="js/students.js"></script><script src="js/exams.js"></script><script src="js/fees.js"></script><script src="js/gallery.js"></script><script src="js/charts.js"></script><script src="js/portal.js"></script>
 <script>
 (async()=>{const p=await Auth.require(["student"]);Auth.shell(p);const $=id=>document.getElementById(id);
 Portal.init(p,"student");

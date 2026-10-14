@@ -2,9 +2,9 @@
 const Portal = {
   async init(p, mode) {
     const $ = id => document.getElementById(id), pane = $("pane");
-    const TABS = [["profile", "Profile"], ["attendance", "Attendance"], ["results", "Results"], ["homework", "Homework"], ["timetable", "Timetable"]]
+    const TABS = [["home", "Today"], ["profile", "Profile"], ["attendance", "Attendance"], ["results", "Results"], ["homework", "Homework"], ["timetable", "Timetable"]]
       .concat(mode === "parent" ? [["fees", "Fees"]] : [], [["activities", "Activities"]], mode === "parent" ? [["library", "Library"]] : [], [["notices", "Notices and events"]]);
-    let kids = [], cur = null, tab = "profile", rules = [], hwSub = "", hwFrom = "";
+    let kids = [], cur = null, tab = "home", rules = [], hwSub = "", hwFrom = "";
     const nm = s => [s.first_name, s.middle_name, s.last_name].filter(Boolean).join(" ");
     const none = m => `<div class="state">${U.esc(m)}</div>`, noEnr = none("This student is not enrolled in a class yet.");
     try {
@@ -18,6 +18,31 @@ const Portal = {
     $("tb").innerHTML = TABS.map(t => `<button class="btn ${t[0] === tab ? "" : "ghost"} sm" data-t="${t[0]}">${t[1]}</button>`).join("");
     const T = v => String(v || "").slice(0, 5), DAYS = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
     const R = {
+      async home(k) {
+        if (!k.e) return noEnr;
+        const td = Fee.today(), d30 = new Date(Date.now() - 29 * 864e5).toLocaleDateString("en-CA"), dow = (new Date().getDay() + 6) % 7 + 1, div = k.e.division_id, yr = k.e.academic_year_id;
+        const [a, f, h, n, e, t] = await Promise.all([
+          db.from("attendance").select("att_date,status").eq("enrollment_id", k.e.id).gte("att_date", d30),
+          mode === "parent" ? db.from("student_fees").select("balance,due_date").eq("enrollment_id", k.e.id) : Promise.resolve({ data: [] }),
+          db.from("homework").select("title,due_date,subjects(name)").eq("division_id", div).eq("academic_year_id", yr).eq("status", "active").gte("due_date", td).order("due_date").limit(4),
+          db.from("notices").select("title,notice_date,priority").eq("status", "published").order("notice_date", { ascending: false }).limit(3),
+          db.from("events").select("title,event_date").eq("status", "published").gte("event_date", td).order("event_date").limit(3),
+          db.from("timetable_slots").select("period,start_time,end_time,subjects(name)").eq("division_id", div).eq("academic_year_id", yr).eq("is_active", true).eq("day", dow).order("period")]);
+        const bad = [a, f, h, n, e, t].find(x => x.error); if (bad) throw bad.error;
+        const today = a.data.find(r => r.att_date === td), lbl = { present: "Present", absent: "Absent", late: "Late", half_day: "Half day", leave: "On leave" };
+        const att = a.data.filter(r => r.att_date <= td), ok = att.reduce((c, r) => c + (r.status === "present" || r.status === "late" ? 1 : r.status === "half_day" ? .5 : 0), 0), pc = att.length ? Math.round(ok * 100 / att.length) : null;
+        const bal = f.data.reduce((c, x) => c + Number(x.balance), 0), over = f.data.filter(x => Number(x.balance) > 0 && x.due_date < td).reduce((c, x) => c + Number(x.balance), 0);
+        const li = (arr, fn, empty) => arr.length ? "<ul>" + arr.map(x => "<li>" + fn(x) + "</li>").join("") + "</ul>" : `<p class="ch-note">${empty}</p>`;
+        const links = [["track-bus.html", "Track the bus"], ["requests.html", "Leave and requests"], ["ptm.html", "Parent meetings"], ["ai.html", "Ask the school (AI)"]];
+        return `<div class="kpis"><div class="card"><small>Today</small><b style="${today && today.status === "absent" ? "color:var(--bad)" : ""}">${today ? lbl[today.status] : "Not marked yet"}</b></div>
+<div class="card"><small>Attendance, last 30 days</small><b>${pc === null ? "-" : pc + "%"}</b>${pc === null ? "" : `<div class="meter"><span style="width:${pc}%"></span></div>`}</div>
+${mode === "parent" ? `<div class="card"><small>Fee outstanding</small><b>${Fee.inr(bal)}</b><small>${over > 0 ? U.esc(Fee.inr(over)) + " overdue" : bal > 0 ? "Nothing overdue" : "All paid"}</small></div>` : ""}</div>
+${mode === "parent" ? `<div class="alerts">${links.map(l => `<a href="${l[0]}">${U.esc(l[1])}</a>`).join("")}</div>` : ""}
+<div class="charts"><div class="chart-card"><h3>Today's timetable</h3>${li(t.data, x => "Period " + x.period + ": <b>" + U.esc(x.subjects.name) + "</b> " + T(x.start_time) + "-" + T(x.end_time), "No classes today.")}</div>
+<div class="chart-card"><h3>Homework due soon</h3>${li(h.data, x => "<b>" + U.esc(x.subjects.name) + "</b>: " + U.esc(x.title) + " (due " + U.esc(x.due_date) + ")", "No homework due.")}</div>
+<div class="chart-card"><h3>Latest notices</h3>${li(n.data, x => U.esc(x.title) + " <small>" + U.esc(x.notice_date) + "</small>", "No notices.")}</div>
+<div class="chart-card"><h3>Upcoming events</h3>${li(e.data, x => U.esc(x.event_date) + " - " + U.esc(x.title), "No events soon.")}</div></div>`;
+      },
       async profile(k) {
         const { data: g, error } = await db.from("student_guardians").select("relation,name,mobile,email,address").eq("student_id", k.s.id); if (error) throw error;
         return `<div class="panel"><h2>${U.esc(nm(k.s))}</h2><p>Admission no: ${U.esc(k.s.admission_no)} | GR no: ${U.esc(k.s.gr_no || "-")} | Class: ${U.esc(k.e ? k.e.divisions.classes.name + " - " + k.e.divisions.name : "-")} | Roll no: ${U.esc(k.e?.roll_no ?? "-")}<br>Date of birth: ${U.esc(k.s.dob)} | Gender: ${U.esc(k.s.gender)}${k.s.blood_group ? " | Blood group: " + U.esc(k.s.blood_group) : ""}${k.s.house ? " | House: " + U.esc(k.s.house) : ""}</p></div>
@@ -31,7 +56,8 @@ const Portal = {
         const pct = o => { const n = o.present + o.absent + o.late + o.half_day + o.leave; return n ? Math.round((o.present + o.late + o.half_day * 0.5) / n * 100) + "%" : "-"; };
         const tot = { present: 0, absent: 0, late: 0, half_day: 0, leave: 0 }; Object.values(m).forEach(o => Object.keys(tot).forEach(x => tot[x] += o[x]));
         const abs = data.filter(r => r.status === "absent").slice(-10).reverse();
-        return `<div class="card"><b>${pct(tot)}</b>Attendance this year (${data.length} days marked)</div><div class="tw" style="margin-top:1rem"><table><thead><tr><th>Month</th><th>Present</th><th>Absent</th><th>Late</th><th>Half day</th><th>Leave</th><th>%</th></tr></thead><tbody>${Object.entries(m).map(([k2, o]) => `<tr><td>${U.esc(k2)}</td><td>${o.present}</td><td>${o.absent}</td><td>${o.late}</td><td>${o.half_day}</td><td>${o.leave}</td><td>${pct(o)}</td></tr>`).join("")}</tbody></table></div>${abs.length ? `<p><b>Recent absences:</b> ${abs.map(r => U.esc(r.att_date)).join(", ")}</p>` : ""}`;
+        k.post = () => { if (typeof Charts === "undefined" || !$("achart")) return; Charts.series($("achart"), "Attendance by month", Object.entries(m).map(([mo, o]) => { const n = o.present + o.absent + o.late + o.half_day + o.leave; return { label: mo.slice(2), value: n ? Math.round((o.present + o.late + o.half_day * 0.5) / n * 100) : 0 }; }), { max: 100, fmt: v => v + "%", axisFmt: v => v + "%", valueHead: "Attendance %" }); };
+        return `<div id="achart" style="margin-bottom:1rem"></div><div class="card"><b>${pct(tot)}</b>Attendance this year (${data.length} days marked)</div><div class="tw" style="margin-top:1rem"><table><thead><tr><th>Month</th><th>Present</th><th>Absent</th><th>Late</th><th>Half day</th><th>Leave</th><th>%</th></tr></thead><tbody>${Object.entries(m).map(([k2, o]) => `<tr><td>${U.esc(k2)}</td><td>${o.present}</td><td>${o.absent}</td><td>${o.late}</td><td>${o.half_day}</td><td>${o.leave}</td><td>${pct(o)}</td></tr>`).join("")}</tbody></table></div>${abs.length ? `<p><b>Recent absences:</b> ${abs.map(r => U.esc(r.att_date)).join(", ")}</p>` : ""}`;
       },
       async results(k) {
         if (!k.e) return noEnr;
@@ -41,9 +67,13 @@ const Portal = {
         const { data: subs, error: e2 } = await db.from("exam_subjects").select("id,exam_id,max_marks,passing_marks,subjects(name,sort_order)").eq("division_id", k.e.division_id).in("exam_id", ex.map(x => x.id)); if (e2) throw e2;
         const { data: m, error: e3 } = subs.length ? await db.from("marks").select("exam_subject_id,enrollment_id,marks,absent").eq("enrollment_id", k.e.id).in("exam_subject_id", subs.map(x => x.id)) : { data: [] }; if (e3) throw e3;
         const mk = Object.fromEntries(m.map(x => [x.exam_subject_id + "|" + x.enrollment_id, x]));
-        return ex.map(x => { const s = subs.filter(y => y.exam_id === x.id).sort((a, b) => a.subjects.sort_order - b.subjects.sort_order || a.subjects.name.localeCompare(b.subjects.name)); if (!s.length) return "";
+        const trend = [];
+        const html = ex.map(x => { const s = subs.filter(y => y.exam_id === x.id).sort((a, b) => a.subjects.sort_order - b.subjects.sort_order || a.subjects.name.localeCompare(b.subjects.name)); if (!s.length) return "";
           const r = Ex.calc(s, mk, k.e.id, rules);
+          if (Number.isFinite(Number(r.pct))) trend.push({ label: x.name, value: Number(r.pct) });
           return `<div class="panel"><h3>${U.esc(x.name)}</h3><div class="tw"><table><thead><tr><th>Subject</th><th>Maximum</th><th>Obtained</th></tr></thead><tbody>${s.map((y, i) => `<tr><td>${U.esc(y.subjects.name)}</td><td>${y.max_marks}</td><td${r.cells[i].f ? ' style="color:var(--bad)"' : ""}>${U.esc(r.cells[i].v)}</td></tr>`).join("")}<tr><th>Total</th><th>${r.max}</th><th>${r.tot}</th></tr></tbody></table></div><p>Percentage: <b>${r.pct}%</b> | Grade: <b>${U.esc(r.grade)}</b> | Result: <b>${U.esc(r.result)}</b></p><a class="btn sm" href="report-card.html?exam=${x.id}&e=${k.e.id}">Open report card</a></div>`; }).join("") || none("No results to show.");
+        k.post = () => { if (typeof Charts !== "undefined" && trend.length > 1 && $("rchart")) Charts.series($("rchart"), "Result percentage by exam", trend, { max: 100, fmt: v => v + "%", axisFmt: v => v + "%", valueHead: "Percentage", kind: "line" }); };
+        return (trend.length > 1 ? '<div id="rchart" style="margin-bottom:1rem"></div>' : "") + html;
       },
       async homework(k) {
         if (!k.e) return noEnr;
@@ -99,7 +129,7 @@ const Portal = {
     async function render() {
       $("tb").querySelectorAll("button").forEach(b => b.className = "btn sm" + (b.dataset.t === tab ? "" : " ghost"));
       pane.innerHTML = '<div class="state">Loading...</div>';
-      try { pane.innerHTML = await R[tab](cur); } catch (e) { U.friendly(e); U.state(pane, "error", "Unable to load this section. Please try again."); }
+      try { cur.post = null; pane.innerHTML = await R[tab](cur); if (cur.post) { const f = cur.post; cur.post = null; f(); } } catch (e) { U.friendly(e); U.state(pane, "error", "Unable to load this section. Please try again."); }
     }
     $("tb").addEventListener("click", ev => { const b = ev.target.closest("button[data-t]"); if (b) { tab = b.dataset.t; render(); } });
     if ($("ks")) $("ks").onchange = () => { cur = kids[Number($("ks").value)]; hwSub = hwFrom = ""; render(); };
