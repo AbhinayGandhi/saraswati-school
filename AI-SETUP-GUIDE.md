@@ -11,7 +11,7 @@ AI तुमच्या वेबसाइटवर थेट चालत न�
 ## स्टेप 1: Gemini API key बनवा
 1. https://aistudio.google.com उघडा आणि शाळेच्या Google खात्याने लॉगिन करा (18+ व्यक्तीचे खाते).
 2. "Get API key" -> "Create API key" दाबा.
-3. आलेली key (AIza... ने सुरू होणारी) कॉपी करा. **ती कोणालाही पाठवू नका, मला सुद्धा नाही.**
+3. आलेली key "Copy" बटणाने पूर्ण कॉपी करा. key ची सुरुवात वेगवेगळी असू शकते (जुन्या key "AIza" ने सुरू होतात, Google नवीन स्वरूपातही key देते). महत्त्वाचे म्हणजे ती AI Studio च्या "API keys" पानावरूनच घेतलेली असावी. ती पूर्ण असावी, आधी-नंतर रिकामी जागा (space) नसावी. **ती कोणालाही पाठवू नका, मला सुद्धा नाही.**
 
 ## स्टेप 2: Supabase मध्ये फंक्शन टाका (फक्त शाळेचा प्रोजेक्ट!)
 1. supabase.com -> **शाळेचा प्रोजेक्ट** (qakdefjhyayimjipskxd) उघडा. Patsanstha प्रोजेक्टला हात लावू नका.
@@ -39,6 +39,7 @@ SQL Editor मध्ये `supabase/phase20.sql` चालवा (phase19 आ�
 |---|---|
 | AI is switched off | Control panel मध्ये On करा |
 | AI is not set up yet | `GEMINI_API_KEY` secret टाकला नाही, किंवा फंक्शन deploy केले नाही |
+| The AI key is not accepted by Google | `GEMINI_API_KEY` मध्ये key अपूर्ण, चुकीची किंवा space सह टाकली आहे; AI Studio मधून पुन्हा कॉपी करून secret नव्याने save करा. जुनी key रद्द केली असेल तर नवीन बनवा |
 | AI model setting needs a fix | `GEMINI_MODEL` secret मध्ये चालू मॉडेल-नाव टाका |
 | The AI service is busy | Google ची मोफत मर्यादा संपली; थोड्या वेळाने चालेल |
 | used today's limit | त्या वापरकर्त्याची रोजची मर्यादा संपली; उद्या चालेल, किंवा Control panel मध्ये वाढवा |

@@ -135,7 +135,7 @@ export async function handle(req: Request, env: Env): Promise<Response> {
       body: JSON.stringify({ systemInstruction: { parts: [{ text: built.system }] }, contents: [{ role: "user", parts: [{ text: built.user }] }], generationConfig: { temperature: 0.4, maxOutputTokens: built.maxTokens } }),
     });
     if (r.status === 429) return J(503, { error: "busy" });
-    if (!r.ok) { console.error("gemini status", r.status); return J(502, { error: r.status === 404 ? "model" : "upstream" }); }
+    if (!r.ok) { console.error("gemini status", r.status); return J(502, { error: r.status === 404 ? "model" : [400, 401, 403].includes(r.status) ? "bad_key" : "upstream" }); }
     const d = await r.json();
     const parts = d?.candidates?.[0]?.content?.parts;
     const text = Array.isArray(parts) ? parts.map((p: { text?: string }) => p.text ?? "").join("").trim() : "";
