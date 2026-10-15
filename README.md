@@ -118,3 +118,8 @@ Run `supabase/phase13.sql`, `phase14.sql` and `phase15.sql` once each (or just r
 
 ## Round 10: security audit
 - Run `supabase/phase22.sql` once (read-only views, anon write revoke, enquiry rate cap). See SECURITY.md "Final audit".
+
+## Round 11: real school content
+- `supabase/REAL-CONTENT.sql` fills address, phone, motto, history, registration, headmaster, Facebook/Telegram from the school's public website. Run once (safe to repeat); edit the text first if needed. Vision, mission, principal message, email, timings and facilities were NOT published, so they stay empty (placeholders) until the school supplies them.
+- `phase23.sql`: new public settings keys (registration, principal_title, facebook, telegram) and https-only link check.
+- Public footer shows social links; notices page has "Share on WhatsApp".

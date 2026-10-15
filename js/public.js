@@ -3,7 +3,7 @@
   const PAGES = [["index.html","Home"],["about.html","About"],["academics.html","Academics"],["site-admissions.html","Admissions"],["faculty.html","Faculty"],["facilities.html","Facilities"],["site-activities.html","Activities"],["site-events.html","Events"],["gallery.html","Gallery"],["site-notices.html","Notices"],["contact.html","Contact"]];
   const here = location.pathname.split("/").pop() || "index.html";
   const el = (tag, txt, cls) => { const e = document.createElement(tag); if (txt != null) e.textContent = txt; if (cls) e.className = cls; return e; };
-  const S = { home_tagline: "", about_text: "", vision: "", mission: "", principal_message: "", school_name: "Saraswati English Medium School", address: "[School Address]", phone: "[School Phone]", email: "[School Email]", principal: "[Principal Name]" };
+  const S = { home_tagline: "", about_text: "", vision: "", mission: "", principal_message: "", school_name: "Saraswati English Medium School", address: "[School Address]", phone: "[School Phone]", email: "[School Email]", principal: "[Principal Name]", principal_title: "Principal", registration: "", facebook: "", telegram: "", website: "" };
 
   function header() {
     const h = document.getElementById("sh"); if (!h) return;
@@ -26,6 +26,8 @@
     const b = el("div"); b.append(el("h3", "Contact"), el("p", null)); b.lastChild.append(el("span", S.address, "d-address"), document.createElement("br"), el("span", S.phone, "d-phone"), document.createElement("br"), el("span", S.email, "d-email"));
     const c = el("div"); c.append(el("h3", "Quick links"));
     [["site-admissions.html","Admissions"],["apply.html","Admission enquiry"],["site-notices.html","Notices"],["login.html","Login"]].forEach(([h, t]) => { const l = el("a", t); l.href = h; c.append(l, document.createElement("br")); });
+    const soc = [["Facebook", S.facebook], ["Telegram", S.telegram], ["Website", S.website]].filter(x => /^https:\/\//.test(x[1] || ""));
+    if (soc.length) { b.append(el("p", null)); soc.forEach(([t, u], i) => { const l = el("a", t); l.href = u; l.target = "_blank"; l.rel = "noopener"; if (i) b.lastChild.append(" | "); b.lastChild.append(l); }); }
     cols.append(a, b, c); w.append(cols, el("small", "© Saraswati English Medium School")); f.appendChild(w);
   }
   function fill() {
@@ -36,7 +38,7 @@
   }
   async function settings() {
     try { const { data, error } = await db.from("school_settings").select("key,value"); if (error) throw error; (data || []).forEach(r => { if (r.value) S[r.key] = r.value; }); } catch (e) { console.error(e); }
-    fill();
+    footer(); fill();
   }
   // list(box, rows, drawFn, emptyText): safe rendering with loading, empty and error states
   function list(box, rows, draw, empty) {
