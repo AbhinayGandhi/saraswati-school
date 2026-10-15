@@ -115,3 +115,6 @@ Run `supabase/phase13.sql`, `phase14.sql` and `phase15.sql` once each (or just r
 ## Round 9: parent portal
 - New default tab "Today" (parent and student portals): today's attendance, 30-day attendance %, fee outstanding/overdue (parents only), today's timetable, homework due soon, latest notices, upcoming events, quick links (bus, requests, meetings, AI).
 - Attendance tab gets a monthly % chart; Results tab gets an exam-by-exam percentage trend. Uses only existing RLS-protected tables; no SQL needed.
+
+## Round 10: security audit
+- Run `supabase/phase22.sql` once (read-only views, anon write revoke, enquiry rate cap). See SECURITY.md "Final audit".

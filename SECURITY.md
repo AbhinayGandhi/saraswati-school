@@ -23,3 +23,8 @@
 - The anon key is public by design. Its safety depends on Row Level Security, which is why you must run every SQL phase file.
 - Any function you add later must be granted to `authenticated` and revoked from `anon` explicitly (see `phase12.sql`).
 - Two-factor login is not offered by this website. Use strong, unique passwords for Super Admin and School Admin; change them if a person leaves.
+
+## Final audit (Round 10)
+Checked: RLS on every table (all enabled; `ai_usage`, `bus_alerts`, `certificate_counters` intentionally have no policies = no direct access), all SECURITY DEFINER functions have a fixed search_path, anon can run only `submit_enquiry`, `driver_ping`, `driver_board` (token-gated) plus harmless helpers, per-role write tests (teacher: only own divisions; parent: only own notifications; fee payments immutable), no secrets in the repo, page output escaped.
+Fixed in `phase22.sql`: the helper views `teacher_names` and `teachers_public` were writable by any signed-in user (they bypass RLS); now read-only, and `teacher_names` is no longer public. Anonymous role can no longer write to any table directly. The public enquiry form now also has an hourly global cap.
+Known and accepted: reception can see driver tokens (needed to share the driver link); unsent offline attendance stays on the phone after sign-out so it is not lost (refused/unauthorised rows are rejected by the server); GitHub Pages cannot set CSP headers.
