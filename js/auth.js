@@ -8,17 +8,22 @@ const Auth = {
       throw new Error("Sign-in problem: " + (error.message || "unknown error") + (error.status ? " (code " + error.status + ")" : ""));
     }
   },
-  async logout() { await db.auth.signOut(); location.href = "login.html"; },
+  async logout() { if (typeof Offline !== "undefined") Offline.clear(); try { await db.auth.signOut(); } catch (e) { } location.href = "login.html"; },
   async resetPassword(email) {
     const redirectTo = location.origin + location.pathname.replace(/[^/]*$/, "") + "login.html";
     const { error } = await db.auth.resetPasswordForEmail(email, { redirectTo });
     if (error) throw new Error("Could not send the reset email. Check the address and try again.");
   },
   async profile() {
-    const { data: { session } } = await db.auth.getSession();
-    if (!session) return null;
+    // Offline: the last signed-in profile is reused so offline attendance pages can open. Real access is still enforced by the server (RLS) when data is sent.
+    let session = null;
+    try { const r = await db.auth.getSession(); session = r.data && r.data.session; } catch (e) { }
+    const cached = typeof Offline !== "undefined" ? Offline.get("prof") : null;
+    if (!session) return cached && navigator.onLine === false ? cached : null;
     const { data, error } = await db.from("profiles").select("id, full_name, role, is_active").eq("id", session.user.id).single();
+    if (error && cached && cached.id === session.user.id && typeof Offline !== "undefined" && Offline.isNet(error)) return cached;
     if (error || !data || !data.is_active) return null;
+    if (typeof Offline !== "undefined") Offline.set("prof", data);
     return data;
   },
   // Call at the top of every protected page. Redirects if not signed in or role not allowed.
