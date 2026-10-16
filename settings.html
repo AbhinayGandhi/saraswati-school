@@ -5,7 +5,7 @@
 <p class="muted">Only Super Admin and School Admin can change these settings. Every change is recorded in the Audit logs.</p>
 <form id="f" class="card" autocomplete="off">
 <h2>School details</h2>
-<div class="row"><div><label for="school_name">School name</label><input id="school_name" maxlength="150"></div><div><label for="principal">Principal</label><input id="principal" maxlength="100"></div></div>
+<div class="row"><div><label for="school_name">School name</label><input id="school_name" maxlength="150"></div><div><label for="principal">Principal / Headmaster name</label><input id="principal" maxlength="100"></div><div><label for="principal_title">Title shown on the About page</label><input id="principal_title" maxlength="60" placeholder="Principal"></div></div>
 <div class="row"><div><label for="address">Address</label><input id="address" maxlength="300"></div><div><label for="phone">Phone</label><input id="phone" maxlength="40"></div></div>
 <div class="row"><div><label for="email">Email</label><input id="email" type="email" maxlength="120"></div><div><label for="website">Website</label><input id="website" maxlength="150" placeholder="https://"></div></div>
 <div class="row"><div><label>Logo (PNG, JPG or WebP, up to 1 MB)</label><input id="logo" type="file" accept="image/png,image/jpeg,image/webp"><div id="logoNow" class="muted"></div></div></div>
@@ -14,11 +14,11 @@
 <fieldset><legend>Working days</legend><div id="wd"></div><p class="muted">Holidays and vacations in the School calendar are always off. A "Special school day" in the calendar makes a weekly off day a working day.</p></fieldset>
 <h2>Rules</h2>
 <div class="row"><div><label for="attendance_alert_percent">Low attendance alert below (%)</label><input id="attendance_alert_percent" inputmode="numeric" maxlength="3"></div><div><label for="library_fine_per_day">Library fine per day (Rs.)</label><input id="library_fine_per_day" inputmode="decimal" maxlength="8"></div><div><label for="receipt_prefix">Fee receipt prefix (letters or digits, up to 6)</label><input id="receipt_prefix" maxlength="6"></div></div>
-<h2>Fee payment by UPI</h2><div class="row"><div><label for="upi_id">School UPI ID (for example school@bank)</label><input id="upi_id" maxlength="100" autocomplete="off"></div><div><label for="upi_payee">Payee name shown to parents</label><input id="upi_payee" maxlength="80"></div></div><p class="muted">Parents see this only after login, on the Fees tab. Leave empty to switch UPI payment off.</p>
+<h2>Fee payment by UPI</h2><div class="row"><div><label for="upi_id">School UPI ID (for example school@bank)</label><input id="upi_id" maxlength="100" autocomplete="off"></div><div><label for="upi_payee">Payee name shown to parents</label><input id="upi_payee" maxlength="80"></div></div><p class="muted">Parents see this only after login, on the Fees tab. Leave empty to switch UPI payment off.</p><h2>Fee payment by bank transfer (NEFT / IMPS)</h2><div class="row"><div><label for="bank_account_name">Account holder name</label><input id="bank_account_name" maxlength="100" autocomplete="off"></div><div><label for="bank_name">Bank name</label><input id="bank_name" maxlength="100"></div><div><label for="bank_branch">Branch</label><input id="bank_branch" maxlength="100"></div><div><label for="bank_account_no">Account number (digits only)</label><input id="bank_account_no" inputmode="numeric" maxlength="20" autocomplete="off"></div><div><label for="bank_ifsc">IFSC code</label><input id="bank_ifsc" maxlength="11" autocomplete="off"></div></div><p class="muted">Shown to parents only after login, on the Fees tab, with a Copy button. Leave empty to hide. Double-check the account number: parents will send real money to it.</p>
 <p class="muted">Grading rules (A+, A, B...) are managed on the <a href="exams.html">Exams</a> page. Admission and GR numbers are typed by the office when a student is admitted.</p>
 <h2>Public website text</h2>
 <div><label for="home_tagline">Home page tagline</label><input id="home_tagline" maxlength="200"></div>
-<div><label for="about_text">About the school</label><textarea id="about_text" rows="4" maxlength="2000"></textarea></div>
+<div><label for="registration">Recognition and registration details (one per line)</label><textarea id="registration" rows="3" maxlength="1000"></textarea></div><div class="row"><div><label for="facebook">Facebook page link (https://...)</label><input id="facebook" maxlength="250"></div><div><label for="telegram">Telegram link (https://...)</label><input id="telegram" maxlength="250"></div></div><div><label for="about_text">About the school</label><textarea id="about_text" rows="4" maxlength="2000"></textarea></div>
 <div class="row"><div><label for="vision">Vision</label><textarea id="vision" rows="3" maxlength="1000"></textarea></div><div><label for="mission">Mission</label><textarea id="mission" rows="3" maxlength="1000"></textarea></div></div>
 <div><label for="principal_message">Principal's message</label><textarea id="principal_message" rows="4" maxlength="2000"></textarea></div>
 <p><button class="btn" id="save">Save settings</button></p>
@@ -26,7 +26,7 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script><script src="js/config.js"></script><script src="js/supabase.js"></script><script src="js/utils.js"></script><script src="js/permissions.js"></script><script src="js/auth.js"></script>
 <script>
 (async()=>{const p=await Auth.require(["super_admin","school_admin"]);Auth.shell(p);const $=id=>document.getElementById(id);
-const TXT=["school_name","principal","address","phone","email","website","school_start_time","school_end_time","attendance_alert_percent","library_fine_per_day","receipt_prefix","upi_id","upi_payee","home_tagline","about_text","vision","mission","principal_message"];
+const TXT=["school_name","principal","address","phone","email","website","school_start_time","school_end_time","attendance_alert_percent","library_fine_per_day","receipt_prefix","principal_title","registration","facebook","telegram","upi_id","upi_payee","bank_account_name","bank_name","bank_branch","bank_account_no","bank_ifsc","home_tagline","about_text","vision","mission","principal_message"];
 const DAYS=[[1,"Mon"],[2,"Tue"],[3,"Wed"],[4,"Thu"],[5,"Fri"],[6,"Sat"],[7,"Sun"]];
 $("wd").innerHTML=DAYS.map(([n,l])=>`<label style="display:inline-block;margin-right:12px"><input type="checkbox" class="wdc" value="${n}"> ${l}</label>`).join("");
 let cur={};
@@ -40,7 +40,9 @@ const pr=$("receipt_prefix").value.trim();if(pr&&!/^[A-Za-z0-9-]{1,6}$/.test(pr)
 const ap=$("attendance_alert_percent").value.trim();if(ap&&(!/^\d{1,3}$/.test(ap)||+ap>100))return U.toast("Attendance alert must be 0 to 100.","err");
 const fine=$("library_fine_per_day").value.trim();if(fine&&!/^\d{1,5}(\.\d{1,2})?$/.test(fine))return U.toast("Library fine must be a number.","err");
 const upi=$("upi_id").value.trim();if(upi&&!/^[A-Za-z0-9._-]{2,64}@[A-Za-z0-9]{2,32}$/.test(upi))return U.toast("UPI ID looks wrong. Example: school@bank","err");
-const site=$("website").value.trim();if(site&&!/^https?:\/\//i.test(site))return U.toast("Website must start with http:// or https://","err");
+for(const k of ["website","facebook","telegram"]){const v=$(k).value.trim();if(v&&!/^https:\/\//i.test(v))return U.toast("Links must start with https://","err")}
+const acc=$("bank_account_no").value.trim();if(acc&&!/^\d{6,20}$/.test(acc))return U.toast("Account number: digits only (6 to 20).","err");
+const ifsc=$("bank_ifsc").value.trim().toUpperCase();if(ifsc&&!/^[A-Z]{4}0[A-Z0-9]{6}$/.test(ifsc))return U.toast("IFSC looks wrong. Example: SBIN0001234","err");
 $("save").disabled=true;
 try{const rows=TXT.map(k=>({key:k,value:$(k).value.trim()}));rows.push({key:"working_days",value:days.join(",")});
 const f=$("logo").files[0];

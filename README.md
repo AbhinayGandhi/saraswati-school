@@ -123,3 +123,8 @@ Run `supabase/phase13.sql`, `phase14.sql` and `phase15.sql` once each (or just r
 - CORRECTION: the first version of `REAL-CONTENT.sql` used details of the Marathi-medium school (Saraswati Vidyalaya, saraswativk.edu.in). Run `supabase/REAL-CONTENT-UNDO.sql` once to clear them. `REAL-CONTENT.sql` is now an empty template: fill in the English Medium School's own verified details, then run it (or type them in School settings).
 - `phase23.sql`: new public settings keys (registration, principal_title, facebook, telegram) and https-only link check.
 - Public footer shows social links; notices page has "Share on WhatsApp".
+
+## Round 12: payments, Marathi, demo guide
+- Run `supabase/phase24.sql` and `supabase/phase25.sql` (or the new ALL-IN-ONE.sql). Fee tab for parents now has UPI QR, bank transfer details with Copy buttons (set them in School settings), and approved bank-transfer claims keep mode "bank_transfer" on the receipt.
+- `js/i18n.js`: about 580 more Marathi strings (all admin/teacher/parent screens). Names and data typed by the school are never translated.
+- `DEMO-GUIDE.md`: Marathi presentation script and Q&A.
