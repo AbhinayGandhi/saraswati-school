@@ -10,7 +10,7 @@
     h.className = "sh"; h.innerHTML = "";
     const inn = el("div", null, "in");
     const brand = el("a", null, "brand"); brand.href = "index.html";
-    brand.append(el("span", "S", "logo"), el("span", "Saraswati English Medium School"));
+    const lg = el("span", "S", "logo"); const li = document.createElement("img"); li.alt = ""; li.onload = () => { lg.textContent = ""; lg.appendChild(li); }; li.src = "images/logo.png"; brand.append(lg, el("span", "Saraswati English Medium School"));
     const btn = el("button", "Menu", "btn ghost"); btn.id = "pm"; btn.setAttribute("aria-expanded", "false"); btn.setAttribute("aria-controls", "pn");
     const nav = el("nav"); nav.id = "pn"; nav.setAttribute("aria-label", "Main");
     PAGES.forEach(([href, label]) => { const a = el("a", label); a.href = href; if (href === here) a.setAttribute("aria-current", "page"); nav.appendChild(a); });

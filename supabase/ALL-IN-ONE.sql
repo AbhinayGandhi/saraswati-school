@@ -3124,6 +3124,33 @@ do $__s$ begin execute $__q$revoke all on function review_payment_claim(uuid, bo
 
 do $__s$ begin execute $__q$grant execute on function review_payment_claim(uuid, boolean, text) to authenticated$__q$; exception when duplicate_table or duplicate_object or duplicate_function or duplicate_column or duplicate_schema or duplicate_alias or unique_violation or invalid_function_definition then null; end $__s$;
 
+do $__s$ begin execute $__q$create or replace function driver_roster(p_token text) returns jsonb language plpgsql stable security definer set search_path = public as $$
+declare rid uuid; b bus_live%rowtype; r jsonb;
+begin
+  if p_token is null or length(p_token) < 32 then return jsonb_build_object('ok', false, 'error', 'bad_key'); end if;
+  select k.route_id into rid from transport_driver_keys k join transport_routes t on t.id = k.route_id where k.token = p_token and t.status = 'active';
+  if rid is null then return jsonb_build_object('ok', false, 'error', 'bad_key'); end if;
+  select * into b from bus_live where route_id = rid;
+  if b.route_id is null or not b.trip_active then return jsonb_build_object('ok', false, 'error', 'no_trip'); end if;
+  select coalesce(jsonb_agg(x order by x->>'stop', x->>'name'), '[]'::jsonb) into r from (
+    select jsonb_build_object(
+      'adm', s.admission_no,
+      'name', trim(s.first_name || ' ' || coalesce(left(s.last_name, 1) || '.', '')),
+      'stop', coalesce(st.name, ''),
+      'done', exists (select 1 from bus_boarding bb where bb.enrollment_id = e.id and bb.route_id = rid and bb.event_date = current_date and bb.trip = b.trip)
+    ) x
+    from transport_assignments a join student_enrollments e on e.id = a.enrollment_id and e.status = 'active'
+    join students s on s.id = e.student_id left join transport_stops st on st.id = a.stop_id
+    where a.route_id = rid and a.status = 'active') q;
+  return jsonb_build_object('ok', true, 'trip', b.trip, 'rows', r);
+end $$$__q$; exception when duplicate_table or duplicate_object or duplicate_function or duplicate_column or duplicate_schema or duplicate_alias or unique_violation or invalid_function_definition then null; end $__s$;
+
+do $__s$ begin execute $__q$revoke all on function driver_roster(text) from public$__q$; exception when duplicate_table or duplicate_object or duplicate_function or duplicate_column or duplicate_schema or duplicate_alias or unique_violation or invalid_function_definition then null; end $__s$;
+
+do $__s$ begin execute $__q$grant execute on function driver_roster(text) to anon, authenticated$__q$; exception when duplicate_table or duplicate_object or duplicate_function or duplicate_column or duplicate_schema or duplicate_alias or unique_violation or invalid_function_definition then null; end $__s$;
+
+do $__s$ begin execute $__q$select 'phase26 finished' as result$__q$; exception when duplicate_table or duplicate_object or duplicate_function or duplicate_column or duplicate_schema or duplicate_alias or unique_violation or invalid_function_definition then null; end $__s$;
+
 
 -- Finished. If you see 'Success' with no red error, your database is complete and up to date.
 select 'ALL-IN-ONE finished' as result;

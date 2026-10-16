@@ -1,5 +1,5 @@
 <!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="robots" content="noindex"><meta name="description" content="Saraswati English Medium School: school bus driver page."><link rel="stylesheet" href="css/style.css"><title>Bus driver | Saraswati English Medium School</title>
-<style>body{padding:1rem;max-width:30rem;margin:0 auto}.big{display:block;width:100%;padding:1.1rem;font-size:1.15rem;margin:.6rem 0}.st{padding:.8rem;border-radius:.5rem;background:#eef2f7;margin:.8rem 0;font-weight:700}.ok{background:#e3f4ea}.bad{background:#fde8e8}</style></head>
+<style>.rw{display:flex;align-items:center;gap:.6rem;width:100%;text-align:left;padding:.8rem;margin:.35rem 0;border:1px solid var(--line);border-radius:.5rem;background:var(--card);color:var(--ink);font:inherit;cursor:pointer}.rw.d{background:#e3f4ea;color:#14402a;border-color:#9ccfb0}.rw b{flex:1}.rw small{color:inherit;opacity:.8}.rs{font-weight:700;margin-top:.6rem;color:var(--muted)}body{padding:1rem;max-width:30rem;margin:0 auto}.big{display:block;width:100%;padding:1.1rem;font-size:1.15rem;margin:.6rem 0}.st{padding:.8rem;border-radius:.5rem;background:#eef2f7;margin:.8rem 0;font-weight:700}.ok{background:#e3f4ea}.bad{background:#fde8e8}</style></head>
 <body><h1>School bus / स्कूल बस</h1>
 <p id="rt" style="font-size:1.1rem;font-weight:700">Loading...</p>
 <div id="stat" class="st" role="status" aria-live="polite">Checking link...</div>
@@ -11,7 +11,11 @@
 <div id="scanbox" hidden><h2 style="font-size:1.1rem">Student QR scan / विद्यार्थी QR स्कॅन</h2><div class="qrbox"><video id="vid" playsinline muted style="width:100%;border-radius:.5rem" hidden></video><canvas id="cv" hidden></canvas></div>
 <button class="btn big ghost" id="cam">Start scanner / स्कॅनर सुरू करा</button>
 <div class="row" style="display:flex;gap:.5rem"><input id="man" placeholder="Admission no" autocomplete="off" maxlength="40" style="flex:1"><button class="btn ghost" id="manb" type="button">OK</button></div>
-<div id="bmsg" class="st" role="status" aria-live="polite" hidden></div></div>
+<div id="bmsg" class="st" role="status" aria-live="polite" hidden></div>
+<h2 style="font-size:1.1rem;margin-top:1.2rem">Children list / विद्यार्थी यादी <span id="rc" style="font-weight:400"></span></h2>
+<p style="font-size:.9rem;margin:.2rem 0">Tap a child to note boarding (pickup) or getting off (drop). / नाव दाबून चढले/उतरले नोंदवा.</p>
+<button class="btn ghost" id="rl" type="button">Load list / यादी दाखवा</button>
+<div id="ro" style="margin-top:.6rem"></div></div>
 <p style="font-size:.9rem">Keep this page open and the screen on while driving. Parents see the bus on the map only while a trip is running.<br>गाडी चालवताना हे पेज उघडे आणि स्क्रीन चालू ठेवा. फेरी सुरू असतानाच पालकांना बस नकाशावर दिसते.</p>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script><script src="js/config.js"></script>
 <script>
@@ -37,7 +41,7 @@ $("rt").textContent=r.route+(r.vehicle?" | "+r.vehicle:"");$("ctl").hidden=false
 let stream=null,raf=null,lastCode="",lastAt=0,jq=null;
 function beep(ok){try{const c=new (window.AudioContext||window.webkitAudioContext)(),o=c.createOscillator(),g=c.createGain();o.frequency.value=ok?880:220;g.gain.value=.08;o.connect(g);g.connect(c.destination);o.start();setTimeout(()=>{o.stop();c.close()},ok?120:300)}catch(e){}if(navigator.vibrate)navigator.vibrate(ok?60:[80,60,80])}
 async function board(adm){const m=$("bmsg");m.hidden=false;try{const {data,error}=await db.rpc("driver_board",{p_token:tok,p_admission:adm});if(error)throw error;
-if(data.ok){beep(true);m.className="st ok";m.textContent=(data.event==="board"?"Boarded: ":"Got off: ")+data.name+(data.repeat?" (already noted)":"")+"  |  "+data.done+" / "+data.total}
+if(data.ok){beep(true);m.className="st ok";m.textContent=(data.event==="board"?"Boarded: ":"Got off: ")+data.name+(data.repeat?" (already noted)":"")+"  |  "+data.done+" / "+data.total;if(rows.length)loadRo(true)}
 else{beep(false);m.className="st bad";m.textContent=data.error==="not_on_route"?"This student is not on this bus.":data.error==="no_trip"?"Start the trip first.":"Could not note this student."}}
 catch(e){beep(false);m.className="st bad";m.textContent="No internet. Try again."}}
 function code(t){const m=/^SES\|(.{1,40})$/.exec(String(t||"").trim());return m?m[1]:null}
@@ -45,6 +49,14 @@ function stopCam(){if(raf)cancelAnimationFrame(raf);raf=null;if(stream)stream.ge
 function loop(){const v=$("vid"),c=$("cv");if(!stream)return;if(v.readyState===v.HAVE_ENOUGH_DATA&&jq){c.width=v.videoWidth;c.height=v.videoHeight;const g=c.getContext("2d",{willReadFrequently:true});g.drawImage(v,0,0);const r=jq(g.getImageData(0,0,c.width,c.height).data,c.width,c.height),a=r&&code(r.data);if(a&&(a!==lastCode||Date.now()-lastAt>4000)){lastCode=a;lastAt=Date.now();board(a)}}setTimeout(()=>{raf=requestAnimationFrame(loop)},150)}
 $("cam").onclick=async()=>{if(stream)return stopCam();try{if(!jq){await new Promise((ok,no)=>{const sc=document.createElement("script");sc.src="js/vendor/jsQR.js";sc.onload=ok;sc.onerror=no;document.head.appendChild(sc)});jq=window.jsQR}
 stream=await navigator.mediaDevices.getUserMedia({video:{facingMode:"environment"},audio:false});const v=$("vid");v.srcObject=stream;v.hidden=false;await v.play();$("cam").textContent="Stop scanner / स्कॅनर बंद करा";loop()}catch(e){stream=null;const m=$("bmsg");m.hidden=false;m.className="st bad";m.textContent="Camera did not start. Allow camera, or type the admission number."}};
+
+function esc(t){const d=document.createElement("div");d.textContent=t;return d.innerHTML}
+let rows=[];
+function drawRo(){const box=$("ro");box.innerHTML="";const dn=rows.filter(r=>r.done).length;$("rc").textContent=rows.length?"("+dn+" / "+rows.length+")":"";if(!rows.length){box.innerHTML='<div class="st">No children on this list. / यादीत कोणी नाही.</div>';return}
+let stop=null;rows.forEach((r,i)=>{if(r.stop!==stop){stop=r.stop;const h=document.createElement("div");h.className="rs";h.textContent=stop||"Stop not set / थांबा नाही";box.appendChild(h)}
+const b=document.createElement("button");b.type="button";b.className="rw"+(r.done?" d":"");b.innerHTML='<b>'+esc(r.name)+'</b><small>'+esc(r.adm)+'</small><span>'+(r.done?"\u2714":"\u25CB")+'</span>';b.onclick=async()=>{if(r.done)return;b.disabled=true;await board(r.adm);await loadRo(true);};box.appendChild(b)})}
+async function loadRo(quiet){try{const {data,error}=await db.rpc("driver_roster",{p_token:tok});if(error)throw error;if(!data.ok){if(!quiet){const m=$("bmsg");m.hidden=false;m.className="st bad";m.textContent=data.error==="no_trip"?"Start the trip first.":"Could not load the list."}return}rows=data.rows||[];drawRo()}catch(e){const m=$("bmsg");m.hidden=false;m.className="st bad";m.textContent="No internet. Try again."}}
+$("rl").onclick=()=>loadRo(false);
 $("manb").onclick=()=>{const v=$("man").value.trim();if(v){board(v);$("man").value=""}};
 })();
 </script></body></html>

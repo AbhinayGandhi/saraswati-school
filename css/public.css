@@ -35,3 +35,40 @@ body.pub{background:var(--bg)}
 .steps li{counter-increment:s;background:var(--card);border:1px solid var(--line);border-radius:10px;padding:1rem 1rem 1rem 3.4rem;position:relative}
 .steps li:before{content:counter(s);position:absolute;left:1rem;top:.9rem;width:1.8rem;height:1.8rem;border-radius:50%;background:var(--gold);color:#16233b;font-weight:700;display:grid;place-items:center}
 @media print{.sh,.pf,.hero .btn{display:none}}
+
+/* ===== Round 13: new blue + orange look for the public website (the ERP pages keep their own colours) ===== */
+body.pub{--chalk:#1d56b3;--chalk-d:#143f87;--gold:#f28c28;--navy:#0f2a5c;--sky:#e8f1fd;--sun:#fff3e2}
+@media (prefers-color-scheme:dark){body.pub{--chalk:#5b9bf0;--chalk-d:#8db8f6;--gold:#f5a049;--navy:#0b1b3a;--sky:#16233b;--sun:#2a2217}}
+body.pub{font-family:var(--font),"Noto Sans Devanagari","Mangal",sans-serif}
+.sh .logo{background:var(--chalk);color:#fff;overflow:hidden}.sh .logo img{width:100%;height:100%;object-fit:cover;display:block}
+.sh nav a.cta{background:var(--gold);color:#1a1205}
+.pf{background:var(--navy)}
+.hero2{position:relative;color:#fff;background:linear-gradient(135deg,var(--navy) 0%,#1d56b3 62%,#3a82e0 100%);overflow:hidden;padding:3.5rem 0 5.5rem}
+.hero2:before{content:"";position:absolute;right:-90px;top:-90px;width:340px;height:340px;border-radius:50%;background:rgba(242,140,40,.28)}
+.hero2:after{content:"";position:absolute;left:-60px;bottom:-110px;width:260px;height:260px;border-radius:50%;background:rgba(255,255,255,.08)}
+.hero2 .wrap{position:relative;z-index:1;display:grid;gap:2rem;grid-template-columns:1.1fr .9fr;align-items:center}
+.hero2 .tag{display:inline-block;background:rgba(255,255,255,.15);padding:.25rem .8rem;border-radius:99px;margin-bottom:1rem;font-size:.9rem}
+.hero2 h1{font-size:clamp(2rem,5vw,3.3rem);margin-bottom:.8rem}
+.hero2 p{font-size:1.1rem;max-width:52ch;opacity:.95}
+.hero2 .btn{margin:.5rem .5rem 0 0}.hero2 .btn.alt{background:var(--gold);color:#1a1205}.hero2 .btn.ghost{color:#fff;border-color:rgba(255,255,255,.65)}
+.ph-img{position:relative;overflow:hidden;border-radius:14px;background:linear-gradient(135deg,var(--sky),var(--sun));display:grid;place-items:center;color:var(--muted);text-align:center}
+.ph-img img{position:absolute;left:0;top:0;width:100%;height:100%;object-fit:cover}
+.ph-img span{padding:1rem;font-weight:700;font-size:.95rem}
+.hero-photo{aspect-ratio:4/3;box-shadow:0 14px 40px rgba(0,0,0,.3);border:4px solid rgba(255,255,255,.7)}
+.quick{position:relative;z-index:2;margin-top:-3rem}
+.quick .wrap{display:grid;gap:.8rem;grid-template-columns:repeat(auto-fit,minmax(150px,1fr))}
+.qa{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:1rem;text-decoration:none;color:var(--ink);text-align:center;box-shadow:0 6px 18px rgba(15,42,92,.12);font-weight:700;transition:transform .15s}
+.qa:hover{transform:translateY(-3px)}.qa svg{width:30px;height:30px;stroke:var(--chalk);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;display:block;margin:0 auto .4rem}
+.qa small{display:block;font-weight:400;color:var(--muted);font-size:.82rem}
+.sec h2{border-left-color:var(--gold)}
+.feat{display:grid;gap:1rem;grid-template-columns:repeat(auto-fit,minmax(220px,1fr))}
+.feat .pc{border-top:4px solid var(--gold)}.feat .pc:nth-child(even){border-top-color:var(--chalk)}
+.feat svg{width:34px;height:34px;stroke:var(--chalk);fill:none;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;margin-bottom:.4rem}
+.photos{display:grid;gap:.8rem;grid-template-columns:2fr 1fr 1fr;grid-template-rows:170px 170px}
+.photos .ph-img:first-child{grid-row:span 2}
+.cta-band{background:linear-gradient(120deg,var(--gold),#f7b25c);color:#1a1205;padding:2.2rem 0}
+.cta-band .wrap{display:flex;flex-wrap:wrap;gap:1rem;align-items:center;justify-content:space-between}
+.cta-band h2{border:0;padding:0;margin:0;font-size:1.5rem}.cta-band .btn{background:var(--navy);color:#fff}
+.rv{opacity:1;transform:none}.js-rv .rv{opacity:0;transform:translateY(16px);transition:opacity .5s,transform .5s}.js-rv .rv.in{opacity:1;transform:none}
+@media(prefers-reduced-motion:reduce){.js-rv .rv{opacity:1;transform:none;transition:none}.qa{transition:none}}
+@media(max-width:860px){.hero2 .wrap{grid-template-columns:1fr}.hero-photo{display:none}.photos{grid-template-columns:1fr 1fr;grid-template-rows:auto}.photos .ph-img{aspect-ratio:4/3}.photos .ph-img:first-child{grid-row:auto;grid-column:span 2}}

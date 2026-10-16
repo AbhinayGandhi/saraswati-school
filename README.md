@@ -128,3 +128,15 @@ Run `supabase/phase13.sql`, `phase14.sql` and `phase15.sql` once each (or just r
 - Run `supabase/phase24.sql` and `supabase/phase25.sql` (or the new ALL-IN-ONE.sql). Fee tab for parents now has UPI QR, bank transfer details with Copy buttons (set them in School settings), and approved bank-transfer claims keep mode "bank_transfer" on the receipt.
 - `js/i18n.js`: about 580 more Marathi strings (all admin/teacher/parent screens). Names and data typed by the school are never translated.
 - `DEMO-GUIDE.md`: Marathi presentation script and Q&A.
+
+## Round 13 – new Home page and bus helper checklist
+
+**Home page (public website).** New blue and orange look, hero with photo slot, quick-action strip, "keeps parents connected" feature cards, "Life at school" photo grid, admission call-to-action band, soft scroll animation (works on old Chrome; switches off for people who prefer reduced motion). The ERP pages keep their own colours; only public pages changed.
+
+**Adding real photos and the logo later (no code needed).** Put these files in the `images` folder of the repo:
+- `images/logo.png` – round/square school logo (shows in the header instead of the letter S)
+- `images/hero.jpg` – big photo in the hero (landscape, about 1200x900, under 300 KB)
+- `images/photo1.jpg` … `images/photo5.jpg` – Campus, Classroom, Sports, Events, Activities (landscape, under 300 KB each)
+Until a file exists, a coloured placeholder is shown. Get the school's written permission before publishing photos of children.
+
+**Bus helper checklist.** On the driver page, after a trip is started, "Load list" shows the children on this bus grouped by stop. Tap a child to note "boarded" (pickup) or "got off" (drop). Parents get the same notification as with the QR scan. Needs `supabase/phase26.sql` (already inside `ALL-IN-ONE.sql`). Only the bus secret link can read this list; it shows first name, last initial, admission number and stop.
