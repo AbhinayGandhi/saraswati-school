@@ -140,3 +140,5 @@ Run `supabase/phase13.sql`, `phase14.sql` and `phase15.sql` once each (or just r
 Until a file exists, a coloured placeholder is shown. Get the school's written permission before publishing photos of children.
 
 **Bus helper checklist.** On the driver page, after a trip is started, "Load list" shows the children on this bus grouped by stop. Tap a child to note "boarded" (pickup) or "got off" (drop). Parents get the same notification as with the QR scan. Needs `supabase/phase26.sql` (already inside `ALL-IN-ONE.sql`). Only the bus secret link can read this list; it shows first name, last initial, admission number and stop.
+
+**Undo a wrong tick (phase27).** On the checklist, tap a green (already noted) name and confirm to remove the note. Parents get a short "correction" notification. Works only while the trip is running. Included in `ALL-IN-ONE.sql`.

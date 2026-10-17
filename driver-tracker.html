@@ -13,7 +13,7 @@
 <div class="row" style="display:flex;gap:.5rem"><input id="man" placeholder="Admission no" autocomplete="off" maxlength="40" style="flex:1"><button class="btn ghost" id="manb" type="button">OK</button></div>
 <div id="bmsg" class="st" role="status" aria-live="polite" hidden></div>
 <h2 style="font-size:1.1rem;margin-top:1.2rem">Children list / विद्यार्थी यादी <span id="rc" style="font-weight:400"></span></h2>
-<p style="font-size:.9rem;margin:.2rem 0">Tap a child to note boarding (pickup) or getting off (drop). / नाव दाबून चढले/उतरले नोंदवा.</p>
+<p style="font-size:.9rem;margin:.2rem 0">Tap a child to note boarding (pickup) or getting off (drop). Tap a green name again to undo. / नाव दाबून चढले/उतरले नोंदवा. चुकले तर हिरवे नाव पुन्हा दाबा.</p>
 <button class="btn ghost" id="rl" type="button">Load list / यादी दाखवा</button>
 <div id="ro" style="margin-top:.6rem"></div></div>
 <p style="font-size:.9rem">Keep this page open and the screen on while driving. Parents see the bus on the map only while a trip is running.<br>गाडी चालवताना हे पेज उघडे आणि स्क्रीन चालू ठेवा. फेरी सुरू असतानाच पालकांना बस नकाशावर दिसते.</p>
@@ -54,7 +54,7 @@ function esc(t){const d=document.createElement("div");d.textContent=t;return d.i
 let rows=[];
 function drawRo(){const box=$("ro");box.innerHTML="";const dn=rows.filter(r=>r.done).length;$("rc").textContent=rows.length?"("+dn+" / "+rows.length+")":"";if(!rows.length){box.innerHTML='<div class="st">No children on this list. / यादीत कोणी नाही.</div>';return}
 let stop=null;rows.forEach((r,i)=>{if(r.stop!==stop){stop=r.stop;const h=document.createElement("div");h.className="rs";h.textContent=stop||"Stop not set / थांबा नाही";box.appendChild(h)}
-const b=document.createElement("button");b.type="button";b.className="rw"+(r.done?" d":"");b.innerHTML='<b>'+esc(r.name)+'</b><small>'+esc(r.adm)+'</small><span>'+(r.done?"\u2714":"\u25CB")+'</span>';b.onclick=async()=>{if(r.done)return;b.disabled=true;await board(r.adm);await loadRo(true);};box.appendChild(b)})}
+const b=document.createElement("button");b.type="button";b.className="rw"+(r.done?" d":"");b.innerHTML='<b>'+esc(r.name)+'</b><small>'+esc(r.adm)+'</small><span>'+(r.done?"\u2714":"\u25CB")+'</span>';b.onclick=async()=>{b.disabled=true;if(r.done){if(!confirm("Remove this note for "+r.name+"? / "+r.name+" ची नोंद काढायची?")){b.disabled=false;return}try{const {data,error}=await db.rpc("driver_unboard",{p_token:tok,p_admission:r.adm});if(error)throw error;const m=$("bmsg");m.hidden=false;m.className="st ok";m.textContent="Removed: "+r.name+" / नोंद काढली"}catch(e){const m=$("bmsg");m.hidden=false;m.className="st bad";m.textContent="No internet. Try again."}}else await board(r.adm);await loadRo(true);};box.appendChild(b)})}
 async function loadRo(quiet){try{const {data,error}=await db.rpc("driver_roster",{p_token:tok});if(error)throw error;if(!data.ok){if(!quiet){const m=$("bmsg");m.hidden=false;m.className="st bad";m.textContent=data.error==="no_trip"?"Start the trip first.":"Could not load the list."}return}rows=data.rows||[];drawRo()}catch(e){const m=$("bmsg");m.hidden=false;m.className="st bad";m.textContent="No internet. Try again."}}
 $("rl").onclick=()=>loadRo(false);
 $("manb").onclick=()=>{const v=$("man").value.trim();if(v){board(v);$("man").value=""}};
