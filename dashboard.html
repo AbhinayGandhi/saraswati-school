@@ -14,7 +14,8 @@ const h=document.createElement("p");h.className="ch-note";h.textContent="Academi
 const F=o.fees,at=o.att_today||{},atN=Object.values(at).reduce((a,b)=>a+b,0),pres=(at.present||0)+(at.late||0)+(at.half_day||0);
 if(o.students!==undefined){kp.append(tile("Students",o.students),tile("Teachers",o.teachers),tile("Classes",o.classes,o.divisions+" divisions"))}
 if(o.att_today!==undefined){const t=tile("Attendance today",atN?pct(pres,atN)+"%":"-",atN?pres+" of "+atN+" present":"Not marked yet");if(atN){const m=document.createElement("div");m.className="meter";m.innerHTML='<span style="width:'+pct(pres,atN)+'%"></span>';t.appendChild(m)}kp.appendChild(t)}
-if(F){kp.append(tile("Collected today",Fee.inr(o.fee_today)),tile("Outstanding",Fee.inr(F.balance),Fee.inr(F.overdue)+" overdue"))}
+const inr0=v=>"₹"+Math.round(Number(v)||0).toLocaleString("en-IN");
+if(F){kp.append(tile("Collected today",inr0(o.fee_today)),tile("Outstanding",inr0(F.balance),inr0(F.overdue)+" overdue"))}
 const link=(href,n,txt)=>{if(!n)return;const a=document.createElement("a");a.href=href;a.innerHTML="<b></b> ";a.firstChild.textContent=n;a.append(txt);al.appendChild(a)};
 link("attendance.html",o.att_unmarked,"divisions not marked today");link("requests.html",o.pending_requests,"parent requests pending");link("leave.html",o.pending_leave,"leave requests pending");link("payment-claims.html",o.pending_claims,"UPI payment claims to review");link("fee-reports.html",F&&F.overdue_n,"students with overdue fees");
 if(o.att_days)Charts.series(ch.appendChild(document.createElement("div")),"Attendance, last 14 days",o.att_days.map(d=>({label:d.d.slice(5),value:pct(d.p,d.n),note:d.p+" of "+d.n+" present"})),{kind:"line",max:100,fmt:v=>v+"%",axisFmt:v=>v+"%",valueHead:"Present %"});

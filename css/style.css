@@ -68,6 +68,6 @@ td input[type=number]{width:6rem}
 .ch-split{display:flex;gap:2px;height:22px;border-radius:4px;overflow:hidden;margin:.6rem 0}.ch-split span{min-width:2px}
 .ch-legend{list-style:none;display:flex;flex-wrap:wrap;gap:.4rem 1rem;margin:.2rem 0 0;padding:0;font-size:.9rem}.ch-legend i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:.35rem}
 .charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,340px),1fr));gap:1rem;margin:1rem 0}
-.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.8rem}.kpis .card small{color:var(--muted);display:block}.kpis .card b{font-size:1.7rem}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.8rem}.kpis .card small{color:var(--muted);display:block}.kpis .card{min-width:0}.kpis .card b{font-size:clamp(1.2rem,2.1vw,1.7rem);display:block;white-space:nowrap}
 .meter{height:10px;border-radius:5px;background:color-mix(in srgb,var(--c1) 18%,var(--card));overflow:hidden;margin-top:.4rem}.meter span{display:block;height:100%;background:var(--c1)}
 .alerts{display:flex;flex-wrap:wrap;gap:.6rem;margin:1rem 0}.alerts a{padding:.4rem .8rem;border:1px solid var(--line);border-radius:999px;color:var(--ink);text-decoration:none;background:var(--card)}.alerts a b{color:var(--c2)}

@@ -164,14 +164,14 @@ begin
 
   ---------------------------------------------------------------- attendance (last 42 days, skipping holidays and weekly offs)
   insert into attendance (enrollment_id, att_date, status)
-  select e.enr, d::date, case when x < 0.90 then 'present' when x < 0.95 then 'absent' when x < 0.97 then 'late' when x < 0.985 then 'leave' else 'half_day' end
-  from _demo_enr e cross join generate_series(greatest(current_date - 42, date '2026-06-15'), least(current_date - 1, date '2027-04-30'), interval '1 day') d
-  cross join lateral (select random() as x) rr
-  where is_working_day(d::date);
+  with g as (select e.enr, d::date as dd, random() as x
+             from _demo_enr e cross join generate_series(greatest(current_date - 42, date '2026-06-15'), least(current_date - 1, date '2027-04-30'), interval '1 day') d)
+  select enr, dd, case when x < 0.90 then 'present' when x < 0.95 then 'absent' when x < 0.97 then 'late' when x < 0.985 then 'leave' else 'half_day' end
+  from g where is_working_day(dd);
   insert into teacher_attendance (teacher_id, att_date, status)
-  select t.id, d::date, case when x < 0.93 then 'present' when x < 0.97 then 'leave' else 'late' end
-  from teachers t cross join generate_series(greatest(current_date - 20, date '2026-06-15'), least(current_date - 1, date '2027-04-30'), interval '1 day') d
-  cross join lateral (select random() as x) rr where is_working_day(d::date);
+  with g as (select t.id as tid, d::date as dd, random() as x
+             from teachers t cross join generate_series(greatest(current_date - 20, date '2026-06-15'), least(current_date - 1, date '2027-04-30'), interval '1 day') d)
+  select tid, dd, case when x < 0.93 then 'present' when x < 0.97 then 'leave' else 'late' end from g where is_working_day(dd);
 
   ---------------------------------------------------------------- First Term exam (published) with marks, and a draft Unit Test
   insert into exams (academic_year_id, name, exam_type, status) values (y1, 'First Term Examination 2026', 'First Term', 'draft') returning id into ex1;

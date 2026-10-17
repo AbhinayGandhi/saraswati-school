@@ -48,7 +48,7 @@ const Charts = (() => {
       const s = mk("svg", { viewBox: `0 0 ${W} ${H}`, class: "ch-svg", role: "img", "aria-label": title }, body);
       for (let k = 0; k <= 4; k++) { const v = min + (max - min) * k / 4, y = py(v); mk("line", { x1: L, x2: W - R, y1: y, y2: y, class: "ch-grid" }, s); const t = mk("text", { x: L - 6, y: y + 4, "text-anchor": "end", class: "ch-l" }, s); t.textContent = (o.axisFmt || compact)(v) }
       const step = Math.ceil(pts.length / 8);
-      pts.forEach((p, i) => { if (i % step === 0 || i === pts.length - 1) { const t = mk("text", { x: px(i), y: H - 10, "text-anchor": "middle", class: "ch-l" }, s); t.textContent = p.label } });
+      pts.forEach((p, i) => { if ((pts.length - 1 - i) % step === 0) { const t = mk("text", { x: px(i), y: H - 10, "text-anchor": "middle", class: "ch-l" }, s); t.textContent = p.label } });
       if ((o.kind || "col") === "col") {
         const bw = Math.min(24, (W - L - R) / pts.length * .6);
         pts.forEach((p, i) => { const g = mk("g", {}, s); mk("rect", { x: px(i) - (W - L - R) / pts.length / 2, y: T, width: (W - L - R) / pts.length, height: H - T - B, fill: "transparent" }, g);

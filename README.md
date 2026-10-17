@@ -150,3 +150,7 @@ Until a file exists, a coloured placeholder is shown. Get the school's written p
 - `PRESENTATION-STEPS.md`: timed step-by-step plan (in Marathi) for presenting the project.
 
 **RESET-DATA.sql fix.** If a demo login had saved something that points to it (for example an AI knowledge note), the reset stopped with a "foreign key constraint ... on table profiles" error. The reset now detaches (or removes, where a login is required) such rows before deleting the demo logins. Tested with an AI note saved by the demo principal.
+
+**Round 14b – fixes found on the live demo.**
+- `DEMO-DATA.sql`: the first version made every demo attendance "present" (100% everywhere) because the random number was computed once. Now each student/day gets its own value (about 88% present). If you already loaded the old demo data, run `supabase/DEMO-ATTENDANCE-FIX.sql` once instead of reloading.
+- Dashboard: the "Outstanding" amount was cut off on 1366px screens. Money tiles now show whole rupees and never wrap; chart date labels no longer overlap.
