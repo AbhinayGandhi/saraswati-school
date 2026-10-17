@@ -148,3 +148,5 @@ Until a file exists, a coloured placeholder is shown. Get the school's written p
 - `report-card.html`: new layout with school header (address, phone and principal from School settings), subject grades, grading scale and signature lines. `report-card.html?exam=...&dv=...` prints every report card of a division (one per page). Results page has a **Print all report cards** button.
 - `supabase/DEMO-EXTRA.sql` / `DEMO-EXTRA-UNDO.sql`: fake UPI/bank, bus-stop map positions and two pending payment claims for the demo. Run only after `DEMO-DATA.sql`.
 - `PRESENTATION-STEPS.md`: timed step-by-step plan (in Marathi) for presenting the project.
+
+**RESET-DATA.sql fix.** If a demo login had saved something that points to it (for example an AI knowledge note), the reset stopped with a "foreign key constraint ... on table profiles" error. The reset now detaches (or removes, where a login is required) such rows before deleting the demo logins. Tested with an AI note saved by the demo principal.

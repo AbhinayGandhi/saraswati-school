@@ -36,6 +36,21 @@ alter sequence receipt_seq restart;
 alter sequence enquiry_seq restart;
 do $c$ begin if to_regclass('public.certificate_counters') is not null then truncate table certificate_counters; end if; end $c$;
 
+-- Before removing the demo logins: anything that still points to a demo login (for example the AI knowledge notes or a payment claim they saved)
+-- is detached (set to empty) or, where a login is required, removed. Without this step the database refuses to delete the login.
+do $f$ declare r record;
+begin
+  for r in select c.conrelid::regclass as t, a.attname as col, a.attnotnull as nn
+           from pg_constraint c join pg_attribute a on a.attrelid = c.conrelid and a.attnum = c.conkey[1]
+           where c.contype = 'f' and c.confrelid = 'public.profiles'::regclass and array_length(c.conkey, 1) = 1 and c.conrelid <> 'public.profiles'::regclass loop
+    if r.nn then
+      execute format('delete from %s where %I in (select id from auth.users where email like %L)', r.t, r.col, '%@demo.example.com');
+    else
+      execute format('update %s set %I = null where %I in (select id from auth.users where email like %L)', r.t, r.col, r.col, '%@demo.example.com');
+    end if;
+  end loop;
+end $f$;
+
 -- Remove the demo logins (profiles go with them). Your own users are not touched.
 delete from auth.users where email like '%@demo.example.com';
 
