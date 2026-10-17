@@ -142,3 +142,9 @@ Until a file exists, a coloured placeholder is shown. Get the school's written p
 **Bus helper checklist.** On the driver page, after a trip is started, "Load list" shows the children on this bus grouped by stop. Tap a child to note "boarded" (pickup) or "got off" (drop). Parents get the same notification as with the QR scan. Needs `supabase/phase26.sql` (already inside `ALL-IN-ONE.sql`). Only the bus secret link can read this list; it shows first name, last initial, admission number and stop.
 
 **Undo a wrong tick (phase27).** On the checklist, tap a green (already noted) name and confirm to remove the note. Parents get a short "correction" notification. Works only while the trip is running. Included in `ALL-IN-ONE.sql`.
+
+## Round 14 – admission form, PDF report cards, demo extras
+- `apply.html`: 3-step admission enquiry (student, parent, previous school), a "documents usually asked" box, and a printable receipt (Print or save as PDF) after sending. No database change.
+- `report-card.html`: new layout with school header (address, phone and principal from School settings), subject grades, grading scale and signature lines. `report-card.html?exam=...&dv=...` prints every report card of a division (one per page). Results page has a **Print all report cards** button.
+- `supabase/DEMO-EXTRA.sql` / `DEMO-EXTRA-UNDO.sql`: fake UPI/bank, bus-stop map positions and two pending payment claims for the demo. Run only after `DEMO-DATA.sql`.
+- `PRESENTATION-STEPS.md`: timed step-by-step plan (in Marathi) for presenting the project.

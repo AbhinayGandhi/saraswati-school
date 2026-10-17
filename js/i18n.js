@@ -14,6 +14,11 @@
     "Life at school": "शाळेतील जीवन", "Campus": "परिसर", "Classroom": "वर्ग", "Sports": "खेळ", "Activities": "उपक्रम", "More photos in the gallery": "दालनात आणखी छायाचित्रे",
     "Admissions open? Send an enquiry today": "प्रवेश सुरू? आजच चौकशी पाठवा", "The school office will contact you.": "शाळा कार्यालय तुमच्याशी संपर्क करेल.", "How admission works": "प्रवेश कसा होतो",
     "Children list / विद्यार्थी यादी": "विद्यार्थी यादी", "Stop not set / थांबा नाही": "थांबा नाही",
+    /* Round 14: admission form and report card */
+    "1. Student": "1. विद्यार्थी", "2. Parent": "2. पालक", "3. Previous school": "3. आधीची शाळा", "Next": "पुढे", "Back": "मागे",
+    "Documents usually asked at admission": "प्रवेशाच्या वेळी साधारण लागणारी कागदपत्रे", "Birth certificate": "जन्म दाखला", "Passport-size photographs of the child": "मुलाचे पासपोर्ट आकाराचे फोटो",
+    "Admission enquiry receipt": "प्रवेश चौकशी पावती", "Print or save as PDF": "प्रिंट करा किंवा PDF जतन करा", "Application no": "अर्ज क्रमांक", "Class applied for": "कोणत्या वर्गासाठी अर्ज",
+    "Parent / guardian": "पालक / संरक्षक", "Mobile": "मोबाईल", "Print all report cards": "सर्व गुणपत्रके छापा", "PROGRESS REPORT": "प्रगती अहवाल",
     /* Round 12: wider Marathi coverage */
     "Change language": "भाषा बदला", "Main": "मुख्य", "Sidebar": "बाजूचा मेनू",
     "Zoom in": "मोठे करा", "Zoom out": "लहान करा", "Bus map": "बसचा नकाशा",
