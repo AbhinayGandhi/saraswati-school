@@ -160,3 +160,11 @@ Until a file exists, a coloured placeholder is shown. Get the school's written p
 **Round 14d – from live screenshots (principal).** (1) The side menu now stays in place and scrolls by itself on wide screens, so short pages no longer end with a long empty area. (2) `phase28.sql` (also in `ALL-IN-ONE.sql`): the dashboard says "divisions not marked today" only on working days (not on Sundays, holidays or vacations).
 
 **Round 14e – report card print.** The print layout is now fixed (school name always black and bold, student details always in two columns) so it prints the same on old and new Chrome. Tip for printing: in the Chrome print window untick "Headers and footers" so the web address and date are not printed on the report card.
+
+## Round 15: flexibility (phase30)
+- **Attendance edit window:** Settings > Flexibility > "Teachers can change attendance up to (days back)". Empty = no limit (as before). Admin, principal and the SQL editor are never limited.
+- **Calendar by division:** School calendar > "Applies to". A holiday, vacation or Special school day can be for the whole school or for ONE division (e.g. Sunday classes for Grade 10). Teacher attendance opens on any day that has a special school day.
+- **Marks:** admins can now Reopen locked/published marks to correct a mistake and Lock them again.
+- **Parent/student portal switches:** Settings > "Show to parents and students" hides tabs (results, homework, timetable, fees, activities, library, notices, bus). Cosmetic only; data access is still enforced by RLS.
+- **Report card wording:** heading, three signature labels and an extra note from Settings (empty = defaults).
+- Run `phase30.sql` (or the new ALL-IN-ONE.sql). Safe to re-run.

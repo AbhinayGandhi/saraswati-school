@@ -33,10 +33,17 @@ const Auth = {
     if (!Perm.can(p.role, allowed)) { location.href = "dashboard.html"; return new Promise(() => {}); }
     return p;
   },
+  // Parent/student portal switches set by the school (settings "Show to parents and students"). Cosmetic only; data rules stay in RLS.
+  async hidden() {
+    if (Auth._hid) return Auth._hid;
+    try { const { data } = await db.rpc("portal_hidden"); Auth._hid = new Set(String(data || "").split(",").filter(Boolean)); } catch (e) { Auth._hid = new Set(); }
+    return Auth._hid;
+  },
   // Builds sidebar and top bar; wires mobile drawer.
   shell(p) {
     const links = Perm.navFor(p.role).map(n => `<a href="${n.href}"${location.pathname.endsWith(n.href) ? ' aria-current="page"' : ""}>${U.esc(n.label)}</a>`).join("");
     document.getElementById("sidebar").innerHTML = `<div class="brand">${U.esc(SCHOOL_NAME)}</div><nav aria-label="Main">${links}</nav>`;
+    if (p.role === "parent" || p.role === "student") Auth.hidden().then(h => { if (h.has("bus")) document.querySelectorAll('#sidebar a[href="track-bus.html"]').forEach(a => a.remove()); });
     document.getElementById("who").textContent = `${p.full_name || "User"} (${p.role.replace("_", " ")})`;
     const sb = document.getElementById("sidebar"), btn = document.getElementById("menu");
     btn.addEventListener("click", () => { const o = sb.classList.toggle("open"); btn.setAttribute("aria-expanded", o); });

@@ -14,6 +14,13 @@
 <fieldset><legend>Working days</legend><div id="wd"></div><p class="muted">Holidays and vacations in the School calendar are always off. A "Special school day" in the calendar makes a weekly off day a working day.</p></fieldset>
 <h2>Rules</h2>
 <div class="row"><div><label for="attendance_alert_percent">Low attendance alert below (%)</label><input id="attendance_alert_percent" inputmode="numeric" maxlength="3"></div><div><label for="library_fine_per_day">Library fine per day (Rs.)</label><input id="library_fine_per_day" inputmode="decimal" maxlength="8"></div><div><label for="receipt_prefix">Fee receipt prefix (letters or digits, up to 6)</label><input id="receipt_prefix" maxlength="6"></div></div>
+<h2>Flexibility</h2>
+<div class="row"><div><label for="attendance_edit_days">Teachers can change attendance up to (days back)</label><input id="attendance_edit_days" inputmode="numeric" maxlength="3" placeholder="Empty = no limit"></div></div>
+<p class="muted">Leave empty to let teachers correct attendance of any past date. The office (admin, principal) can always correct it. Holidays and special school days for a single division are set in the School calendar ("Applies to").</p>
+<fieldset><legend>Show to parents and students</legend><div id="pt"></div><p class="muted">Untick a section to hide it from the parent and student portal. You can switch it back on any time. Nothing is deleted.</p></fieldset>
+<h2>Report card wording</h2>
+<div class="row"><div><label for="rc_title">Heading (default: PROGRESS REPORT)</label><input id="rc_title" maxlength="60"></div><div><label for="rc_sign1">Signature 1 (default: Class teacher)</label><input id="rc_sign1" maxlength="60"></div><div><label for="rc_sign2">Signature 2 (default: Parent)</label><input id="rc_sign2" maxlength="60"></div><div><label for="rc_sign3">Signature 3 (default: Principal)</label><input id="rc_sign3" maxlength="60"></div></div>
+<div><label for="rc_note">Extra note at the bottom of the report card (optional)</label><input id="rc_note" maxlength="300"></div>
 <h2>Fee payment by UPI</h2><div class="row"><div><label for="upi_id">School UPI ID (for example school@bank)</label><input id="upi_id" maxlength="100" autocomplete="off"></div><div><label for="upi_payee">Payee name shown to parents</label><input id="upi_payee" maxlength="80"></div></div><p class="muted">Parents see this only after login, on the Fees tab. Leave empty to switch UPI payment off.</p><h2>Fee payment by bank transfer (NEFT / IMPS)</h2><div class="row"><div><label for="bank_account_name">Account holder name</label><input id="bank_account_name" maxlength="100" autocomplete="off"></div><div><label for="bank_name">Bank name</label><input id="bank_name" maxlength="100"></div><div><label for="bank_branch">Branch</label><input id="bank_branch" maxlength="100"></div><div><label for="bank_account_no">Account number (digits only)</label><input id="bank_account_no" inputmode="numeric" maxlength="20" autocomplete="off"></div><div><label for="bank_ifsc">IFSC code</label><input id="bank_ifsc" maxlength="11" autocomplete="off"></div></div><p class="muted">Shown to parents only after login, on the Fees tab, with a Copy button. Leave empty to hide. Double-check the account number: parents will send real money to it.</p>
 <p class="muted">Grading rules (A+, A, B...) are managed on the <a href="exams.html">Exams</a> page. Admission and GR numbers are typed by the office when a student is admitted.</p>
 <h2>Public website text</h2>
@@ -26,25 +33,28 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script><script src="js/config.js"></script><script src="js/supabase.js"></script><script src="js/utils.js"></script><script src="js/permissions.js"></script><script src="js/auth.js"></script>
 <script>
 (async()=>{const p=await Auth.require(["super_admin","school_admin"]);Auth.shell(p);const $=id=>document.getElementById(id);
-const TXT=["school_name","principal","address","phone","email","website","school_start_time","school_end_time","attendance_alert_percent","library_fine_per_day","receipt_prefix","principal_title","registration","facebook","telegram","upi_id","upi_payee","bank_account_name","bank_name","bank_branch","bank_account_no","bank_ifsc","home_tagline","about_text","vision","mission","principal_message"];
+const TXT=["school_name","principal","address","phone","email","website","school_start_time","school_end_time","attendance_alert_percent","library_fine_per_day","receipt_prefix","principal_title","registration","facebook","telegram","upi_id","upi_payee","bank_account_name","bank_name","bank_branch","bank_account_no","bank_ifsc","home_tagline","about_text","vision","mission","principal_message","attendance_edit_days","rc_title","rc_sign1","rc_sign2","rc_sign3","rc_note"];
+const PT=[["results","Results"],["homework","Homework"],["timetable","Timetable"],["fees","Fees and online payment"],["activities","Activities"],["library","Library"],["notices","Notices and events"],["bus","Track bus"]];
+$("pt").innerHTML=PT.map(([k,l])=>`<label style="display:inline-block;margin-right:12px"><input type="checkbox" class="ptc" value="${k}"> ${l}</label>`).join("");
 const DAYS=[[1,"Mon"],[2,"Tue"],[3,"Wed"],[4,"Thu"],[5,"Fri"],[6,"Sat"],[7,"Sun"]];
 $("wd").innerHTML=DAYS.map(([n,l])=>`<label style="display:inline-block;margin-right:12px"><input type="checkbox" class="wdc" value="${n}"> ${l}</label>`).join("");
 let cur={};
 async function load(){try{const {data,error}=await db.from("school_settings").select("key,value");if(error)throw error;cur=Object.fromEntries(data.map(r=>[r.key,r.value]));
-TXT.forEach(k=>{$(k).value=cur[k]||""});const wd=(cur.working_days||"1,2,3,4,5,6").split(",");document.querySelectorAll(".wdc").forEach(c=>c.checked=wd.includes(c.value));
+TXT.forEach(k=>{$(k).value=cur[k]||""});const wd=(cur.working_days||"1,2,3,4,5,6").split(",");document.querySelectorAll(".wdc").forEach(c=>c.checked=wd.includes(c.value));const hid=(cur.portal_hidden||"").split(",");document.querySelectorAll(".ptc").forEach(c=>c.checked=!hid.includes(c.value));
 $("logoNow").innerHTML=cur.logo_path?`<img alt="Current logo" style="max-height:60px" src="${U.esc(db.storage.from("branding").getPublicUrl(cur.logo_path).data.publicUrl)}">`:"No logo uploaded yet.";
 }catch(e){U.friendly(e);U.toast("Could not load settings. Please refresh.","err")}}
 $("f").addEventListener("submit",async ev=>{ev.preventDefault();
 const days=[...document.querySelectorAll(".wdc")].filter(c=>c.checked).map(c=>c.value);if(!days.length)return U.toast("Select at least one working day.","err");
 const pr=$("receipt_prefix").value.trim();if(pr&&!/^[A-Za-z0-9-]{1,6}$/.test(pr))return U.toast("Receipt prefix: up to 6 letters or digits.","err");
 const ap=$("attendance_alert_percent").value.trim();if(ap&&(!/^\d{1,3}$/.test(ap)||+ap>100))return U.toast("Attendance alert must be 0 to 100.","err");
+const ae=$("attendance_edit_days").value.trim();if(ae&&!/^\d{1,3}$/.test(ae))return U.toast("Attendance edit days must be a number.","err");
 const fine=$("library_fine_per_day").value.trim();if(fine&&!/^\d{1,5}(\.\d{1,2})?$/.test(fine))return U.toast("Library fine must be a number.","err");
 const upi=$("upi_id").value.trim();if(upi&&!/^[A-Za-z0-9._-]{2,64}@[A-Za-z0-9]{2,32}$/.test(upi))return U.toast("UPI ID looks wrong. Example: school@bank","err");
 for(const k of ["website","facebook","telegram"]){const v=$(k).value.trim();if(v&&!/^https:\/\//i.test(v))return U.toast("Links must start with https://","err")}
 const acc=$("bank_account_no").value.trim();if(acc&&!/^\d{6,20}$/.test(acc))return U.toast("Account number: digits only (6 to 20).","err");
 const ifsc=$("bank_ifsc").value.trim().toUpperCase();if(ifsc&&!/^[A-Z]{4}0[A-Z0-9]{6}$/.test(ifsc))return U.toast("IFSC looks wrong. Example: SBIN0001234","err");
 $("save").disabled=true;
-try{const rows=TXT.map(k=>({key:k,value:$(k).value.trim()}));rows.push({key:"working_days",value:days.join(",")});
+try{const rows=TXT.map(k=>({key:k,value:$(k).value.trim()}));rows.push({key:"working_days",value:days.join(",")});rows.push({key:"portal_hidden",value:[...document.querySelectorAll(".ptc")].filter(c=>!c.checked).map(c=>c.value).join(",")});
 const f=$("logo").files[0];
 if(f){if(!["image/png","image/jpeg","image/webp"].includes(f.type)||f.size>1048576)throw new Error("bad logo");
 const path="logo-"+Date.now()+"."+(f.type==="image/png"?"png":f.type==="image/webp"?"webp":"jpg");

@@ -21,8 +21,8 @@ $("dv").innerHTML=d.map(x=>`<option value="${x.id}">${U.esc(x.label)}</option>`)
 async function sheet(){const dv=$("dv").value,dt=$("dt").value;en=[];$("note").innerHTML="";if(!dv||!dt)return;list.innerHTML='<div class="state">Loading...</div>';
 const rk="att_r_"+dv;let e,m={},hol=null,off=false,offline=false;
 try{const r=await db.from("student_enrollments").select("id,roll_no,students!inner(first_name,last_name,admission_no)").eq("division_id",dv).eq("academic_year_id",$("y").value).eq("status","active").order("roll_no",{nullsFirst:false});if(r.error)throw r.error;e=r.data;Offline.set(rk,e);
-if(e.length){const [a,h]=await Promise.all([db.from("attendance").select("enrollment_id,status").eq("att_date",dt).in("enrollment_id",e.map(x=>x.id)),db.from("school_calendar").select("title").eq("day",dt).in("kind",["holiday","vacation"])]);if(a.error||h.error)throw a.error||h.error;
-m=Object.fromEntries(a.data.map(x=>[x.enrollment_id,x.status]));hol=h.data[0];off=(await db.rpc("day_status",{p_day:dt})).data==="weekly_off"}}
+if(e.length){const [a,h]=await Promise.all([db.from("attendance").select("enrollment_id,status").eq("att_date",dt).in("enrollment_id",e.map(x=>x.id)),db.from("school_calendar").select("title").eq("day",dt).in("kind",["holiday","vacation"]).or("division_id.is.null,division_id.eq."+dv)]);if(a.error||h.error)throw a.error||h.error;
+m=Object.fromEntries(a.data.map(x=>[x.enrollment_id,x.status]));hol=h.data[0];off=(await db.rpc("day_status",{p_day:dt,p_div:dv})).data==="weekly_off"}}
 catch(err){if(Offline.isNet(err)&&Offline.get(rk)){offline=true;e=Offline.get(rk)}else{U.friendly(err);return U.state(list,"error","Unable to load attendance. Please try again.")}}
 en=e;if(!e.length)return U.state(list,"empty","No active students in this division.");
 Object.assign(m,Offline.queuedFor(dt));
@@ -35,7 +35,7 @@ $("sv").onclick=async()=>{const rows=[...list.querySelectorAll("select[data-e]")
 const keep=()=>{Offline.add(rows);ob.draw();U.toast("No internet: attendance saved on this phone. It will be sent automatically.")};
 if(navigator.onLine===false)return keep();
 $("sv").disabled=true;const {error}=await db.from("attendance").upsert(rows,{onConflict:"enrollment_id,att_date"});$("sv").disabled=false;
-if(error){if(Offline.isNet(error))return keep();U.friendly(error);return U.toast(String(error.message).includes("holiday")?"This date is a holiday or a non-working day.":"Could not save attendance. Please try again.","err")}
+if(error){if(Offline.isNet(error))return keep();U.friendly(error);return U.toast(String(error.message).includes("holiday")?"This date is a holiday or a non-working day.":String(error.message).includes("locked:")?"This date is too old for you to change. Please ask the school office.":"Could not save attendance. Please try again.","err")}
 U.audit("Attendance saved ("+rows.length+" students)","attendance",$("dv").value);U.toast("Attendance saved.")};
 $("y").onchange=async()=>{await loadDivs();sheet()};$("dv").onchange=sheet;$("dt").onchange=sheet;
 $("rp").onclick=async()=>{const mo=$("mo").value;if(!mo||!en.length&&!$("dv").value)return;const [yy,mm]=mo.split("-"),last=new Date(yy,mm,0).getDate();

@@ -4,6 +4,8 @@ const Portal = {
     const $ = id => document.getElementById(id), pane = $("pane");
     const TABS = [["home", "Today"], ["profile", "Profile"], ["attendance", "Attendance"], ["results", "Results"], ["homework", "Homework"], ["timetable", "Timetable"]]
       .concat(mode === "parent" ? [["fees", "Fees"]] : [], [["activities", "Activities"]], mode === "parent" ? [["library", "Library"]] : [], [["notices", "Notices and events"]]);
+    const HID = await Auth.hidden(), SW = { results: "results", homework: "homework", timetable: "timetable", fees: "fees", activities: "activities", library: "library", notices: "notices" };
+    for (let i = TABS.length - 1; i >= 0; i--) if (HID.has(SW[TABS[i][0]])) TABS.splice(i, 1);
     let kids = [], cur = null, tab = "home", rules = [], hwSub = "", hwFrom = "";
     const nm = s => [s.first_name, s.middle_name, s.last_name].filter(Boolean).join(" ");
     const none = m => `<div class="state">${U.esc(m)}</div>`, noEnr = none("This student is not enrolled in a class yet.");
@@ -33,15 +35,15 @@ const Portal = {
         const att = a.data.filter(r => r.att_date <= td), ok = att.reduce((c, r) => c + (r.status === "present" || r.status === "late" ? 1 : r.status === "half_day" ? .5 : 0), 0), pc = att.length ? Math.round(ok * 100 / att.length) : null;
         const bal = f.data.reduce((c, x) => c + Number(x.balance), 0), over = f.data.filter(x => Number(x.balance) > 0 && x.due_date < td).reduce((c, x) => c + Number(x.balance), 0);
         const li = (arr, fn, empty) => arr.length ? "<ul>" + arr.map(x => "<li>" + fn(x) + "</li>").join("") + "</ul>" : `<p class="ch-note">${empty}</p>`;
-        const links = [["track-bus.html", "Track the bus"], ["requests.html", "Leave and requests"], ["ptm.html", "Parent meetings"], ["ai.html", "Ask the school (AI)"]];
+        const links = [["track-bus.html", "Track the bus"], ["requests.html", "Leave and requests"], ["ptm.html", "Parent meetings"], ["ai.html", "Ask the school (AI)"]].filter(l => !(l[0] === "track-bus.html" && HID.has("bus")));
         return `<div class="kpis"><div class="card"><small>Today</small><b style="${today && today.status === "absent" ? "color:var(--bad)" : ""}">${today ? lbl[today.status] : "Not marked yet"}</b></div>
 <div class="card"><small>Attendance, last 30 days</small><b>${pc === null ? "-" : pc + "%"}</b>${pc === null ? "" : `<div class="meter"><span style="width:${pc}%"></span></div>`}</div>
-${mode === "parent" ? `<div class="card"><small>Fee outstanding</small><b>${Fee.inr(bal)}</b><small>${over > 0 ? U.esc(Fee.inr(over)) + " overdue" : bal > 0 ? "Nothing overdue" : "All paid"}</small></div>` : ""}</div>
+${mode === "parent" && !HID.has("fees") ? `<div class="card"><small>Fee outstanding</small><b>${Fee.inr(bal)}</b><small>${over > 0 ? U.esc(Fee.inr(over)) + " overdue" : bal > 0 ? "Nothing overdue" : "All paid"}</small></div>` : ""}</div>
 ${mode === "parent" ? `<div class="alerts">${links.map(l => `<a href="${l[0]}">${U.esc(l[1])}</a>`).join("")}</div>` : ""}
-<div class="charts"><div class="chart-card"><h3>Today's timetable</h3>${li(t.data, x => "Period " + x.period + ": <b>" + U.esc(x.subjects.name) + "</b> " + T(x.start_time) + "-" + T(x.end_time), "No classes today.")}</div>
-<div class="chart-card"><h3>Homework due soon</h3>${li(h.data, x => "<b>" + U.esc(x.subjects.name) + "</b>: " + U.esc(x.title) + " (due " + U.esc(x.due_date) + ")", "No homework due.")}</div>
-<div class="chart-card"><h3>Latest notices</h3>${li(n.data, x => U.esc(x.title) + " <small>" + U.esc(x.notice_date) + "</small>", "No notices.")}</div>
-<div class="chart-card"><h3>Upcoming events</h3>${li(e.data, x => U.esc(x.event_date) + " - " + U.esc(x.title), "No events soon.")}</div></div>`;
+<div class="charts">${HID.has("timetable") ? "" : `<div class="chart-card"><h3>Today's timetable</h3>${li(t.data, x => "Period " + x.period + ": <b>" + U.esc(x.subjects.name) + "</b> " + T(x.start_time) + "-" + T(x.end_time), "No classes today.")}</div>`}
+${HID.has("homework") ? "" : `<div class="chart-card"><h3>Homework due soon</h3>${li(h.data, x => "<b>" + U.esc(x.subjects.name) + "</b>: " + U.esc(x.title) + " (due " + U.esc(x.due_date) + ")", "No homework due.")}</div>`}
+${HID.has("notices") ? "" : `<div class="chart-card"><h3>Latest notices</h3>${li(n.data, x => U.esc(x.title) + " <small>" + U.esc(x.notice_date) + "</small>", "No notices.")}</div>
+<div class="chart-card"><h3>Upcoming events</h3>${li(e.data, x => U.esc(x.event_date) + " - " + U.esc(x.title), "No events soon.")}</div>`}</div>`;
       },
       async profile(k) {
         const { data: g, error } = await db.from("student_guardians").select("relation,name,mobile,email,address").eq("student_id", k.s.id); if (error) throw error;
