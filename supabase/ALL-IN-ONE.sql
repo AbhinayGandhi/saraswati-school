@@ -3242,6 +3242,14 @@ do $__s$ begin execute $__q$grant execute on function dashboard_overview() to au
 
 do $__s$ begin execute $__q$select 'phase28 finished' as result$__q$; exception when duplicate_table or duplicate_object or duplicate_function or duplicate_column or duplicate_schema or duplicate_alias or unique_violation or invalid_function_definition then null; end $__s$;
 
+do $__s$ begin execute $__q$drop policy if exists tr_read on transport_routes$__q$; exception when duplicate_table or duplicate_object or duplicate_function or duplicate_column or duplicate_schema or duplicate_alias or unique_violation or invalid_function_definition then null; end $__s$;
+
+do $__s$ begin execute $__q$create policy tr_read on transport_routes for select to authenticated using (can_manage_transport() or exists (select 1 from transport_assignments a where a.route_id = transport_routes.id and a.status = 'active' and is_guardian_of_enrollment(a.enrollment_id)))$__q$; exception when duplicate_table or duplicate_object or duplicate_function or duplicate_column or duplicate_schema or duplicate_alias or unique_violation or invalid_function_definition then null; end $__s$;
+
+do $__s$ begin execute $__q$drop policy if exists ts_read on transport_stops$__q$; exception when duplicate_table or duplicate_object or duplicate_function or duplicate_column or duplicate_schema or duplicate_alias or unique_violation or invalid_function_definition then null; end $__s$;
+
+do $__s$ begin execute $__q$create policy ts_read on transport_stops for select to authenticated using (can_manage_transport() or exists (select 1 from transport_assignments a where a.route_id = transport_stops.route_id and a.status = 'active' and is_guardian_of_enrollment(a.enrollment_id)))$__q$; exception when duplicate_table or duplicate_object or duplicate_function or duplicate_column or duplicate_schema or duplicate_alias or unique_violation or invalid_function_definition then null; end $__s$;
+
 
 -- Finished. If you see 'Success' with no red error, your database is complete and up to date.
 select 'ALL-IN-ONE finished' as result;
