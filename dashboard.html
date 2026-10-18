@@ -13,7 +13,8 @@ try{const {data:o,error}=await db.rpc("dashboard_overview");if(error)throw error
 const h=document.createElement("p");h.className="ch-note";h.textContent="Academic year "+(o.year||"-")+" | "+new Date().toLocaleDateString("en-IN",{weekday:"long",day:"numeric",month:"long"});out.appendChild(h);
 const F=o.fees,at=o.att_today||{},atN=Object.values(at).reduce((a,b)=>a+b,0),pres=(at.present||0)+(at.late||0)+(at.half_day||0);
 if(o.students!==undefined){kp.append(tile("Students",o.students),tile("Teachers",o.teachers),tile("Classes",o.classes,o.divisions+" divisions"))}
-if(o.att_today!==undefined){const t=tile("Attendance today",atN?pct(pres,atN)+"%":"-",atN?pres+" of "+atN+" present":"Not marked yet");if(atN){const m=document.createElement("div");m.className="meter";m.innerHTML='<span style="width:'+pct(pres,atN)+'%"></span>';t.appendChild(m)}kp.appendChild(t)}
+let ds=null;try{ds=(await db.rpc("day_status",{p_day:new Date().toLocaleDateString("en-CA")})).data}catch(e){}
+if(o.att_today!==undefined){const t=tile("Attendance today",atN?pct(pres,atN)+"%":"-",atN?pres+" of "+atN+" present":ds==="weekly_off"?"Weekly off day":ds==="holiday"?"Holiday":"Not marked yet");if(atN){const m=document.createElement("div");m.className="meter";m.innerHTML='<span style="width:'+pct(pres,atN)+'%"></span>';t.appendChild(m)}kp.appendChild(t)}
 const inr0=v=>"₹"+Math.round(Number(v)||0).toLocaleString("en-IN");
 if(F){kp.append(tile("Collected today",inr0(o.fee_today)),tile("Outstanding",inr0(F.balance),inr0(F.overdue)+" overdue"))}
 const link=(href,n,txt)=>{if(!n)return;const a=document.createElement("a");a.href=href;a.innerHTML="<b></b> ";a.firstChild.textContent=n;a.append(txt);al.appendChild(a)};

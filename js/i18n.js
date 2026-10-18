@@ -15,6 +15,7 @@
     "Admissions open? Send an enquiry today": "प्रवेश सुरू? आजच चौकशी पाठवा", "The school office will contact you.": "शाळा कार्यालय तुमच्याशी संपर्क करेल.", "How admission works": "प्रवेश कसा होतो",
     "Children list / विद्यार्थी यादी": "विद्यार्थी यादी", "Stop not set / थांबा नाही": "थांबा नाही",
     /* Round 15: flexibility switches */
+    "Weekly off day": "साप्ताहिक सुट्टी", "Holiday": "सुट्टी",
     "Flexibility": "लवचिकता", "Applies to": "लागू होते", "Whole school": "संपूर्ण शाळा", "One division": "एक तुकडी",
     "Teachers can change attendance up to (days back)": "शिक्षक किती दिवस मागपर्यंत हजेरी बदलू शकतात", "Show to parents and students": "पालक आणि विद्यार्थ्यांना काय दाखवायचे",
     "Fees and online payment": "फी आणि ऑनलाइन भरणा", "Report card wording": "गुणपत्रकातील मजकूर", "Lock marks": "गुण लॉक करा", "Reopen for correction": "दुरुस्तीसाठी पुन्हा उघडा",
