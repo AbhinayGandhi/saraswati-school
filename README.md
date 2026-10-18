@@ -156,3 +156,5 @@ Until a file exists, a coloured placeholder is shown. Get the school's written p
 - Dashboard: the "Outstanding" amount was cut off on 1366px screens. Money tiles now show whole rupees and never wrap; chart date labels no longer overlap.
 
 **Round 14c – from live screenshots.** Public header stays on one row on 1366px screens (menu button below 1180px; the Install app button in the header is hidden between 1181 and 1499px, the browser's own install icon still works). The admission form and login page now use the same blue and orange colours as the public site.
+
+**Round 14d – from live screenshots (principal).** (1) The side menu now stays in place and scrolls by itself on wide screens, so short pages no longer end with a long empty area. (2) `phase28.sql` (also in `ALL-IN-ONE.sql`): the dashboard says "divisions not marked today" only on working days (not on Sundays, holidays or vacations).
