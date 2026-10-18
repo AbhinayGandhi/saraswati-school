@@ -154,3 +154,5 @@ Until a file exists, a coloured placeholder is shown. Get the school's written p
 **Round 14b – fixes found on the live demo.**
 - `DEMO-DATA.sql`: the first version made every demo attendance "present" (100% everywhere) because the random number was computed once. Now each student/day gets its own value (about 88% present). If you already loaded the old demo data, run `supabase/DEMO-ATTENDANCE-FIX.sql` once instead of reloading.
 - Dashboard: the "Outstanding" amount was cut off on 1366px screens. Money tiles now show whole rupees and never wrap; chart date labels no longer overlap.
+
+**Round 14c – from live screenshots.** Public header stays on one row on 1366px screens (menu button below 1180px; the Install app button in the header is hidden between 1181 and 1499px, the browser's own install icon still works). The admission form and login page now use the same blue and orange colours as the public site.
