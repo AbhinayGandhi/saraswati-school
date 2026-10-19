@@ -84,3 +84,9 @@ body.pub{font-family:var(--font),"Noto Sans Devanagari","Mangal",sans-serif}
 .sh nav{gap:0}
 .sh .in{padding:.5rem .8rem}
 @media(min-width:1181px) and (max-width:1499px){.sh #installbtn{display:none}}
+/* Round 16: phone buttons on Home */
+@media(max-width:600px){
+.hero2 .btn{display:block;width:100%;text-align:center;box-sizing:border-box;margin:.6rem 0 0}
+.cta-band .wrap>div:last-child{display:flex;flex-direction:column;gap:.6rem;width:100%}
+.cta-band .btn{display:block;width:100%;text-align:center;box-sizing:border-box}
+}
