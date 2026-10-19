@@ -136,7 +136,7 @@ ${HID.has("notices") ? "" : `<div class="chart-card"><h3>Latest notices</h3>${li
     async function render() {
       $("tb").querySelectorAll("button").forEach(b => b.className = "btn sm" + (b.dataset.t === tab ? "" : " ghost"));
       pane.innerHTML = '<div class="state">Loading...</div>';
-      try { cur.post = null; pane.innerHTML = await R[tab](cur); if (cur.post) { const f = cur.post; cur.post = null; f(); } } catch (e) { U.friendly(e); U.state(pane, "error", "Unable to load this section. Please try again."); }
+      try { cur.post = null; pane.innerHTML = await R[tab](cur); pane.querySelectorAll("table").forEach(t => { const hs = [...t.querySelectorAll("thead th")].map(h => h.textContent.trim()); if (!hs.length) return; t.classList.add("stk"); t.querySelectorAll("tbody tr").forEach(r => [...r.children].forEach((c, i) => { if (hs[i]) c.setAttribute("data-l", hs[i]); })); }); if (cur.post) { const f = cur.post; cur.post = null; f(); } } catch (e) { U.friendly(e); U.state(pane, "error", "Unable to load this section. Please try again."); }
     }
     $("tb").addEventListener("click", ev => { const b = ev.target.closest("button[data-t]"); if (b) { tab = b.dataset.t; render(); } });
     if ($("ks")) $("ks").onchange = () => { cur = kids[Number($("ks").value)]; hwSub = hwFrom = ""; render(); };
