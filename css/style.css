@@ -71,3 +71,5 @@ td input[type=number]{width:6rem}
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:.8rem}.kpis .card small{color:var(--muted);display:block}.kpis .card{min-width:0}.kpis .card b{font-size:clamp(1.2rem,2.1vw,1.7rem);display:block;white-space:nowrap}
 .meter{height:10px;border-radius:5px;background:color-mix(in srgb,var(--c1) 18%,var(--card));overflow:hidden;margin-top:.4rem}.meter span{display:block;height:100%;background:var(--c1)}
 .alerts{display:flex;flex-wrap:wrap;gap:.6rem;margin:1rem 0}.alerts a{padding:.4rem .8rem;border:1px solid var(--line);border-radius:999px;color:var(--ink);text-decoration:none;background:var(--card)}.alerts a b{color:var(--c2)}
+/* Round 15b: parent/student portal on phones: two tabs per row, tiles may wrap */
+@media (max-width:600px){#tb{grid-template-columns:1fr 1fr;gap:.5rem}#tb .btn{padding:.55rem .3rem;font-size:.92rem}#pane .kpis .card b{white-space:normal;font-size:1.25rem}}

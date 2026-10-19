@@ -31,12 +31,13 @@ const Portal = {
           db.from("events").select("title,event_date").eq("status", "published").gte("event_date", td).order("event_date").limit(3),
           db.from("timetable_slots").select("period,start_time,end_time,subjects(name)").eq("division_id", div).eq("academic_year_id", yr).eq("is_active", true).eq("day", dow).order("period")]);
         const bad = [a, f, h, n, e, t].find(x => x.error); if (bad) throw bad.error;
+        let ds = null; try { ds = (await db.rpc("day_status", { p_day: td, p_div: div })).data; } catch (x) { }
         const today = a.data.find(r => r.att_date === td), lbl = { present: "Present", absent: "Absent", late: "Late", half_day: "Half day", leave: "On leave" };
         const att = a.data.filter(r => r.att_date <= td), ok = att.reduce((c, r) => c + (r.status === "present" || r.status === "late" ? 1 : r.status === "half_day" ? .5 : 0), 0), pc = att.length ? Math.round(ok * 100 / att.length) : null;
         const bal = f.data.reduce((c, x) => c + Number(x.balance), 0), over = f.data.filter(x => Number(x.balance) > 0 && x.due_date < td).reduce((c, x) => c + Number(x.balance), 0);
         const li = (arr, fn, empty) => arr.length ? "<ul>" + arr.map(x => "<li>" + fn(x) + "</li>").join("") + "</ul>" : `<p class="ch-note">${empty}</p>`;
         const links = [["track-bus.html", "Track the bus"], ["requests.html", "Leave and requests"], ["ptm.html", "Parent meetings"], ["ai.html", "Ask the school (AI)"]].filter(l => !(l[0] === "track-bus.html" && HID.has("bus")));
-        return `<div class="kpis"><div class="card"><small>Today</small><b style="${today && today.status === "absent" ? "color:var(--bad)" : ""}">${today ? lbl[today.status] : "Not marked yet"}</b></div>
+        return `<div class="kpis"><div class="card"><small>Today</small><b style="${today && today.status === "absent" ? "color:var(--bad)" : ""}">${today ? lbl[today.status] : ds === "weekly_off" ? "Weekly off day" : ds === "holiday" ? "Holiday" : "Not marked yet"}</b></div>
 <div class="card"><small>Attendance, last 30 days</small><b>${pc === null ? "-" : pc + "%"}</b>${pc === null ? "" : `<div class="meter"><span style="width:${pc}%"></span></div>`}</div>
 ${mode === "parent" && !HID.has("fees") ? `<div class="card"><small>Fee outstanding</small><b>${Fee.inr(bal)}</b><small>${over > 0 ? U.esc(Fee.inr(over)) + " overdue" : bal > 0 ? "Nothing overdue" : "All paid"}</small></div>` : ""}</div>
 ${mode === "parent" ? `<div class="alerts">${links.map(l => `<a href="${l[0]}">${U.esc(l[1])}</a>`).join("")}</div>` : ""}
