@@ -35,6 +35,14 @@
     document.querySelectorAll(".d-address").forEach(n => n.textContent = S.address);
     document.querySelectorAll(".d-phone").forEach(n => n.textContent = S.phone);
     document.querySelectorAll(".d-email").forEach(n => n.textContent = S.email);
+    const mb = document.getElementById("mapbox");
+    if (mb && /^-?[0-9.]+$/.test(S.map_lat || "") && /^-?[0-9.]+$/.test(S.map_lng || "")) {
+      const q = S.map_lat + "," + S.map_lng, f = document.createElement("iframe");
+      f.src = "https://maps.google.com/maps?q=" + q + "&z=17&output=embed"; f.title = "School location map"; f.loading = "lazy";
+      f.referrerPolicy = "no-referrer-when-downgrade"; f.style.cssText = "width:100%;height:380px;border:0;border-radius:10px";
+      const a = document.createElement("a"); a.href = "https://www.google.com/maps?q=" + q; a.target = "_blank"; a.rel = "noopener"; a.className = "btn"; a.textContent = "Open in Google Maps"; a.style.marginTop = ".8rem";
+      mb.append(f, document.createElement("br"), a); document.getElementById("mapsec").hidden = false;
+    }
   }
   async function settings() {
     try { const { data, error } = await db.from("school_settings").select("key,value"); if (error) throw error; (data || []).forEach(r => { if (r.value) S[r.key] = r.value; }); } catch (e) { console.error(e); }

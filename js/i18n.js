@@ -14,6 +14,9 @@
     "Life at school": "शाळेतील जीवन", "Campus": "परिसर", "Classroom": "वर्ग", "Sports": "खेळ", "Activities": "उपक्रम", "More photos in the gallery": "दालनात आणखी छायाचित्रे",
     "Admissions open? Send an enquiry today": "प्रवेश सुरू? आजच चौकशी पाठवा", "The school office will contact you.": "शाळा कार्यालय तुमच्याशी संपर्क करेल.", "How admission works": "प्रवेश कसा होतो",
     "Children list / विद्यार्थी यादी": "विद्यार्थी यादी", "Stop not set / थांबा नाही": "थांबा नाही",
+    /* Round 16: map */
+    "Satellite": "उपग्रह", "Open in Google Maps": "Google Maps मध्ये उघडा", "School location on the map": "नकाशावर शाळेचे ठिकाण", "Latitude": "अक्षांश (Latitude)", "Longitude": "रेखांश (Longitude)",
+    "In Google Maps right-click the school gate and click the two numbers shown on top to copy them (for example 17.701212, 74.174362). Put the first number in Latitude and the second in Longitude. They are shown as a map on the Contact page. Leave both empty to hide the map.": "Google Maps मध्ये शाळेच्या गेटवर उजवे क्लिक करा आणि वर दिसणारे दोन आकडे क्लिक करून कॉपी करा (उदा. 17.701212, 74.174362). पहिला आकडा Latitude मध्ये आणि दुसरा Longitude मध्ये टाका. ते संपर्क पानावर नकाशा म्हणून दिसतात. नकाशा लपवण्यासाठी दोन्ही रिकामे ठेवा.",
     /* Round 15: flexibility switches */
     "Weekly off day": "साप्ताहिक सुट्टी", "Holiday": "सुट्टी",
     "Flexibility": "लवचिकता", "Applies to": "लागू होते", "Whole school": "संपूर्ण शाळा", "One division": "एक तुकडी",

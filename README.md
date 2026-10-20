@@ -168,3 +168,8 @@ Until a file exists, a coloured placeholder is shown. Get the school's written p
 - **Parent/student portal switches:** Settings > "Show to parents and students" hides tabs (results, homework, timetable, fees, activities, library, notices, bus). Cosmetic only; data access is still enforced by RLS.
 - **Report card wording:** heading, three signature labels and an extra note from Settings (empty = defaults).
 - Run `phase30.sql` (or the new ALL-IN-ONE.sql). Safe to re-run.
+
+## Round 16: maps (phase31)
+- Track bus has a Map / Satellite switch (OpenStreetMap or Esri World Imagery, both free with attribution) and each stop popup has an "Open in Google Maps" link.
+- Settings has "School location on the map" (map_lat, map_lng). When set, the Contact page shows a Google map of the school and an "Open in Google Maps" button. Empty = hidden.
+- DEMO-KOREGAON.sql / DEMO-BUS-KOREGAON.sql put the demo route on the real Koregaon map (demo only).
