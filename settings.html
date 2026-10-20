@@ -7,7 +7,7 @@
 <h2>School details</h2>
 <div class="row"><div><label for="school_name">School name</label><input id="school_name" maxlength="150"></div><div><label for="principal">Principal / Headmaster name</label><input id="principal" maxlength="100"></div><div><label for="principal_title">Title shown on the About page</label><input id="principal_title" maxlength="60" placeholder="Principal"></div></div>
 <div class="row"><div><label for="address">Address</label><input id="address" maxlength="300"></div><div><label for="phone">Phone</label><input id="phone" maxlength="40"></div></div>
-<div class="row"><div><label for="email">Email</label><input id="email" type="email" maxlength="120"></div><div><label for="website">Website</label><input id="website" maxlength="150" placeholder="https://"></div></div>
+<div class="row"><div><label for="email">Email</label><input id="email" type="text" inputmode="email" autocomplete="off" maxlength="120" placeholder="optional"></div><div><label for="website">Website</label><input id="website" maxlength="150" placeholder="https://"></div></div>
 <div class="row"><div><label>Logo (PNG, JPG or WebP, up to 1 MB)</label><input id="logo" type="file" accept="image/png,image/jpeg,image/webp"><div id="logoNow" class="muted"></div></div></div>
 <h2>Timings and working days</h2>
 <div class="row"><div><label for="school_start_time">School starts (HH:MM)</label><input id="school_start_time" type="time"></div><div><label for="school_end_time">School ends (HH:MM)</label><input id="school_end_time" type="time"></div></div>
@@ -43,7 +43,7 @@ const DAYS=[[1,"Mon"],[2,"Tue"],[3,"Wed"],[4,"Thu"],[5,"Fri"],[6,"Sat"],[7,"Sun"
 $("wd").innerHTML=DAYS.map(([n,l])=>`<label style="display:inline-block;margin-right:12px"><input type="checkbox" class="wdc" value="${n}"> ${l}</label>`).join("");
 let cur={};
 async function load(){try{const {data,error}=await db.from("school_settings").select("key,value");if(error)throw error;cur=Object.fromEntries(data.map(r=>[r.key,r.value]));
-TXT.forEach(k=>{$(k).value=cur[k]||""});const wd=(cur.working_days||"1,2,3,4,5,6").split(",");document.querySelectorAll(".wdc").forEach(c=>c.checked=wd.includes(c.value));const hid=(cur.portal_hidden||"").split(",");document.querySelectorAll(".ptc").forEach(c=>c.checked=!hid.includes(c.value));
+TXT.forEach(k=>{const v=cur[k]||"";$(k).value=/^\[.*\]$/.test(v.trim())?"":v});const wd=(cur.working_days||"1,2,3,4,5,6").split(",");document.querySelectorAll(".wdc").forEach(c=>c.checked=wd.includes(c.value));const hid=(cur.portal_hidden||"").split(",");document.querySelectorAll(".ptc").forEach(c=>c.checked=!hid.includes(c.value));
 $("logoNow").innerHTML=cur.logo_path?`<img alt="Current logo" style="max-height:60px" src="${U.esc(db.storage.from("branding").getPublicUrl(cur.logo_path).data.publicUrl)}">`:"No logo uploaded yet.";
 }catch(e){U.friendly(e);U.toast("Could not load settings. Please refresh.","err")}}
 $("f").addEventListener("submit",async ev=>{ev.preventDefault();
