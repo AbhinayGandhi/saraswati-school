@@ -178,3 +178,8 @@ Until a file exists, a coloured placeholder is shown. Get the school's written p
 - Track bus and the Contact page now use ONE map (Leaflet + OpenStreetMap, free, any district/taluka). The Satellite switch and the Google iframe were removed.
 - Track bus: "Show my distance from the bus" (phone GPS, used only on the phone, never sent or saved), stop list with Street View / Google Maps links.
 - Driver page keeps the most accurate GPS reading of the last seconds.
+
+## Round 17 (update-63) – Bus pilot
+- phase32.sql: learned bus paths (max 5, permanent), parent pickup points, `bus_boarding` switch (default OFF).
+- Driver page: QR scan + children list only when Settings -> "Bus driver page" is ticked. Path is saved when the trip ends.
+- Track bus: parent sets pickup by "Set to my current location" or "Choose on the map"; ETA targets the pickup point.
