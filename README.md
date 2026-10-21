@@ -173,3 +173,8 @@ Until a file exists, a coloured placeholder is shown. Get the school's written p
 - Track bus has a Map / Satellite switch (OpenStreetMap or Esri World Imagery, both free with attribution) and each stop popup has an "Open in Google Maps" link.
 - Settings has "School location on the map" (map_lat, map_lng). When set, the Contact page shows a Google map of the school and an "Open in Google Maps" button. Empty = hidden.
 - DEMO-KOREGAON.sql / DEMO-BUS-KOREGAON.sql put the demo route on the real Koregaon map (demo only).
+
+## Round 16b: one map everywhere
+- Track bus and the Contact page now use ONE map (Leaflet + OpenStreetMap, free, any district/taluka). The Satellite switch and the Google iframe were removed.
+- Track bus: "Show my distance from the bus" (phone GPS, used only on the phone, never sent or saved), stop list with Street View / Google Maps links.
+- Driver page keeps the most accurate GPS reading of the last seconds.
