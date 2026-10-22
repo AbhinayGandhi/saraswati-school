@@ -183,3 +183,6 @@ Until a file exists, a coloured placeholder is shown. Get the school's written p
 - phase32.sql: learned bus paths (max 5, permanent), parent pickup points, `bus_boarding` switch (default OFF).
 - Driver page: QR scan + children list only when Settings -> "Bus driver page" is ticked. Path is saved when the trip ends.
 - Track bus: parent sets pickup by "Set to my current location" or "Choose on the map"; ETA targets the pickup point.
+
+## Round 17b (update-65)
+- supabase/DEMO-BUS-REMOVE.sql: deletes all demo bus data before real bus operation (re-runnable). Do NOT run DEMO-KOREGAON.sql / DEMO-BUS*.sql afterwards.
