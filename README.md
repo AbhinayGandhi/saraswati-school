@@ -186,3 +186,6 @@ Until a file exists, a coloured placeholder is shown. Get the school's written p
 
 ## Round 17b (update-65)
 - supabase/DEMO-BUS-REMOVE.sql: deletes all demo bus data before real bus operation (re-runnable). Do NOT run DEMO-KOREGAON.sql / DEMO-BUS*.sql afterwards.
+
+## Round 18 (update-66)
+- Parent portal "Today" tab: added School bus status card and Unread notifications count.

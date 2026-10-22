@@ -32,6 +32,21 @@ const Portal = {
           db.from("timetable_slots").select("period,start_time,end_time,subjects(name)").eq("division_id", div).eq("academic_year_id", yr).eq("is_active", true).eq("day", dow).order("period")]);
         const bad = [a, f, h, n, e, t].find(x => x.error); if (bad) throw bad.error;
         let ds = null; try { ds = (await db.rpc("day_status", { p_day: td, p_div: div })).data; } catch (x) { }
+        let busCard = "", unread = 0;
+        if (mode === "parent") {
+          try {
+            if (!HID.has("bus")) {
+              const { data: as } = await db.from("transport_assignments").select("route_id,transport_routes(name)").eq("enrollment_id", k.e.id).eq("status", "active").limit(1);
+              if (as && as.length) {
+                const { data: bl } = await db.from("bus_live").select("trip,trip_active,updated_at").eq("route_id", as[0].route_id).maybeSingle();
+                const live = bl && bl.trip_active && (Date.now() - new Date(bl.updated_at)) < 180000;
+                busCard = `<div class="card"><small>School bus</small><b>${live ? "Running" : "Not running"}</b><small>${live ? (bl.trip === "drop" ? "Drop trip" : "Pickup trip") + " - <a href=\"track-bus.html\">see where</a>" : U.esc(as[0].transport_routes ? as[0].transport_routes.name : "")}</small></div>`;
+              }
+            }
+            const { count } = await db.from("notifications").select("id", { count: "exact", head: true }).eq("is_read", false);
+            unread = count || 0;
+          } catch (x) { }
+        }
         const today = a.data.find(r => r.att_date === td), lbl = { present: "Present", absent: "Absent", late: "Late", half_day: "Half day", leave: "On leave" };
         const att = a.data.filter(r => r.att_date <= td), ok = att.reduce((c, r) => c + (r.status === "present" || r.status === "late" ? 1 : r.status === "half_day" ? .5 : 0), 0), pc = att.length ? Math.round(ok * 100 / att.length) : null;
         const bal = f.data.reduce((c, x) => c + Number(x.balance), 0), over = f.data.filter(x => Number(x.balance) > 0 && x.due_date < td).reduce((c, x) => c + Number(x.balance), 0);
@@ -39,6 +54,7 @@ const Portal = {
         const links = [["track-bus.html", "Track the bus"], ["requests.html", "Leave and requests"], ["ptm.html", "Parent meetings"], ["ai.html", "Ask the school (AI)"]].filter(l => !(l[0] === "track-bus.html" && HID.has("bus")));
         return `<div class="kpis"><div class="card"><small>Today</small><b style="${today && today.status === "absent" ? "color:var(--bad)" : ""}">${today ? lbl[today.status] : ds === "weekly_off" ? "Weekly off day" : ds === "holiday" ? "Holiday" : "Not marked yet"}</b></div>
 <div class="card"><small>Attendance, last 30 days</small><b>${pc === null ? "-" : pc + "%"}</b>${pc === null ? "" : `<div class="meter"><span style="width:${pc}%"></span></div>`}</div>
+${busCard}${unread ? `<div class="card"><small>Unread notifications</small><b>${unread}</b><small><a href="notifications.html">open</a></small></div>` : ""}
 ${mode === "parent" && !HID.has("fees") ? `<div class="card"><small>Fee outstanding</small><b>${Fee.inr(bal)}</b><small>${over > 0 ? U.esc(Fee.inr(over)) + " overdue" : bal > 0 ? "Nothing overdue" : "All paid"}</small></div>` : ""}</div>
 ${mode === "parent" ? `<div class="alerts">${links.map(l => `<a href="${l[0]}">${U.esc(l[1])}</a>`).join("")}</div>` : ""}
 <div class="charts">${HID.has("timetable") ? "" : `<div class="chart-card"><h3>Today's timetable</h3>${li(t.data, x => "Period " + x.period + ": <b>" + U.esc(x.subjects.name) + "</b> " + T(x.start_time) + "-" + T(x.end_time), "No classes today.")}</div>`}
