@@ -82,3 +82,5 @@ td input[type=number]{width:6rem}
 @media (max-width:600px){#rep table.stk,#rep table.stk tbody,#rep table.stk tr,#rep table.stk td{display:block;width:100%}#rep table.stk thead{display:none}
 #rep table.stk tr{border:1px solid var(--line);border-radius:10px;padding:.5rem .8rem;margin-bottom:.6rem}#rep table.stk td{border:0;padding:.15rem 0;display:flex;justify-content:space-between;gap:.8rem;text-align:right}
 #rep table.stk td[data-l]::before{content:attr(data-l);font-size:.8rem;opacity:.7;text-align:left;flex:none}#rep.tw{overflow-x:visible}}
+
+#sidebar .sbfind{padding:0 1rem .6rem}#sidebar .sbfind input{width:100%;padding:.5rem .7rem;border-radius:.4rem;border:1px solid rgba(255,255,255,.25);background:rgba(255,255,255,.08);color:#fff;font:inherit}#sidebar .sbfind input::placeholder{color:#b9c4d8}

@@ -42,7 +42,20 @@ const Auth = {
   // Builds sidebar and top bar; wires mobile drawer.
   shell(p) {
     const links = Perm.navFor(p.role).map(n => `<a href="${n.href}"${location.pathname.endsWith(n.href) ? ' aria-current="page"' : ""}>${U.esc(n.label)}</a>`).join("");
-    document.getElementById("sidebar").innerHTML = `<div class="brand">${U.esc(SCHOOL_NAME)}</div><nav aria-label="Main">${links}</nav>`;
+    const many = Perm.navFor(p.role).length > 8;
+    document.getElementById("sidebar").innerHTML = `<div class="brand">${U.esc(SCHOOL_NAME)}</div>${many ? '<div class="sbfind"><input id="sbq" type="search" placeholder="Find a menu" aria-label="Find a menu" autocomplete="off"></div>' : ""}<nav aria-label="Main">${links}</nav>`;
+    // Menu is kept in A to Z order (Dashboard always first); it is re-sorted when the language changes.
+    const sortNav = () => {
+      const nav = document.querySelector("#sidebar nav"); if (!nav) return;
+      const lg = document.documentElement.lang === "mr" ? "mr" : "en", as = [...nav.children];
+      const sorted = [...as].sort((x, y) => (x.getAttribute("href") === "dashboard.html" ? -1 : y.getAttribute("href") === "dashboard.html" ? 1 : x.textContent.trim().localeCompare(y.textContent.trim(), lg, { sensitivity: "base" })));
+      if (sorted.some((el, i) => el !== as[i])) sorted.forEach(el => nav.appendChild(el));
+    };
+    window.SES_afterLang = () => { try { sortNav(); } catch (e) { } };
+    sortNav();
+    const q = document.getElementById("sbq");
+    if (q) q.addEventListener("input", () => { const t = q.value.trim().toLowerCase(); document.querySelectorAll("#sidebar nav a").forEach(el => { el.style.display = !t || el.textContent.toLowerCase().includes(t) ? "" : "none"; }); });
+    const cur = document.querySelector('#sidebar a[aria-current]'); if (cur && cur.scrollIntoView && window.innerWidth > 800) { try { cur.scrollIntoView({ block: "nearest" }); } catch (e) { } }
     if (p.role === "parent" || p.role === "student") Auth.hidden().then(h => { if (h.has("bus")) document.querySelectorAll('#sidebar a[href="track-bus.html"]').forEach(a => a.remove()); });
     document.getElementById("who").textContent = `${p.full_name || "User"} (${p.role.replace("_", " ")})`;
     const sb = document.getElementById("sidebar"), btn = document.getElementById("menu");

@@ -1,6 +1,6 @@
 /* Service worker: lets the site be installed on a phone and shows a friendly page when offline.
    It handles files from this website and the supabase-js library (so attendance pages open offline). School data comes from Supabase (another address) and is never stored here. */
-const CACHE = "ses-v25";
+const CACHE = "ses-v26";
 const SHELL = ["offline.html", "css/style.css", "css/public.css", "css/print.css", "images/icon-192.png"];
 self.addEventListener("install", e => {
   e.waitUntil(caches.open(CACHE).then(c => Promise.all(SHELL.map(u => c.add(u).catch(() => null)))).then(() => self.skipWaiting()));

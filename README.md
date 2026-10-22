@@ -198,3 +198,6 @@ Until a file exists, a coloured placeholder is shown. Get the school's written p
 
 ## Round 21 (update-70)
 - Parent portal "Today" tab: "Ask by voice" (js/voice.js). Browser speech recognition + keyword rules, answers from the child's own records. No AI, no cost, no SQL.
+
+## Round 22 (update-72)
+- Sidebar menu now A to Z (Dashboard first, also in Marathi order) and has a "Find a menu" search box when there are more than 8 items.
