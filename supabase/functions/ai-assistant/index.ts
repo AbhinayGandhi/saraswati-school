@@ -65,6 +65,13 @@ function build(task: string, b: Record<string, unknown>, ctx: Record<string, unk
     if (cls === null || subj === null || topic === null || !Number.isInteger(n) || n < 1 || n > 20) return "fields";
     const diff = ["easy", "medium", "hard"].includes(String(b.difficulty)) ? String(b.difficulty) : "medium";
     const qt = ["mcq", "short", "mixed"].includes(String(b.qtype)) ? String(b.qtype) : "mixed";
+    const kind = ["practice", "paper", "homework"].includes(String(b.kind)) ? String(b.kind) : "practice";
+    if (kind === "homework") {
+      return { maxTokens: 1400, system: `${base}\nWrite a homework sheet for ${cls}, subject ${subj}, on the given topic: ${n} short tasks that a child can do at home in about 30 to 40 minutes in total (a mix of questions, small writing or practice tasks, and one simple activity). Difficulty: ${diff}. Language: ${lang}. Number the tasks. Keep the instructions simple for a child and add one short line for parents on how to help. Do not use any names. Keep the content age-appropriate and factually correct; the teacher will check it.`, user: `<user_input>Topic: ${topic}</user_input>` };
+    }
+    if (kind === "paper") {
+      return { maxTokens: 3000, system: `${base}\nCreate a school question paper for ${cls}, subject ${subj}, on the given topic or chapters, with ${n} questions in total. Difficulty: ${diff}. Language: ${lang}. Format: a heading line, then "Time: [time]  Marks: [marks]", then sections (for example Section A multiple-choice with 4 options, Section B short answers, Section C long answers) with the marks written beside each question, and the marks adding up to the total. After the paper add "Answer key and marking scheme". Keep the content age-appropriate and factually correct; the teacher will check it.`, user: `<user_input>Topic: ${topic}</user_input>` };
+    }
     return { maxTokens: 2200, system: `${base}\nCreate ${n} ${diff} ${qt === "mcq" ? "multiple-choice (4 options each)" : qt === "short" ? "short-answer" : "mixed multiple-choice and short-answer"} questions suitable for ${cls}, subject ${subj}, on the given topic. Language: ${lang}. Number the questions. After all questions add "Answer key" with the correct answers. Keep the content age-appropriate and factually correct; teachers will check it.`, user: `<user_input>Topic: ${topic}</user_input>` };
   }
   if (task === "ask") {

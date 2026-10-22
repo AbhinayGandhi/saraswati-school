@@ -192,3 +192,6 @@ Until a file exists, a coloured placeholder is shown. Get the school's written p
 
 ## Round 19 (update-67)
 - send-message.html "Message parents": app notification to parents (send_broadcast RPC) + WhatsApp list. phase33.sql.
+
+## Round 20 (update-68)
+- AI Question maker: new "What to make" choice (practice questions / question paper with marks / homework sheet), Copy and Print buttons. Edge Function ai-assistant must be re-deployed (paste the new index.ts).
