@@ -189,3 +189,6 @@ Until a file exists, a coloured placeholder is shown. Get the school's written p
 
 ## Round 18 (update-66)
 - Parent portal "Today" tab: added School bus status card and Unread notifications count.
+
+## Round 19 (update-67)
+- send-message.html "Message parents": app notification to parents (send_broadcast RPC) + WhatsApp list. phase33.sql.

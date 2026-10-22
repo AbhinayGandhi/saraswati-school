@@ -1,0 +1,41 @@
+<!doctype html><html lang="en"><head><meta name="description" content="Saraswati English Medium School: school management portal."><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bitter:wght@600;700&display=swap" rel="stylesheet"><link rel="stylesheet" href="css/style.css"><link rel="stylesheet" href="css/print.css" media="print"><title>Message parents | Saraswati English Medium School</title></head>
+<body><div class="app"><aside id="sidebar" class="noprint" aria-label="Sidebar"></aside>
+<div><header class="top noprint"><button class="btn ghost" id="menu" aria-expanded="false" aria-controls="sidebar">Menu</button><span id="who"></span><button class="btn ghost" id="logout">Sign out</button></header>
+<main><h1 class="noprint">Message parents</h1>
+<p class="noprint">Write one message. <b>App notification</b> goes at once to every parent who has a login. <b>WhatsApp</b> opens one chat at a time with the message ready; you press Send yourself. Nothing is sent to WhatsApp automatically.</p>
+<div class="row noprint"><div><label for="cl">Class</label><select id="cl"><option value="">All classes</option></select></div>
+<div><label for="dv">Division</label><select id="dv"><option value="">All divisions</option></select></div>
+<div><label for="mt">Ready message</label><select id="mt"><option value="">Write my own</option><option value="hol">Holiday</option><option value="ptm">Parent meeting</option><option value="bus">Bus delay</option><option value="gen">General notice</option></select></div>
+<div><label for="ml">Language</label><select id="ml"><option value="en">English</option><option value="mr">Marathi</option></select></div></div>
+<label for="ti" class="noprint">Title (shown in the app)</label><input id="ti" maxlength="120" class="noprint">
+<label for="msg" class="noprint">Message ({student} {class} {school} are filled in for WhatsApp)</label><textarea id="msg" rows="4" maxlength="1000" class="noprint"></textarea>
+<p class="noprint"><button class="btn" id="app">Send app notification</button> <button class="btn ghost" id="csv">Download list (CSV)</button> <span id="amsg" role="status"></span></p>
+<div id="sum"></div><div id="list" class="tw"><div class="state">Loading...</div></div></main></div></div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script><script src="js/config.js"></script><script src="js/supabase.js"></script><script src="js/utils.js"></script><script src="js/permissions.js"></script><script src="js/auth.js"></script>
+<script>
+(async()=>{const p=await Auth.require(["super_admin","school_admin","principal","reception"]);Auth.shell(p);const $=id=>document.getElementById(id);let rows=[],school="Saraswati English Medium School",divs=[],done=new Set();
+const T={hol:{en:["Holiday","The school will remain closed on [date]. Classes resume on [date]. - {school}"],mr:["सुट्टी","[तारीख] रोजी शाळेला सुट्टी राहील. [तारीख] पासून वर्ग नेहमीप्रमाणे सुरू होतील. - {school}"]},
+ptm:{en:["Parent meeting","Parent-teacher meeting for {student} ({class}) is on [date] at [time]. Please attend. - {school}"],mr:["पालक सभा","{student} ({class}) यांची पालक-शिक्षक सभा [तारीख] रोजी [वेळ] वाजता आहे. कृपया उपस्थित राहावे. - {school}"]},
+bus:{en:["Bus delay","Today the school bus will be late by about [minutes] minutes. Sorry for the trouble. - {school}"],mr:["बस उशीर","आज शाळेची बस सुमारे [मिनिटे] मिनिटे उशिरा येईल. गैरसोयीबद्दल क्षमस्व. - {school}"]},
+gen:{en:["Notice","[Write your notice here] - {school}"],mr:["सूचना","[येथे सूचना लिहा] - {school}"]}};
+function tpl(){const t=T[$("mt").value];if(!t)return;const x=t[$("ml").value];$("ti").value=x[0];$("msg").value=x[1]}
+$("mt").onchange=tpl;$("ml").onchange=tpl;
+try{const s=await U.settings();if(s.school_name)school=s.school_name}catch(e){}
+try{const [c,d]=await Promise.all([db.from("classes").select("id,name").order("sort_order"),db.from("divisions").select("id,name,class_id")]);if(c.error)throw c.error;if(d.error)throw d.error;divs=d.data;$("cl").insertAdjacentHTML("beforeend",c.data.map(x=>`<option value="${x.id}">${U.esc(x.name)}</option>`).join(""))}catch(e){U.friendly(e)}
+function fillDv(){const c=$("cl").value;$("dv").innerHTML='<option value="">All divisions</option>'+divs.filter(d=>!c||d.class_id===c).map(d=>`<option value="${d.id}">${U.esc(d.name)}</option>`).join("")}
+const fill=(r,m)=>String(m).replace(/\{student\}/g,r?r.student_name:"your child").replace(/\{class\}/g,r?r.class_name+" - "+r.division_name:"").replace(/\{school\}/g,school);
+const phone=m=>{const d=String(m||"").replace(/\D/g,"");if(d.length===10)return "91"+d;if(d.length===12&&d.startsWith("91"))return d;return ""};
+function draw(){const L=$("list");if(!rows.length){$("sum").innerHTML="";return U.state(L,"empty","No students found for this choice.")}
+const login=rows.filter(r=>r.has_login).length,wa=rows.filter(r=>phone(r.guardian_mobile)).length;
+$("sum").innerHTML=`<div class="kpis"><div class="card"><b>${rows.length}</b><small>Students</small></div><div class="card"><b>${login}</b><small>Parents with app login</small></div><div class="card"><b>${wa}</b><small>With a valid mobile for WhatsApp</small></div></div>`;
+L.innerHTML=`<table class="stk"><thead><tr><th>Student</th><th>Class</th><th>Parent</th><th>Mobile</th><th>App</th><th class="noprint">WhatsApp</th></tr></thead><tbody>${rows.map((r,i)=>{const ph=phone(r.guardian_mobile),msg=fill(r,$("msg").value);return `<tr><td data-l="Student">${U.esc(r.student_name)}</td><td data-l="Class">${U.esc(r.class_name+" - "+r.division_name)}</td><td data-l="Parent">${U.esc(r.guardian_name||"-")}</td><td data-l="Mobile">${U.esc(r.guardian_mobile||"no mobile")}</td><td data-l="App">${r.has_login?"Yes":"No login"}</td><td data-l="WhatsApp" class="noprint">${ph?`<a class="btn sm ${done.has(i)?"ghost":""}" data-i="${i}" target="_blank" rel="noopener" href="https://wa.me/${ph}?text=${encodeURIComponent(msg)}">${done.has(i)?"Opened":"WhatsApp"}</a>`:"-"}</td></tr>`}).join("")}</tbody></table>`}
+async function load(){$("list").innerHTML='<div class="state">Loading...</div>';done=new Set();try{const {data,error}=await db.rpc("message_recipients",{p_class:$("cl").value||null,p_division:$("dv").value||null});if(error)throw error;rows=data||[];draw()}catch(e){U.friendly(e);U.state($("list"),"error","Unable to load the list. Please try again.")}}
+$("cl").onchange=()=>{fillDv();load()};$("dv").onchange=load;$("msg").oninput=draw;
+$("list").addEventListener("click",ev=>{const a=ev.target.closest("[data-i]");if(!a)return;done.add(Number(a.dataset.i));a.classList.add("ghost");a.textContent="Opened"});
+$("app").onclick=async()=>{const t=$("ti").value.trim(),m=$("msg").value.trim();if(t.length<2||m.length<2)return U.toast("Write a title and a message first.","err");
+if(/\[[^\]]+\]/.test(m)&&!confirm("The message still has [brackets] that look unfilled. Send anyway?"))return;
+const n=rows.filter(r=>r.has_login).length;if(!confirm("Send this app notification to the parents of "+rows.length+" students ("+n+" have a login)?"))return;
+$("app").disabled=true;try{const {data,error}=await db.rpc("send_broadcast",{p_class:$("cl").value||null,p_division:$("dv").value||null,p_title:t,p_message:fill(null,m)});if(error)throw error;$("amsg").textContent="Sent to "+data+" parent login(s).";U.toast("Sent.")}catch(e){U.friendly(e);U.toast("Could not send. Please try again.","err")}finally{$("app").disabled=false}};
+$("csv").onclick=()=>{if(!rows.length)return U.toast("Nothing to download.","err");U.download("parents-list.csv",U.csv([["Student","Class","Division","Parent","Mobile","App login"],...rows.map(r=>[r.student_name,r.class_name,r.division_name,r.guardian_name,r.guardian_mobile,r.has_login?"yes":"no"])]))};
+load()})();
+</script><script src="js/i18n.js"></script></body></html>
