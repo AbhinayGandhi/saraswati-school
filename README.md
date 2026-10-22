@@ -195,3 +195,6 @@ Until a file exists, a coloured placeholder is shown. Get the school's written p
 
 ## Round 20 (update-68)
 - AI Question maker: new "What to make" choice (practice questions / question paper with marks / homework sheet), Copy and Print buttons. Edge Function ai-assistant must be re-deployed (paste the new index.ts).
+
+## Round 21 (update-70)
+- Parent portal "Today" tab: "Ask by voice" (js/voice.js). Browser speech recognition + keyword rules, answers from the child's own records. No AI, no cost, no SQL.
