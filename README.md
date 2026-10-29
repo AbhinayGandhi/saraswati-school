@@ -204,3 +204,6 @@ Until a file exists, a coloured placeholder is shown. Get the school's written p
 
 ## Round 23 (update-73)
 - Logo watermark on all pages and printouts (Settings switch). Driver page music player (albums of YouTube/Spotify/audio links, Settings switch). Optional "Play prayer" button on the website. phase34.sql.
+
+## Round 24 (update-74)
+- Background GPS tracking: Edge Function gps-ingest (Traccar Client / OwnTracks / any HTTPS sender) + phase35.sql (gps_ingest). Trip starts/ends by itself, path is learned. Transport page shows the tracker details. See TRACKER-SETUP.md.
