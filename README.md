@@ -201,3 +201,6 @@ Until a file exists, a coloured placeholder is shown. Get the school's written p
 
 ## Round 22 (update-72)
 - Sidebar menu now A to Z (Dashboard first, also in Marathi order) and has a "Find a menu" search box when there are more than 8 items.
+
+## Round 23 (update-73)
+- Logo watermark on all pages and printouts (Settings switch). Driver page music player (albums of YouTube/Spotify/audio links, Settings switch). Optional "Play prayer" button on the website. phase34.sql.

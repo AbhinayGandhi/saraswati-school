@@ -17,6 +17,9 @@
 <h2>Flexibility</h2>
 <div class="row"><div><label for="attendance_edit_days">Teachers can change attendance up to (days back)</label><input id="attendance_edit_days" inputmode="numeric" maxlength="3" placeholder="Empty = no limit"></div></div>
 <p class="muted">Leave empty to let teachers correct attendance of any past date. The office (admin, principal) can always correct it. Holidays and special school days for a single division are set in the School calendar ("Applies to").</p>
+<div class="row"><div><label><input type="checkbox" id="wmc"> Logo watermark on every page and on printed receipts</label><p class="muted" style="margin:.2rem 0 0">Shows your school logo very faintly in the background. Needs a logo above. Untick to hide it.</p></div></div>
+<div class="row"><div><label><input type="checkbox" id="dmc"> Bus driver page: music player</label><p class="muted" style="margin:.2rem 0 0">Lets the driver play his own songs, YouTube, Spotify or radio on the driver page. Untick to hide it.</p></div></div>
+<div class="row"><div><label for="prayer_url">School prayer audio link (optional)</label><input id="prayer_url" maxlength="250" placeholder="https://... or assets/prayer.mp3"><p class="muted" style="margin:.2rem 0 0">When filled, the website shows a "Play prayer" button. It never plays by itself. Use only a recording the school owns.</p></div></div>
 <div class="row"><div><label><input type="checkbox" id="bbc"> Bus driver page: student QR scan and children list</label><p class="muted" style="margin:.2rem 0 0">Off = the driver only sees Start trip / End trip. Switch it on when the school agrees to boarding notes.</p></div></div>
 <fieldset><legend>Show to parents and students</legend><div id="pt"></div><p class="muted">Untick a section to hide it from the parent and student portal. You can switch it back on any time. Nothing is deleted.</p></fieldset>
 <h2>School location on the map</h2>
@@ -37,14 +40,14 @@
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script><script src="js/config.js"></script><script src="js/supabase.js"></script><script src="js/utils.js"></script><script src="js/permissions.js"></script><script src="js/auth.js"></script>
 <script>
 (async()=>{const p=await Auth.require(["super_admin","school_admin"]);Auth.shell(p);const $=id=>document.getElementById(id);
-const TXT=["map_lat","map_lng","school_name","principal","address","phone","email","website","school_start_time","school_end_time","attendance_alert_percent","library_fine_per_day","receipt_prefix","principal_title","registration","facebook","telegram","upi_id","upi_payee","bank_account_name","bank_name","bank_branch","bank_account_no","bank_ifsc","home_tagline","about_text","vision","mission","principal_message","attendance_edit_days","rc_title","rc_sign1","rc_sign2","rc_sign3","rc_note"];
+const TXT=["prayer_url","map_lat","map_lng","school_name","principal","address","phone","email","website","school_start_time","school_end_time","attendance_alert_percent","library_fine_per_day","receipt_prefix","principal_title","registration","facebook","telegram","upi_id","upi_payee","bank_account_name","bank_name","bank_branch","bank_account_no","bank_ifsc","home_tagline","about_text","vision","mission","principal_message","attendance_edit_days","rc_title","rc_sign1","rc_sign2","rc_sign3","rc_note"];
 const PT=[["results","Results"],["homework","Homework"],["timetable","Timetable"],["fees","Fees and online payment"],["activities","Activities"],["library","Library"],["notices","Notices and events"],["bus","Track bus"]];
 $("pt").innerHTML=PT.map(([k,l])=>`<label style="display:inline-block;margin-right:12px"><input type="checkbox" class="ptc" value="${k}"> ${l}</label>`).join("");
 const DAYS=[[1,"Mon"],[2,"Tue"],[3,"Wed"],[4,"Thu"],[5,"Fri"],[6,"Sat"],[7,"Sun"]];
 $("wd").innerHTML=DAYS.map(([n,l])=>`<label style="display:inline-block;margin-right:12px"><input type="checkbox" class="wdc" value="${n}"> ${l}</label>`).join("");
 let cur={};
 async function load(){try{const {data,error}=await db.from("school_settings").select("key,value");if(error)throw error;cur=Object.fromEntries(data.map(r=>[r.key,r.value]));
-TXT.forEach(k=>{const v=cur[k]||"";$(k).value=/^\[.*\]$/.test(v.trim())?"":v});const wd=(cur.working_days||"1,2,3,4,5,6").split(",");document.querySelectorAll(".wdc").forEach(c=>c.checked=wd.includes(c.value));$("bbc").checked=cur.bus_boarding==="on";const hid=(cur.portal_hidden||"").split(",");document.querySelectorAll(".ptc").forEach(c=>c.checked=!hid.includes(c.value));
+TXT.forEach(k=>{const v=cur[k]||"";$(k).value=/^\[.*\]$/.test(v.trim())?"":v});const wd=(cur.working_days||"1,2,3,4,5,6").split(",");document.querySelectorAll(".wdc").forEach(c=>c.checked=wd.includes(c.value));$("bbc").checked=cur.bus_boarding==="on";$("wmc").checked=cur.watermark!=="off";$("dmc").checked=cur.driver_music!=="off";const hid=(cur.portal_hidden||"").split(",");document.querySelectorAll(".ptc").forEach(c=>c.checked=!hid.includes(c.value));
 $("logoNow").innerHTML=cur.logo_path?`<img alt="Current logo" style="max-height:60px" src="${U.esc(db.storage.from("branding").getPublicUrl(cur.logo_path).data.publicUrl)}">`:"No logo uploaded yet.";
 }catch(e){U.friendly(e);U.toast("Could not load settings. Please refresh.","err")}}
 $("f").addEventListener("submit",async ev=>{ev.preventDefault();
@@ -58,7 +61,7 @@ for(const k of ["website","facebook","telegram"]){const v=$(k).value.trim();if(v
 const acc=$("bank_account_no").value.trim();if(acc&&!/^\d{6,20}$/.test(acc))return U.toast("Account number: digits only (6 to 20).","err");
 const ifsc=$("bank_ifsc").value.trim().toUpperCase();if(ifsc&&!/^[A-Z]{4}0[A-Z0-9]{6}$/.test(ifsc))return U.toast("IFSC looks wrong. Example: SBIN0001234","err");
 $("save").disabled=true;
-try{const rows=TXT.map(k=>({key:k,value:$(k).value.trim()}));rows.push({key:"working_days",value:days.join(",")});rows.push({key:"bus_boarding",value:$("bbc").checked?"on":""});rows.push({key:"portal_hidden",value:[...document.querySelectorAll(".ptc")].filter(c=>!c.checked).map(c=>c.value).join(",")});
+try{const rows=TXT.map(k=>({key:k,value:$(k).value.trim()}));rows.push({key:"working_days",value:days.join(",")});rows.push({key:"bus_boarding",value:$("bbc").checked?"on":""});rows.push({key:"watermark",value:$("wmc").checked?"":"off"});rows.push({key:"driver_music",value:$("dmc").checked?"":"off"});rows.push({key:"portal_hidden",value:[...document.querySelectorAll(".ptc")].filter(c=>!c.checked).map(c=>c.value).join(",")});
 const f=$("logo").files[0];
 if(f){if(!["image/png","image/jpeg","image/webp"].includes(f.type)||f.size>1048576)throw new Error("bad logo");
 const path="logo-"+Date.now()+"."+(f.type==="image/png"?"png":f.type==="image/webp"?"webp":"jpg");

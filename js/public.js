@@ -49,7 +49,19 @@
   }
   async function settings() {
     try { const { data, error } = await db.from("school_settings").select("key,value"); if (error) throw error; (data || []).forEach(r => { if (r.value) S[r.key] = r.value; }); } catch (e) { console.error(e); }
-    footer(); fill();
+    footer(); fill(); prayer();
+  }
+  // Optional prayer button: only when the school set a link in Settings. It never plays by itself.
+  function prayer() {
+    try {
+      if (!S.prayer_url || document.getElementById('prayerbtn')) return;
+      const b = document.createElement('button'); b.id = 'prayerbtn'; b.type = 'button'; b.className = 'btn ghost noprint'; b.textContent = 'Play prayer';
+      b.style.cssText = 'position:fixed;left:12px;bottom:12px;z-index:30;background:#fff';
+      const a = new Audio(S.prayer_url); a.preload = 'none';
+      a.onended = () => { b.textContent = 'Play prayer'; };
+      b.onclick = () => { if (a.paused) { a.play().then(() => { b.textContent = 'Stop prayer'; }, () => { b.textContent = 'Prayer not available'; }); } else { a.pause(); a.currentTime = 0; b.textContent = 'Play prayer'; } };
+      document.body.appendChild(b);
+    } catch (e) { }
   }
   // list(box, rows, drawFn, emptyText): safe rendering with loading, empty and error states
   function list(box, rows, draw, empty) {

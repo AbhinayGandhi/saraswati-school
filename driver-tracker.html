@@ -16,8 +16,10 @@
 <p style="font-size:.9rem;margin:.2rem 0">Tap a child to note boarding (pickup) or getting off (drop). Tap a green name again to undo. / नाव दाबून चढले/उतरले नोंदवा. चुकले तर हिरवे नाव पुन्हा दाबा.</p>
 <button class="btn ghost" id="rl" type="button">Load list / यादी दाखवा</button>
 <div id="ro" style="margin-top:.6rem"></div></div>
+<div id="music" style="margin:1rem 0" hidden></div>
 <p style="font-size:.9rem">Keep this page open and the screen on while driving. Parents see the bus on the map only while a trip is running.<br>गाडी चालवताना हे पेज उघडे आणि स्क्रीन चालू ठेवा. फेरी सुरू असतानाच पालकांना बस नकाशावर दिसते.</p>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.js"></script><script src="js/config.js"></script>
+<script src="js/driver-music.js"></script>
 <script>
 (()=>{const $=id=>document.getElementById(id);let db;try{db=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY,{auth:{persistSession:false}})}catch(e){$("stat").textContent="Setup problem. Please tell the school office.";return}
 let tok="";try{const q=new URLSearchParams(location.search).get("k");if(q){localStorage.setItem("ses_drv",q)}tok=q||localStorage.getItem("ses_drv")||""}catch(e){tok=new URLSearchParams(location.search).get("k")||""}
@@ -39,6 +41,7 @@ $("b1").onclick=()=>start("pickup");$("b2").onclick=()=>start("drop");
 $("b3").onclick=async()=>{if(!confirm("End this trip? / फेरी संपवायची?"))return;try{await rpc("end")}catch(e){}await savePath();stopAll();say("Trip ended. Thank you.","ok")};
 (async()=>{if(!tok){say("This link is not complete. Ask the school office for your bus link.","bad");$("rt").textContent="";return}
 try{const sv=await db.from("school_settings").select("value").eq("key","bus_boarding").maybeSingle();bo=!!(sv&&sv.data&&sv.data.value==="on");ui()}catch(e){}
+try{const dm=await db.from("school_settings").select("value").eq("key","driver_music").maybeSingle();if(!(dm&&dm.data&&dm.data.value==="off")&&typeof DMusic!=="undefined"){$("music").hidden=false;DMusic.mount($("music"))}}catch(e){}
 try{const r=await rpc("info");if(!r.ok){say("This link is not valid or was changed. Ask the school office for the new link.","bad");$("rt").textContent="";return}
 $("rt").textContent=r.route+(r.vehicle?" | "+r.vehicle:"");$("ctl").hidden=false;if(r.active){say("A trip is already running. Press start again to continue sending.")}else say("Ready.")}catch(e){say("Could not connect. Check internet.","bad")}})();
 
